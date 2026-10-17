@@ -23,6 +23,7 @@
         <module>microhoov-common</module>
         <module>microhoov-gateway</module>
         <module>microhoov-services</module>
+        <module>microhoov-admin-web/backend</module>
     </modules>
 
     <properties>

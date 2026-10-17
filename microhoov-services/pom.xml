@@ -25,7 +25,6 @@
         <module>message-service</module>
         <module>growth-service</module>
         <module>stats-service</module>
-        <module>admin-service</module>
     </modules>
 
     <dependencies>

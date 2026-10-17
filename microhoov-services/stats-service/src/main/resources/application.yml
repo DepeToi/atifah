@@ -5,10 +5,10 @@ server:
 spring:
   application:
     name: microhoov-stats
-  lifecycle:
-    timeout-per-shutdown-phase: 30s
   config:
-    import: "optional:nacos:${spring.application.name}.yaml?group=MICROHOOV_GROUP&refreshEnabled=true"
+    import:
+      - "optional:nacos:${spring.application.name}.yaml?group=MICROHOOV_GROUP&refreshEnabled=true"
+      - "optional:nacos:common-application.yaml?group=MICROHOOV_GROUP&refreshEnabled=true"
   cloud:
     nacos:
       server-addr: ${NACOS_ADDR:127.0.0.1:8848}
@@ -21,71 +21,11 @@ spring:
         namespace: ${NACOS_NAMESPACE:}
         group: MICROHOOV_GROUP
         file-extension: yaml
-    sentinel:
-      transport:
-        dashboard: ${SENTINEL_DASHBOARD:127.0.0.1:8858}
-      eager: false
-    openfeign:
-      client:
-        config:
-          default:
-            connect-timeout: 2000
-            read-timeout: 5000
   datasource:
-    driver-class-name: com.mysql.cj.jdbc.Driver
     url: "jdbc:mysql://${MYSQL_HOST:127.0.0.1}:${MYSQL_PORT:3306}/microhoov_stats?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true"
     username: ${MYSQL_USER:root}
     password: ${MYSQL_PASSWORD:root}
-    hikari:
-      maximum-pool-size: 10
-      minimum-idle: 2
-      connection-timeout: 3000
-  data:
-    redis:
-      host: ${REDIS_HOST:127.0.0.1}
-      port: ${REDIS_PORT:6379}
-      password: ${REDIS_PASSWORD:}
-      database: 0
-      timeout: 3s
-  jackson:
-    time-zone: Asia/Shanghai
-    date-format: yyyy-MM-dd HH:mm:ss
 
 rocketmq:
-  name-server: ${ROCKETMQ_NAMESRV:127.0.0.1:9876}
   producer:
     group: microhoov-stats-producer
-    send-message-timeout: 3000
-
-mybatis-plus:
-  configuration:
-    map-underscore-to-camel-case: true
-  global-config:
-    db-config:
-      id-type: assign_id
-      logic-delete-field: deleted
-      logic-delete-value: 1
-      logic-not-delete-value: 0
-
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info,metrics,prometheus
-  endpoint:
-    health:
-      show-details: always
-  metrics:
-    tags:
-      application: ${spring.application.name}
-
-microhoov:
-  security:
-    jwt:
-      secret: ${JWT_SECRET:microhoov-dev-secret-change-me-please-32bytes}
-      issuer: microhoov
-      access-token-ttl: 2h
-
-logging:
-  pattern:
-    level: "%5p [%X{traceId:-}]"

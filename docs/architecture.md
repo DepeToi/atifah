@@ -24,7 +24,7 @@
 | 读峰值    | 3 万 QPS  |
 | IM 长连接 | 5 万      |
 
-**总体风格**：前后端分离 + BFF + 微服务 + 事件驱动 + 读写分离 + 多级缓存 + 最终一致。
+**总体风格**：App 端前后端分离 + BFF；管理后台前端独立（Vue 3 SPA），后端由 admin-service 提供 BFF 接口；微服务 + 事件驱动 + 读写分离 + 多级缓存 + 最终一致。
 
 ## 2. 业务域与微服务拆分
 
@@ -58,11 +58,13 @@
 
 **原则**：一个服务一个逻辑库（初期可共用一个 MySQL 实例，但 Schema 独立），禁止跨库 JOIN；跨服务数据通过 API 或 MQ 事件获取。初期部署时，`auth` 可合并进 `user`、`growth` 可合并进 `user`，避免过度拆分。
 
+管理后台工程位于 `microhoov-admin-web`：前端为 `frontend`（Vue 3 + Vite 单页应用），后端 BFF 为 `backend`（`admin-service`）。数据统一经网关 `/admin/api/**` 转发到 `admin-service` 聚合；管理端使用独立入口、独立鉴权链与 MFA，不直连业务库。
+
 ## 3. 总体技术架构
 
 ```
 ┌───────────────────────────────────────────────────────────────────────┐
-│ 客户端层   iOS/Android App（Flutter）      管理后台 SPA（Vue3）          │
+│ 客户端层   iOS/Android App（Flutter）   管理后台 Web（Vue 3 SPA）          │
 └───────────────┬───────────────────────────────────┬───────────────────┘
                 │ HTTPS                             │ HTTPS
 ┌───────────────▼───────────────────────────────────▼───────────────────┐
@@ -105,6 +107,7 @@
 | 微服务   | Spring Cloud 2025.0.x + Spring Cloud Alibaba 2025.0.0.0 | 版本通过 BOM 对齐             |
 | 注册/配置 | Nacos                                                   | AP 注册中心，配置热更新、灰度开关      |
 | 网关    | Spring Cloud Gateway                                    | 响应式、可编程限流，适合高并发入口       |
+| 管理后台  | Vue 3 + Vite + TypeScript + Element Plus                 | 前后端分离、组件生态成熟、独立构建与发布      |
 | RPC   | OpenFeign（默认）/ Dubbo 3（热点链路可选）                          | 优先简单，避免双协议复杂度           |
 | 流控熔断  | Sentinel                                                | 规则持久化到 Nacos，网关+服务双层防护  |
 | 分布式事务 | Seata AT                                                | 仅用于少量强一致场景，避免滥用         |
@@ -118,6 +121,8 @@
 | 可观测   | SkyWalking + Prometheus/Grafana + Loki                  | 链路、指标、日志三件套             |
 | 容器    | Docker + Kubernetes + Helm/Kustomize                    | 弹性伸缩、滚动/灰度发布            |
 | CI/CD | GitLab CI/GitHub Actions + Harbor + ArgoCD              | 镜像可追溯、GitOps 发布         |
+
+> Servlet 业务服务统一启用 `spring.threads.virtual.enabled=true`，以虚拟线程处理 I/O 密集请求；Gateway 保持响应式事件循环，不启用该配置。自定义线程池、MQ 消费线程与定时任务仍需显式配置。
 
 ## 4. 核心链路设计
 
@@ -279,7 +284,8 @@ Kubernetes 集群
 │   ├── gateway-service        Deployment 3+，HPA
 │   ├── 各业务服务              Deployment 2–N，HPA
 │   ├── message-service(WS)    4+，连接数指标扩缩，粘性会话
-│   └── admin-service         独立入口 + 白名单
+│   ├── admin-service          管理后台 BFF（microhoov-admin-web/backend），独立入口 + 白名单
+│   └── admin-web              管理后台前端（microhoov-admin-web/frontend），Nginx/CDN + 白名单
 ├── ns: middleware
 │   ├── Nacos StatefulSet ×3
 │   ├── MySQL 主从（或云 RDS）
@@ -306,6 +312,8 @@ Git Push → 单测 + SonarQube → Maven 构建 → Jib 镜像 → Harbor
         → ArgoCD 同步 → Dev/Test/Prod → Flyway 数据库迁移
         → 金丝雀发布 → Prometheus 指标校验 → 全量/回滚
 ```
+
+管理后台前端在 `microhoov-admin-web/frontend` 独立执行 `npm ci && npm run build`，静态产物发布到 Nginx / CDN，与后端服务解耦发布。
 
 ## 9. 可观测性与非功能目标
 
