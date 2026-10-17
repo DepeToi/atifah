@@ -1,7 +1,7 @@
 # 情绪管理微服务项目：设计思路与技术架构
 
 > 文档版本：v1.0（2026-10-18）  
-> 技术基线：JDK 17 / Spring Boot 3.5.x / Spring Cloud 2025.0.x / Spring Cloud Alibaba 2025.0.0.0
+> 技术基线：JDK 21 / Spring Boot 3.5.x / Spring Cloud 2025.0.x / Spring Cloud Alibaba 2025.0.0.0
 
 ## 1. 设计目标与容量假设
 
@@ -101,7 +101,7 @@
 
 | 层次    | 选型                                                      | 理由                      |
 | ----- | ------------------------------------------------------- | ----------------------- |
-| 运行时   | JDK 17 + Spring Boot 3.5.x                              | 长期支持、容器友好               |
+| 运行时   | JDK 21 + Spring Boot 3.5.x                              | LTS、虚拟线程、容器友好           |
 | 微服务   | Spring Cloud 2025.0.x + Spring Cloud Alibaba 2025.0.0.0 | 版本通过 BOM 对齐             |
 | 注册/配置 | Nacos                                                   | AP 注册中心，配置热更新、灰度开关      |
 | 网关    | Spring Cloud Gateway                                    | 响应式、可编程限流，适合高并发入口       |

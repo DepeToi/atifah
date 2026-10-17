@@ -8,7 +8,7 @@
 
 | 组件                      | 版本         |
 | ----------------------- | ---------- |
-| JDK                     | 17         |
+| JDK                     | 21         |
 | Spring Boot             | 3.5.16     |
 | Spring Cloud            | 2025.0.3   |
 | Spring Cloud Alibaba    | 2025.0.0.0 |
@@ -56,7 +56,7 @@ microhoov/
 
 ## 环境要求
 
-- JDK 17+
+- JDK 21+（确保 `JAVA_HOME` 指向 JDK 21，`java -version` 输出 21.x）
 - Maven 3.9+
 - Docker / Docker Compose（用于启动 MySQL、Redis、Nacos、RocketMQ 等中间件）
 - IDE：IntelliJ IDEA（推荐）
