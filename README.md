@@ -6,20 +6,20 @@
 
 ## 技术基线
 
-| 组件 | 版本 |
-|---|---|
-| JDK | 17 |
-| Spring Boot | 3.5.16 |
-| Spring Cloud | 2025.0.3 |
-| Spring Cloud Alibaba | 2025.0.0.0 |
-| MyBatis-Plus | 3.5.17 |
-| Redisson | 3.52.0 |
-| RocketMQ Spring Starter | 2.3.6 |
-| JJWT | 0.12.7 |
-| MySQL | 8.0 |
-| Redis | 7.x |
-| RocketMQ | 5.3.1 |
-| Nacos | 3.0.3 |
+| 组件                      | 版本         |
+| ----------------------- | ---------- |
+| JDK                     | 17         |
+| Spring Boot             | 3.5.16     |
+| Spring Cloud            | 2025.0.3   |
+| Spring Cloud Alibaba    | 2025.0.0.0 |
+| MyBatis-Plus            | 3.5.17     |
+| Redisson                | 3.52.0     |
+| RocketMQ Spring Starter | 2.3.6      |
+| JJWT                    | 0.12.7     |
+| MySQL                   | 8.0        |
+| Redis                   | 7.x        |
+| RocketMQ                | 5.3.1      |
+| Nacos                   | 3.0.3      |
 
 ## 模块结构
 
@@ -73,16 +73,16 @@ docker compose -f deploy/docker-compose/docker-compose.yml up -d
 
 启动后：
 
-| 组件 | 地址 | 说明 |
-|---|---|---|
-| MySQL | `127.0.0.1:3306` | 用户 `root` / 密码 `root`，自动创建各服务 Schema |
-| Redis | `127.0.0.1:6379` | 无密码 |
-| Nacos | `127.0.0.1:8848` | 注册与配置中心 |
-| Nacos Console | http://localhost:8849 | Nacos 3.x 控制台，宿主机映射端口 |
-| RocketMQ NameServer | `127.0.0.1:9876` | |
-| RocketMQ Dashboard | http://localhost:8180 | |
-| Sentinel Dashboard | http://localhost:8858 | 默认账号/密码 `sentinel` / `sentinel` |
-| Seata（可选） | `127.0.0.1:8091` | `docker compose --profile seata up -d` |
+| 组件                  | 地址                      | 说明                                     |
+| ------------------- | ----------------------- | -------------------------------------- |
+| MySQL               | `127.0.0.1:3306`        | 用户 `root` / 密码 `root`，自动创建各服务 Schema   |
+| Redis               | `127.0.0.1:6379`        | 无密码                                    |
+| Nacos               | `127.0.0.1:8848`        | 注册与配置中心                                |
+| Nacos Console       | <http://localhost:8849> | Nacos 3.x 控制台，宿主机映射端口                  |
+| RocketMQ NameServer | `127.0.0.1:9876`        |                                        |
+| RocketMQ Dashboard  | <http://localhost:8180> |                                        |
+| Sentinel Dashboard  | <http://localhost:8858> | 默认账号/密码 `sentinel` / `sentinel`        |
+| Seata（可选）           | `127.0.0.1:8091`        | `docker compose --profile seata up -d` |
 
 ### 2. 编译
 
@@ -113,19 +113,23 @@ curl http://localhost:8082/actuator/health   # user-service
 - 配置优先级：环境变量 > Nacos（`MICROHOOV_GROUP`）> 本地 `application.yml`。
 - 常用环境变量：
 
-| 变量 | 默认值 |
-|---|---|
-| `NACOS_ADDR` | `127.0.0.1:8848` |
-| `NACOS_NAMESPACE` | 空（public） |
+| 变量                                                            | 默认值                                    |
+| ------------------------------------------------------------- | -------------------------------------- |
+| `NACOS_ADDR`                                                  | `127.0.0.1:8848`                       |
+| `NACOS_NAMESPACE`                                             | 空（public）                              |
 | `MYSQL_HOST` / `MYSQL_PORT` / `MYSQL_USER` / `MYSQL_PASSWORD` | `127.0.0.1` / `3306` / `root` / `root` |
-| `REDIS_HOST` / `REDIS_PORT` / `REDIS_PASSWORD` | `127.0.0.1` / `6379` / 空 |
-| `ROCKETMQ_NAMESRV` | `127.0.0.1:9876` |
-| `SENTINEL_DASHBOARD` | `127.0.0.1:8858` |
-| `JWT_SECRET` | 开发默认值（生产必须替换） |
+| `REDIS_HOST` / `REDIS_PORT` / `REDIS_PASSWORD`                | `127.0.0.1` / `6379` / 空               |
+| `ROCKETMQ_NAMESRV`                                            | `127.0.0.1:9876`                       |
+| `SENTINEL_DASHBOARD`                                          | `127.0.0.1:8858`                       |
+| `JWT_SECRET`                                                  | 开发默认值（生产必须替换）                          |
 
 - 网关 JWT 鉴权当前默认关闭（`microhoov.gateway.auth.enabled=false`），接入 `auth-service` 签发 Token 后开启。
 - 生产环境请将 `JWT_SECRET` 替换为至少 256 位的强随机密钥，或切换为 RS256 公私钥方案。
 - `growth-service` 的 Seata 默认关闭（`seata.enabled=false`），需要分布式事务时再启用。
+
+## 已知依赖说明
+
+Spring Cloud Gateway 4.3.x 已将 `spring-cloud-starter-gateway` 标记为 deprecated，推荐迁移到 `spring-cloud-starter-gateway-server-webflux`。但 Spring Cloud Alibaba 2025.0.0.0 的 Sentinel Gateway 适配器仍依赖经典网关模块，因此当前骨架暂时保留经典 starter；待 SCA 升级适配后再切换。启动时会看到一条 deprecation WARN，不影响运行。
 
 ## 开发约定
 

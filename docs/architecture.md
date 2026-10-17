@@ -1,6 +1,6 @@
 # 情绪管理微服务项目：设计思路与技术架构
 
-> 文档版本：v1.0（2026-10-18）
+> 文档版本：v1.0（2026-10-18）  
 > 技术基线：JDK 17 / Spring Boot 3.5.x / Spring Cloud 2025.0.x / Spring Cloud Alibaba 2025.0.0.0
 
 ## 1. 设计目标与容量假设
@@ -15,14 +15,14 @@
 
 **容量假设**（可按比例缩容）
 
-| 指标 | 假设 |
-|---|---|
-| 注册用户 | 1000 万 |
-| DAU | 100 万 |
-| 峰值在线 | 20 万 |
-| 打卡峰值 | 3000 QPS |
-| 读峰值 | 3 万 QPS |
-| IM 长连接 | 5 万 |
+| 指标     | 假设       |
+| ------ | -------- |
+| 注册用户   | 1000 万   |
+| DAU    | 100 万    |
+| 峰值在线   | 20 万     |
+| 打卡峰值   | 3000 QPS |
+| 读峰值    | 3 万 QPS  |
+| IM 长连接 | 5 万      |
 
 **总体风格**：前后端分离 + BFF + 微服务 + 事件驱动 + 读写分离 + 多级缓存 + 最终一致。
 
@@ -30,31 +30,31 @@
 
 ### C 端功能域
 
-| 域 | 功能 |
-|---|---|
-| 账号域 | 手机号/三方登录、Token、设备管理、隐私设置 |
-| 情绪域 | 心情打卡、情绪日记、标签、语音/图片附件、日历视图 |
-| 分析域 | 情绪趋势、连续打卡、周报/月报、心理量表 |
-| 社区域 | 树洞/动态、匿名发布、评论、点赞、关注、举报、Feed |
-| 内容域 | 冥想音频、文章、课程、每日推荐、播放进度 |
+| 域   | 功能                             |
+| --- | ------------------------------ |
+| 账号域 | 手机号/三方登录、Token、设备管理、隐私设置       |
+| 情绪域 | 心情打卡、情绪日记、标签、语音/图片附件、日历视图      |
+| 分析域 | 情绪趋势、连续打卡、周报/月报、心理量表           |
+| 社区域 | 树洞/动态、匿名发布、评论、点赞、关注、举报、Feed    |
+| 内容域 | 冥想音频、文章、课程、每日推荐、播放进度           |
 | 消息域 | 站内信、WebSocket 实时消息、App 推送、打卡提醒 |
-| 增长域 | 签到、任务、积分、成就、活动 |
+| 增长域 | 签到、任务、积分、成就、活动                 |
 
 ### 服务划分
 
-| 服务 | 职责 | 数据归属 |
-|---|---|---|
-| `gateway-service` | 路由、鉴权、限流、幂等、灰度、TraceId | 无 |
-| `auth-service` | 登录注册、验证码、三方登录、Token 签发/注销 | `microhoov_auth` |
-| `user-service` | 用户资料、隐私设置、黑名单 | `microhoov_user` |
-| `mood-service` | 打卡、日记、标签、附件、日历查询 | `microhoov_mood` |
-| `analysis-service` | 趋势统计、连续打卡、量表、周报月报、AI 摘要 | `microhoov_analysis` |
-| `community-service` | 树洞、动态、评论、点赞、关注、举报、Feed | `microhoov_community` |
-| `content-service` | 音频/文章/课程、推荐、播放进度 | `microhoov_content` |
-| `message-service` | 站内信、WebSocket、推送、提醒 | `microhoov_message` |
-| `growth-service` | 签到、任务、积分、成就 | `microhoov_growth` |
-| `stats-service` | 埋点消费、运营聚合报表 | `microhoov_stats` |
-| `admin-service` | 管理后台 BFF、RBAC、审核工作台、运营配置 | `microhoov_admin` |
+| 服务                  | 职责                        | 数据归属                  |
+| ------------------- | ------------------------- | --------------------- |
+| `gateway-service`   | 路由、鉴权、限流、幂等、灰度、TraceId    | 无                     |
+| `auth-service`      | 登录注册、验证码、三方登录、Token 签发/注销 | `microhoov_auth`      |
+| `user-service`      | 用户资料、隐私设置、黑名单             | `microhoov_user`      |
+| `mood-service`      | 打卡、日记、标签、附件、日历查询          | `microhoov_mood`      |
+| `analysis-service`  | 趋势统计、连续打卡、量表、周报月报、AI 摘要   | `microhoov_analysis`  |
+| `community-service` | 树洞、动态、评论、点赞、关注、举报、Feed    | `microhoov_community` |
+| `content-service`   | 音频/文章/课程、推荐、播放进度          | `microhoov_content`   |
+| `message-service`   | 站内信、WebSocket、推送、提醒       | `microhoov_message`   |
+| `growth-service`    | 签到、任务、积分、成就               | `microhoov_growth`    |
+| `stats-service`     | 埋点消费、运营聚合报表               | `microhoov_stats`     |
+| `admin-service`     | 管理后台 BFF、RBAC、审核工作台、运营配置  | `microhoov_admin`     |
 
 **原则**：一个服务一个逻辑库（初期可共用一个 MySQL 实例，但 Schema 独立），禁止跨库 JOIN；跨服务数据通过 API 或 MQ 事件获取。初期部署时，`auth` 可合并进 `user`、`growth` 可合并进 `user`，避免过度拆分。
 
@@ -99,25 +99,25 @@
 
 ### 技术选型
 
-| 层次 | 选型 | 理由 |
-|---|---|---|
-| 运行时 | JDK 17 + Spring Boot 3.5.x | 长期支持、容器友好 |
-| 微服务 | Spring Cloud 2025.0.x + Spring Cloud Alibaba 2025.0.0.0 | 版本通过 BOM 对齐 |
-| 注册/配置 | Nacos | AP 注册中心，配置热更新、灰度开关 |
-| 网关 | Spring Cloud Gateway | 响应式、可编程限流，适合高并发入口 |
-| RPC | OpenFeign（默认）/ Dubbo 3（热点链路可选） | 优先简单，避免双协议复杂度 |
-| 流控熔断 | Sentinel | 规则持久化到 Nacos，网关+服务双层防护 |
-| 分布式事务 | Seata AT | 仅用于少量强一致场景，避免滥用 |
-| ORM | MyBatis-Plus | 分页与逻辑删除方便 |
-| 分库分表 | ShardingSphere-JDBC | 无侵入、支持分片+读写分离 |
-| 数据库 | MySQL 8.0/8.4 | 事务、主从、成熟运维 |
-| 缓存 | Redis 7 + Redisson + Caffeine | 分布式缓存/锁/计数 + 本地热点缓存 |
-| 消息 | RocketMQ 5.x | 高吞吐、事务消息、延时消息、顺序消息、死信队列 |
-| 定时任务 | XXL-Job | 周报生成、对账补偿、批量任务 |
-| 文件 | OSS/MinIO 预签名直传 | 服务端不中转大文件 |
-| 可观测 | SkyWalking + Prometheus/Grafana + Loki | 链路、指标、日志三件套 |
-| 容器 | Docker + Kubernetes + Helm/Kustomize | 弹性伸缩、滚动/灰度发布 |
-| CI/CD | GitLab CI/GitHub Actions + Harbor + ArgoCD | 镜像可追溯、GitOps 发布 |
+| 层次    | 选型                                                      | 理由                      |
+| ----- | ------------------------------------------------------- | ----------------------- |
+| 运行时   | JDK 17 + Spring Boot 3.5.x                              | 长期支持、容器友好               |
+| 微服务   | Spring Cloud 2025.0.x + Spring Cloud Alibaba 2025.0.0.0 | 版本通过 BOM 对齐             |
+| 注册/配置 | Nacos                                                   | AP 注册中心，配置热更新、灰度开关      |
+| 网关    | Spring Cloud Gateway                                    | 响应式、可编程限流，适合高并发入口       |
+| RPC   | OpenFeign（默认）/ Dubbo 3（热点链路可选）                          | 优先简单，避免双协议复杂度           |
+| 流控熔断  | Sentinel                                                | 规则持久化到 Nacos，网关+服务双层防护  |
+| 分布式事务 | Seata AT                                                | 仅用于少量强一致场景，避免滥用         |
+| ORM   | MyBatis-Plus                                            | 分页与逻辑删除方便               |
+| 分库分表  | ShardingSphere-JDBC                                     | 无侵入、支持分片+读写分离           |
+| 数据库   | MySQL 8.0/8.4                                           | 事务、主从、成熟运维              |
+| 缓存    | Redis 7 + Redisson + Caffeine                           | 分布式缓存/锁/计数 + 本地热点缓存     |
+| 消息    | RocketMQ 5.x                                            | 高吞吐、事务消息、延时消息、顺序消息、死信队列 |
+| 定时任务  | XXL-Job                                                 | 周报生成、对账补偿、批量任务          |
+| 文件    | OSS/MinIO 预签名直传                                         | 服务端不中转大文件               |
+| 可观测   | SkyWalking + Prometheus/Grafana + Loki                  | 链路、指标、日志三件套             |
+| 容器    | Docker + Kubernetes + Helm/Kustomize                    | 弹性伸缩、滚动/灰度发布            |
+| CI/CD | GitLab CI/GitHub Actions + Harbor + ArgoCD              | 镜像可追溯、GitOps 发布         |
 
 ## 4. 核心链路设计
 
@@ -184,27 +184,27 @@ App ──POST /api/v1/moods──▶ Nginx ──▶ Gateway
 
 ### 5.1 分层抗压
 
-| 层次 | 手段 |
-|---|---|
+| 层次  | 手段                                                    |
+| --- | ----------------------------------------------------- |
 | 接入层 | CDN 静态资源、Nginx `limit_req/limit_conn`、WAF、HTTP/2、连接复用 |
-| 网关层 | JWT 本地验签（无状态）、Sentinel QPS/热点参数限流、灰度分流 |
-| 服务层 | 全部无状态、HPA 水平扩展、线程池隔离、超时控制 |
-| 缓存层 | Caffeine L1 + Redis L2、热点探测、随机 TTL |
-| 存储层 | 主从读写分离、ShardingSphere 分库分表、慢查询治理 |
-| 消息层 | RocketMQ 削峰、批量消费、消费限流、死信队列 |
+| 网关层 | JWT 本地验签（无状态）、Sentinel QPS/热点参数限流、灰度分流                |
+| 服务层 | 全部无状态、HPA 水平扩展、线程池隔离、超时控制                             |
+| 缓存层 | Caffeine L1 + Redis L2、热点探测、随机 TTL                    |
+| 存储层 | 主从读写分离、ShardingSphere 分库分表、慢查询治理                      |
+| 消息层 | RocketMQ 削峰、批量消费、消费限流、死信队列                            |
 
 ### 5.2 缓存设计
 
-| 场景 | 方案 |
-|---|---|
-| 用户/内容详情 | Caffeine(3–10s) + Redis(30–60min 随机 TTL) + MySQL |
-| 今日打卡状态 | `mood:today:{uid}:{date}`，过期到次日凌晨 |
-| 连续打卡 | Redis Bitmap/Set，异步落库 |
-| 点赞去重 | Redis Set + Lua 原子操作 |
-| Feed 收件箱 | Redis ZSET，score=时间戳 |
-| 热门/榜单 | Redis ZSET |
-| 分布式锁 | Redisson（watchdog 续期，Lua 安全释放） |
-| 接口幂等 | `idem:{uid}:{key}`，24h |
+| 场景       | 方案                                               |
+| -------- | ------------------------------------------------ |
+| 用户/内容详情  | Caffeine(3–10s) + Redis(30–60min 随机 TTL) + MySQL |
+| 今日打卡状态   | `mood:today:{uid}:{date}`，过期到次日凌晨                |
+| 连续打卡     | Redis Bitmap/Set，异步落库                            |
+| 点赞去重     | Redis Set + Lua 原子操作                             |
+| Feed 收件箱 | Redis ZSET，score=时间戳                             |
+| 热门/榜单    | Redis ZSET                                       |
+| 分布式锁     | Redisson（watchdog 续期，Lua 安全释放）                   |
+| 接口幂等     | `idem:{uid}:{key}`，24h                           |
 
 **三大缓存问题**：穿透 → 空值缓存 + 布隆过滤器；击穿 → 逻辑过期/互斥重建；雪崩 → 随机 TTL + 多级缓存 + Sentinel 兜底。缓存一致性采用 Cache Aside，关键场景可加延迟双删或订阅 Binlog（Canal）刷新。
 
@@ -219,15 +219,15 @@ App ──POST /api/v1/moods──▶ Nginx ──▶ Gateway
 
 ### 5.4 MQ Topic 规划
 
-| Topic | 生产者 | 消费者 | 用途 |
-|---|---|---|---|
-| `mood-recorded` | mood | stats/analysis/growth/message | 打卡派生事件 |
-| `post-published` | community | audit/fanout/stats | 内容发布与分发 |
-| `content-audit-result` | admin/审核 | community/content | 审核状态回写 |
-| `notification` | 各服务 | message | 统一通知出口 |
-| `stats-event` | 各服务 | stats | 埋点与运营统计 |
-| `points-changed` | growth | user/stats | 积分变更 |
-| `user-logoff` | user | 各服务 | 注销数据清理（Saga） |
+| Topic                  | 生产者       | 消费者                           | 用途           |
+| ---------------------- | --------- | ----------------------------- | ------------ |
+| `mood-recorded`        | mood      | stats/analysis/growth/message | 打卡派生事件       |
+| `post-published`       | community | audit/fanout/stats            | 内容发布与分发      |
+| `content-audit-result` | admin/审核  | community/content             | 审核状态回写       |
+| `notification`         | 各服务       | message                       | 统一通知出口       |
+| `stats-event`          | 各服务       | stats                         | 埋点与运营统计      |
+| `points-changed`       | growth    | user/stats                    | 积分变更         |
+| `user-logoff`          | user      | 各服务                           | 注销数据清理（Saga） |
 
 统一重试策略：重试 16 次 + 指数退避 → 死信队列 → 告警 + 人工补偿。
 
@@ -240,20 +240,20 @@ App ──POST /api/v1/moods──▶ Nginx ──▶ Gateway
 
 ## 6. 数据模型（核心表）
 
-| 表 | 关键字段 | 说明 |
-|---|---|---|
-| `t_user` | id, phone, password_hash, nickname, avatar, status | 手机号脱敏展示 |
-| `t_user_profile` | user_id, gender, birthday, privacy_level, emotion_goal | 隐私设置 |
-| `t_mood_record` | id, user_id, record_date, mood_type, mood_score, tags, content_cipher, visibility, voice_url | 唯一索引 `(user_id, record_date)` |
-| `t_mood_diary` | id, user_id, title, content_cipher, mood_score, created_at | 一天可多条 |
-| `t_post` | id, author_id, is_anonymous, content, audit_status, like_count, comment_count | 匿名帖后台脱敏 |
-| `t_comment` | id, post_id, author_id, content, audit_status | 按 post_id 分片 |
-| `t_like` | user_id, target_type, target_id | 唯一索引防重复 |
-| `t_message` | id, user_id, type, title, content, read_status | 按 user_id 分片 |
-| `t_content` | id, type, title, media_url, duration, status | 冥想/文章/课程 |
-| `t_mood_daily_stat` | user_id, stat_date, avg_score, record_count, emotion_dist | 预聚合 |
-| `t_admin_user` / `t_admin_role` / `t_admin_oper_log` | — | RBAC 与审计 |
-| `t_local_message` | biz_id, topic, payload, status, retry_count | 本地消息表补偿 |
+| 表                                                    | 关键字段                                                                                         | 说明                            |
+| ---------------------------------------------------- | -------------------------------------------------------------------------------------------- | ----------------------------- |
+| `t_user`                                             | id, phone, password_hash, nickname, avatar, status                                           | 手机号脱敏展示                       |
+| `t_user_profile`                                     | user_id, gender, birthday, privacy_level, emotion_goal                                       | 隐私设置                          |
+| `t_mood_record`                                      | id, user_id, record_date, mood_type, mood_score, tags, content_cipher, visibility, voice_url | 唯一索引 `(user_id, record_date)` |
+| `t_mood_diary`                                       | id, user_id, title, content_cipher, mood_score, created_at                                   | 一天可多条                         |
+| `t_post`                                             | id, author_id, is_anonymous, content, audit_status, like_count, comment_count                | 匿名帖后台脱敏                       |
+| `t_comment`                                          | id, post_id, author_id, content, audit_status                                                | 按 post_id 分片                  |
+| `t_like`                                             | user_id, target_type, target_id                                                              | 唯一索引防重复                       |
+| `t_message`                                          | id, user_id, type, title, content, read_status                                               | 按 user_id 分片                  |
+| `t_content`                                          | id, type, title, media_url, duration, status                                                 | 冥想/文章/课程                      |
+| `t_mood_daily_stat`                                  | user_id, stat_date, avg_score, record_count, emotion_dist                                    | 预聚合                           |
+| `t_admin_user` / `t_admin_role` / `t_admin_oper_log` | —                                                                                            | RBAC 与审计                      |
+| `t_local_message`                                    | biz_id, topic, payload, status, retry_count                                                  | 本地消息表补偿                       |
 
 **加密设计**：日记正文、量表结果使用 AES-256-GCM 字段级加密，密钥由 KMS/Vault 管理；日志禁止打印正文；备份加密存储。
 
@@ -262,11 +262,13 @@ App ──POST /api/v1/moods──▶ Nginx ──▶ Gateway
 1. **认证授权**：OAuth2.1 + JWT；Access Token 短时有效、Refresh Token 轮换；`jti` 黑名单存 Redis；管理端独立密钥 + MFA + IP 白名单。
 2. **传输与存储**：全站 HTTPS/TLS1.3、HSTS；密码 Argon2id/BCrypt；手机号、正文加密；数据库最小权限账号。
 3. **数据最小化**：只收集必要字段；默认私密；用户可导出、可注销、可要求删除；注销走 Saga 清理各服务数据。
-4. **内容安全**：文本敏感词 + 模型审核、语音转写审核、图片审核；公开内容先审后发；举报闭环。
-5. **危机干预**：识别自伤/自杀等高风险表达，分级处理——低风险展示关怀内容，中风险展示心理援助资源，高风险进入人工干预流程（操作留审计、严格授权）。
-6. **未成年人保护**：未成年人模式、内容分级、时长提醒；不满 14 周岁需监护人同意。
-7. **后台安全**：RBAC + 数据权限 + 全操作审计；匿名帖反查需专项授权并留痕。
-8. **防刷对抗**：设备指纹、验证码、UID/IP 频控、行为风控、文件类型与大小校验、SSRF 白名单。
+
+
+1. **内容安全**：文本敏感词 + 模型审核、语音转写审核、图片审核；公开内容先审后发；举报闭环。
+2. **危机干预**：识别自伤/自杀等高风险表达，分级处理——低风险展示关怀内容，中风险展示心理援助资源，高风险进入人工干预流程（操作留审计、严格授权）。
+3. **未成年人保护**：未成年人模式、内容分级、时长提醒；不满 14 周岁需监护人同意。
+4. **后台安全**：RBAC + 数据权限 + 全操作审计；匿名帖反查需专项授权并留痕。
+5. **防刷对抗**：设备指纹、验证码、UID/IP 频控、行为风控、文件类型与大小校验、SSRF 白名单。
 
 ## 8. 部署架构（Docker + K8s）
 
@@ -307,14 +309,14 @@ Git Push → 单测 + SonarQube → Maven 构建 → Jib 镜像 → Harbor
 
 ## 9. 可观测性与非功能目标
 
-| 指标 | 目标 |
-|---|---|
-| 可用性 | 99.95% |
-| 核心读接口 P99 | ≤ 200ms |
-| 核心写接口 P99 | ≤ 300ms |
-| 打卡成功率 | ≥ 99.9% |
-| 核心 MQ 消费延迟 P99 | < 1s（统计类 < 5s） |
-| RPO / RTO | ≤ 5min / ≤ 30min |
+| 指标             | 目标               |
+| -------------- | ---------------- |
+| 可用性            | 99.95%           |
+| 核心读接口 P99      | ≤ 200ms          |
+| 核心写接口 P99      | ≤ 300ms          |
+| 打卡成功率          | ≥ 99.9%          |
+| 核心 MQ 消费延迟 P99 | < 1s（统计类 < 5s）   |
+| RPO / RTO      | ≤ 5min / ≤ 30min |
 
 - **链路**：Gateway 生成 TraceId，SkyWalking 全链路追踪，日志统一携带。
 - **指标**：JVM、QPS/RT/错误率、Sentinel 指标、MQ 堆积、Redis 命中率、MySQL 慢查询。
