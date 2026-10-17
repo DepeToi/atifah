@@ -1,0 +1,120 @@
+server:
+  port: 8080
+  shutdown: graceful
+  http2:
+    enabled: true
+
+spring:
+  application:
+    name: microhoov-gateway
+  main:
+    web-application-type: reactive
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
+  config:
+    import: "optional:nacos:${spring.application.name}.yaml?group=MICROHOOV_GROUP&refreshEnabled=true"
+  cloud:
+    nacos:
+      server-addr: ${NACOS_ADDR:127.0.0.1:8848}
+      discovery:
+        server-addr: ${NACOS_ADDR:127.0.0.1:8848}
+        namespace: ${NACOS_NAMESPACE:}
+        group: MICROHOOV_GROUP
+      config:
+        server-addr: ${NACOS_ADDR:127.0.0.1:8848}
+        namespace: ${NACOS_NAMESPACE:}
+        group: MICROHOOV_GROUP
+        file-extension: yaml
+    gateway:
+      discovery:
+        locator:
+          enabled: false
+      routes:
+        - id: microhoov-auth
+          uri: lb://microhoov-auth
+          predicates:
+            - Path=/api/v1/auth/**
+        - id: microhoov-user
+          uri: lb://microhoov-user
+          predicates:
+            - Path=/api/v1/users/**
+        - id: microhoov-mood
+          uri: lb://microhoov-mood
+          predicates:
+            - Path=/api/v1/moods/**
+        - id: microhoov-analysis
+          uri: lb://microhoov-analysis
+          predicates:
+            - Path=/api/v1/analysis/**
+        - id: microhoov-community
+          uri: lb://microhoov-community
+          predicates:
+            - Path=/api/v1/community/**
+        - id: microhoov-content
+          uri: lb://microhoov-content
+          predicates:
+            - Path=/api/v1/contents/**
+        - id: microhoov-message
+          uri: lb://microhoov-message
+          predicates:
+            - Path=/api/v1/messages/**
+        - id: microhoov-message-websocket
+          uri: lb:ws://microhoov-message
+          predicates:
+            - Path=/ws/**
+        - id: microhoov-growth
+          uri: lb://microhoov-growth
+          predicates:
+            - Path=/api/v1/growth/**
+        - id: microhoov-stats
+          uri: lb://microhoov-stats
+          predicates:
+            - Path=/api/v1/stats/**
+        - id: microhoov-admin
+          uri: lb://microhoov-admin
+          predicates:
+            - Path=/admin/api/**
+      globalcors:
+        add-to-simple-url-handler-mapping: true
+        cors-configurations:
+          '[/**]':
+            allowed-origin-patterns: "*"
+            allowed-methods: "*"
+            allowed-headers: "*"
+            allow-credentials: true
+            max-age: 3600
+    sentinel:
+      transport:
+        dashboard: ${SENTINEL_DASHBOARD:127.0.0.1:8858}
+      eager: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    tags:
+      application: ${spring.application.name}
+
+microhoov:
+  gateway:
+    auth:
+      enabled: false
+      whitelist:
+        - /api/v1/auth/
+        - /actuator/
+  security:
+    jwt:
+      secret: ${JWT_SECRET:microhoov-dev-secret-change-me-please-32bytes}
+      issuer: microhoov
+      access-token-ttl: 2h
+
+logging:
+  pattern:
+    level: "%5p [%X{traceId:-}]"
+  level:
+    org.springframework.cloud.gateway: info

@@ -1,0 +1,138 @@
+name: microhoov
+
+services:
+  mysql:
+    image: mysql:8.0.39
+    container_name: microhoov-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      TZ: Asia/Shanghai
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_general_ci
+      - --default-time-zone=+08:00
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ../sql:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-proot" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - microhoov-net
+
+  redis:
+    image: redis:7.4-alpine
+    container_name: microhoov-redis
+    restart: unless-stopped
+    command: [ "redis-server", "--appendonly", "yes" ]
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - microhoov-net
+
+  nacos:
+    image: nacos/nacos-server:v3.0.3
+    container_name: microhoov-nacos
+    restart: unless-stopped
+    environment:
+      MODE: standalone
+      NACOS_AUTH_ENABLE: "false"
+      JVM_XMS: 256m
+      JVM_XMX: 512m
+      JVM_XMN: 128m
+    ports:
+      - "8848:8848"
+      - "9848:9848"
+      - "9849:9849"
+      # Nacos 3.x 控制台端口，宿主机使用 8849 避免与网关 8080 冲突
+      - "8849:8080"
+    networks:
+      - microhoov-net
+
+  rocketmq-namesrv:
+    image: apache/rocketmq:5.3.1
+    container_name: microhoov-rocketmq-namesrv
+    restart: unless-stopped
+    command: sh mqnamesrv
+    environment:
+      JAVA_OPT_EXT: "-Xms256m -Xmx512m -Xmn128m"
+    ports:
+      - "9876:9876"
+    networks:
+      - microhoov-net
+
+  rocketmq-broker:
+    image: apache/rocketmq:5.3.1
+    container_name: microhoov-rocketmq-broker
+    restart: unless-stopped
+    depends_on:
+      - rocketmq-namesrv
+    command: sh mqbroker -c /home/rocketmq/broker.conf
+    environment:
+      JAVA_OPT_EXT: "-Xms512m -Xmx1g -Xmn256m"
+    ports:
+      - "10909:10909"
+      - "10911:10911"
+      - "10912:10912"
+    volumes:
+      - ./rocketmq/broker.conf:/home/rocketmq/broker.conf:ro
+      - rocketmq-store:/home/rocketmq/store
+    networks:
+      - microhoov-net
+
+  rocketmq-dashboard:
+    image: apacherocketmq/rocketmq-dashboard:1.0.0
+    container_name: microhoov-rocketmq-dashboard
+    restart: unless-stopped
+    depends_on:
+      - rocketmq-namesrv
+    environment:
+      JAVA_OPTS: "-Drocketmq.namesrv.addr=rocketmq-namesrv:9876 -Dcom.rocketmq.sendMessageWithVIPChannel=false"
+    ports:
+      - "8180:8080"
+    networks:
+      - microhoov-net
+
+  sentinel-dashboard:
+    image: bladex/sentinel-dashboard:1.8.8
+    container_name: microhoov-sentinel-dashboard
+    restart: unless-stopped
+    ports:
+      - "8858:8858"
+    networks:
+      - microhoov-net
+
+  # 需要验证分布式事务时启用：docker compose --profile seata up -d
+  seata-server:
+    image: seataio/seata-server:2.5.0
+    container_name: microhoov-seata-server
+    profiles: [ "seata" ]
+    restart: unless-stopped
+    environment:
+      STORE_MODE: file
+    ports:
+      - "8091:8091"
+      - "7091:7091"
+    networks:
+      - microhoov-net
+
+volumes:
+  mysql-data:
+  redis-data:
+  rocketmq-store:
+
+networks:
+  microhoov-net:
+    driver: bridge
