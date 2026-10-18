@@ -3,6 +3,7 @@
 > 本文件是前后端接口的统一规则，是接口设计、实现、联调的唯一依据。
 > 通用响应结构与错误码的代码权威在后端 `common-core`（`Result` / `PageResult` / `ErrorCode`），前端镜像在 `src/api/types.ts`；
 > 本文件约束「接口怎么定」，具体每个接口的明细另按服务拆分到 `docs/api/` 下（骨架阶段逐步补充）。
+> AI 每次必读的执行摘要见根 [`AGENTS.md`](../AGENTS.md) §5，本文件是细则；敏感字段与鉴权的执行细则见 [`.claude/rules/security.md`](../.claude/rules/security.md)。
 
 ## 目录
 

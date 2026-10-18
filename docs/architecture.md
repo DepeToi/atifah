@@ -1,7 +1,10 @@
 # 情绪管理微服务项目：设计思路与技术架构
 
-> 文档版本：v1.0（2026-10-18）  
+> 文档版本：v1.0（2026-10-18）
+>
 > 技术基线：JDK 21 / Spring Boot 3.5.x / Spring Cloud 2025.0.x / Spring Cloud Alibaba 2025.0.0.0
+>
+> 这份文档讲「为什么这么设计」，按需阅读；AI 每次必读的硬约束与文档索引见根 [`AGENTS.md`](../AGENTS.md)，模块继承与配置分层见 [`module-layout.md`](module-layout.md)，业务边界见 [`domain.md`](domain.md)，数据模型见 [`db.md`](db.md)。
 
 ## 1. 设计目标与容量假设
 
@@ -28,37 +31,9 @@
 
 ## 2. 业务域与微服务拆分
 
-### C 端功能域
+业务域划分为账号、情绪、分析、社区、内容、消息、增长、运营八个域；对应 9 个 C 端业务服务 + `admin-service` BFF。完整的域职责、服务归属、数据边界与跨域规则见 [`domain.md`](domain.md)。
 
-| 域   | 功能                             |
-| --- | ------------------------------ |
-| 账号域 | 手机号/三方登录、Token、设备管理、隐私设置       |
-| 情绪域 | 心情打卡、情绪日记、标签、语音/图片附件、日历视图      |
-| 分析域 | 情绪趋势、连续打卡、周报/月报、心理量表           |
-| 社区域 | 树洞/动态、匿名发布、评论、点赞、关注、举报、Feed    |
-| 内容域 | 冥想音频、文章、课程、每日推荐、播放进度           |
-| 消息域 | 站内信、WebSocket 实时消息、App 推送、打卡提醒 |
-| 增长域 | 签到、任务、积分、成就、活动                 |
-
-### 服务划分
-
-| 服务                  | 职责                        | 数据归属                  |
-| ------------------- | ------------------------- | --------------------- |
-| `gateway-service`   | 路由、鉴权、限流、幂等、灰度、TraceId    | 无                     |
-| `auth-service`      | 登录注册、验证码、三方登录、Token 签发/注销 | `microhoov_auth`      |
-| `user-service`      | 用户资料、隐私设置、黑名单             | `microhoov_user`      |
-| `mood-service`      | 打卡、日记、标签、附件、日历查询          | `microhoov_mood`      |
-| `analysis-service`  | 趋势统计、连续打卡、量表、周报月报、AI 摘要   | `microhoov_analysis`  |
-| `community-service` | 树洞、动态、评论、点赞、关注、举报、Feed    | `microhoov_community` |
-| `content-service`   | 音频/文章/课程、推荐、播放进度          | `microhoov_content`   |
-| `message-service`   | 站内信、WebSocket、推送、提醒       | `microhoov_message`   |
-| `growth-service`    | 签到、任务、积分、成就               | `microhoov_growth`    |
-| `stats-service`     | 埋点消费、运营聚合报表               | `microhoov_stats`     |
-| `admin-service`     | 管理后台 BFF、RBAC、审核工作台、运营配置  | `microhoov_admin`     |
-
-**原则**：一个服务一个逻辑库（初期可共用一个 MySQL 实例，但 Schema 独立），禁止跨库 JOIN；跨服务数据通过 API 或 MQ 事件获取。初期部署时，`auth` 可合并进 `user`、`growth` 可合并进 `user`，避免过度拆分。
-
-管理后台工程位于 `microhoov-admin-web`：前端为 `frontend`（Vue 3 + Vite 单页应用），后端 BFF 为 `backend`（`admin-service`）。数据统一经网关 `/admin/api/**` 转发到 `admin-service` 聚合；管理端使用独立入口、独立鉴权链与 MFA，不直连业务库。
+拆分原则：一个服务一个逻辑库（初期可共用一个 MySQL 实例，但 Schema 独立），禁止跨库 JOIN；跨服务同步查询走 OpenFeign，异步事件走 RocketMQ；初期允许合并部署（`auth` 并入 `user`、`growth` 并入 `user`），但代码边界与库边界保持不变。
 
 ## 3. 总体技术架构
 
@@ -238,42 +213,27 @@ App ──POST /api/v1/moods──▶ Nginx ──▶ Gateway
 
 ### 5.5 分库分表
 
-- 逻辑库按服务拆分；`t_mood_record`、`t_mood_diary`、`t_post`、`t_comment`、`t_message` 按 `user_id` 哈希分片（示例：4 库 × 8 表）。
-- 分片键必须命中查询条件；评论按 `post_id` 分片，避免跨分片聚合。
-- 使用雪花 ID，禁止分片表自增主键。
-- 跨分片统计一律走 `stats-service` 聚合表，不在线做广播查询。
+分片键必须命中查询条件；`t_mood_record`、`t_mood_diary`、`t_post`、`t_comment`、`t_message` 按 `user_id` 哈希分片，评论按 `post_id` 分片；统一雪花 ID，跨分片统计走 `stats-service` 聚合表。完整规则与表清单见 [`db.md`](db.md) §3。
 
 ## 6. 数据模型（核心表）
 
-| 表                                                    | 关键字段                                                                                         | 说明                            |
-| ---------------------------------------------------- | -------------------------------------------------------------------------------------------- | ----------------------------- |
-| `t_user`                                             | id, phone, password_hash, nickname, avatar, status                                           | 手机号脱敏展示                       |
-| `t_user_profile`                                     | user_id, gender, birthday, privacy_level, emotion_goal                                       | 隐私设置                          |
-| `t_mood_record`                                      | id, user_id, record_date, mood_type, mood_score, tags, content_cipher, visibility, voice_url | 唯一索引 `(user_id, record_date)` |
-| `t_mood_diary`                                       | id, user_id, title, content_cipher, mood_score, created_at                                   | 一天可多条                         |
-| `t_post`                                             | id, author_id, is_anonymous, content, audit_status, like_count, comment_count                | 匿名帖后台脱敏                       |
-| `t_comment`                                          | id, post_id, author_id, content, audit_status                                                | 按 post_id 分片                  |
-| `t_like`                                             | user_id, target_type, target_id                                                              | 唯一索引防重复                       |
-| `t_message`                                          | id, user_id, type, title, content, read_status                                               | 按 user_id 分片                  |
-| `t_content`                                          | id, type, title, media_url, duration, status                                                 | 冥想/文章/课程                      |
-| `t_mood_daily_stat`                                  | user_id, stat_date, avg_score, record_count, emotion_dist                                    | 预聚合                           |
-| `t_admin_user` / `t_admin_role` / `t_admin_oper_log` | —                                                                                            | RBAC 与审计                      |
-| `t_local_message`                                    | biz_id, topic, payload, status, retry_count                                                  | 本地消息表补偿                       |
+核心表清单、敏感字段加密、索引与 DDL 规范见 [`db.md`](db.md)。本节只保留两条架构约束：
 
-**加密设计**：日记正文、量表结果使用 AES-256-GCM 字段级加密，密钥由 KMS/Vault 管理；日志禁止打印正文；备份加密存储。
+- 每个服务只写自己的库；禁止跨库 JOIN，跨服务数据走 API / MQ。
+- 日记正文、量表结果必须字段级加密（AES-256-GCM），密钥由 KMS/Vault 管理；日志禁止打印正文；备份加密存储。
 
 ## 7. 安全与隐私合规
+
+> 写代码时的执行细则见 [`.claude/rules/security.md`](../.claude/rules/security.md)。
 
 1. **认证授权**：OAuth2.1 + JWT；Access Token 短时有效、Refresh Token 轮换；`jti` 黑名单存 Redis；管理端独立密钥 + MFA + IP 白名单。
 2. **传输与存储**：全站 HTTPS/TLS1.3、HSTS；密码 Argon2id/BCrypt；手机号、正文加密；数据库最小权限账号。
 3. **数据最小化**：只收集必要字段；默认私密；用户可导出、可注销、可要求删除；注销走 Saga 清理各服务数据。
-
-
-1. **内容安全**：文本敏感词 + 模型审核、语音转写审核、图片审核；公开内容先审后发；举报闭环。
-2. **危机干预**：识别自伤/自杀等高风险表达，分级处理——低风险展示关怀内容，中风险展示心理援助资源，高风险进入人工干预流程（操作留审计、严格授权）。
-3. **未成年人保护**：未成年人模式、内容分级、时长提醒；不满 14 周岁需监护人同意。
-4. **后台安全**：RBAC + 数据权限 + 全操作审计；匿名帖反查需专项授权并留痕。
-5. **防刷对抗**：设备指纹、验证码、UID/IP 频控、行为风控、文件类型与大小校验、SSRF 白名单。
+4. **内容安全**：文本敏感词 + 模型审核、语音转写审核、图片审核；公开内容先审后发；举报闭环。
+5. **危机干预**：识别自伤/自杀等高风险表达，分级处理——低风险展示关怀内容，中风险展示心理援助资源，高风险进入人工干预流程（操作留审计、严格授权）。
+6. **未成年人保护**：未成年人模式、内容分级、时长提醒；不满 14 周岁需监护人同意。
+7. **后台安全**：RBAC + 数据权限 + 全操作审计；匿名帖反查需专项授权并留痕。
+8. **防刷对抗**：设备指纹、验证码、UID/IP 频控、行为风控、文件类型与大小校验、SSRF 白名单。
 
 ## 8. 部署架构（Docker + K8s）
 

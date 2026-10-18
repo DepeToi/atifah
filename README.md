@@ -2,7 +2,20 @@
 
 情绪管理高并发微服务项目（App + 管理后台），基于 Spring Boot / Spring Cloud Alibaba 的多模块工程骨架。
 
-完整设计见 [docs/architecture.md](docs/architecture.md)。
+文档分工：本文件给人看（定位、快速开始、中间件、端口）；**给 AI 的规则从 [`CLAUDE.md`](CLAUDE.md) → [`AGENTS.md`](AGENTS.md) 进入**，主题规则在 `.claude/rules/`，设计细节在 `docs/`。
+
+| 想了解 | 看这里 |
+| --- | --- |
+| AI 入口 | [`CLAUDE.md`](CLAUDE.md)（只导入 `@AGENTS.md`）/ [`AGENTS.md`](AGENTS.md)（唯一入口） |
+| 安全、编码、数据、Git 硬规则 | [`.claude/rules/`](.claude/rules/) |
+| 模块继承、自动装配、配置分层 | [`docs/module-layout.md`](docs/module-layout.md) |
+| 业务架构、容量、缓存/MQ | [`docs/architecture.md`](docs/architecture.md) |
+| 业务域与服务边界 | [`docs/domain.md`](docs/domain.md) |
+| 接口怎么定 | [`docs/api-contract.md`](docs/api-contract.md) |
+| 数据模型、分片与加密 | [`docs/db.md`](docs/db.md) |
+| 已知坑与排查 | [`docs/pitfalls.md`](docs/pitfalls.md) |
+| 架构决策记录 | [`docs/adr/`](docs/adr/) |
+| 管理后台 | [`microhoov-admin-web/README.md`](microhoov-admin-web/README.md) |
 
 ## 技术基线
 
@@ -27,7 +40,10 @@
 ```
 microhoov/
 ├── pom.xml                        # 聚合工程 + 版本管理
-├── microhoov-common/              # 公共能力
+├── AGENTS.md                      # AI 规则唯一入口（≤200 行）
+├── CLAUDE.md                      # 仅 @AGENTS.md 导入
+├── .claude/rules/                 # security · code-style · database · git
+├── microhoov-common/              # 公共能力（含 AGENTS.md）
 │   ├── common-core                # Result / ErrorCode / BusinessException / 常量
 │   ├── common-web                 # 统一异常、TraceId、Sentinel、Actuator
 │   ├── common-redis               # RedisTemplate 序列化、缓存 Key、Redisson
@@ -45,15 +61,16 @@ microhoov/
 │   ├── message-service            # 8087 站内信、WebSocket、推送
 │   ├── growth-service             # 8088 签到、任务、积分
 │   └── stats-service              # 8089 埋点与运营统计
-├── microhoov-admin-web/           # 管理后台（前后端分离）
-│   ├── frontend/                  # Vue 3 前端（Vite，独立构建）
+├── microhoov-admin-web/           # 管理后台（前后端分离，含 AGENTS.md）
+│   ├── frontend/                  # Vue 3 前端（Vite，独立构建，含 AGENTS.md）
 │   └── backend/                   # 8090 管理后台 BFF（Spring Boot）
 ├── microhoov-app/                 # Flutter App（占位）
 ├── deploy/
 │   ├── docker-compose/            # 本地中间件一键启动
 │   ├── k8s/                       # K8s 部署清单（占位）
+│   ├── nacos/                     # Nacos 共享配置源文件 + 导入说明
 │   └── sql/                       # 初始化 Schema
-└── docs/architecture.md           # 架构设计文档
+└── docs/                          # architecture · domain · api-contract · db · module-layout · pitfalls · adr/
 ```
 
 ## 环境要求
@@ -149,17 +166,15 @@ curl http://localhost:8090/actuator/health   # admin-service（管理后台 BFF�
 
 ## 已知依赖说明
 
-Spring Cloud Gateway 4.3.x 已将 `spring-cloud-starter-gateway` 标记为 deprecated，推荐迁移到 `spring-cloud-starter-gateway-server-webflux`。但 Spring Cloud Alibaba 2025.0.0.0 的 Sentinel Gateway 适配器仍依赖经典网关模块，因此当前骨架暂时保留经典 starter；待 SCA 升级适配后再切换。启动时会看到一条 deprecation WARN，不影响运行。
+启动网关时会看到一条 `spring-cloud-starter-gateway` 的 deprecation WARN，属预期现象（SCA 的 Sentinel 网关适配器仍依赖经典 starter）。原因与迁移时机见 [`docs/module-layout.md`](docs/module-layout.md) §5。
 
 ## 开发约定
 
-- 服务名：`microhoov-<service>`；端口按上表分配。
-- 每个服务独立 Schema，禁止跨库 JOIN。
-- 跨服务同步查询用 OpenFeign，异步解耦用 RocketMQ。
-- 对外接口统一返回 `Result<T>`，分页统一 `PageResult<T>`。
-- 写接口使用 `Idempotency-Key` 请求头保证幂等。
-- 敏感字段（情绪正文、量表结果）必须加密存储，日志禁止打印正文。
-- 管理后台前端位于 `microhoov-admin-web/frontend`，后端 BFF 位于 `microhoov-admin-web/backend`：开发期由 Vite 代理 `/admin/api` 到网关；生产由 Nginx 托管静态资源并反向代理，前端不直连业务服务。
+完整规则从 [`CLAUDE.md`](CLAUDE.md) → [`AGENTS.md`](AGENTS.md) 进入，主题规则在 [`.claude/rules/`](.claude/rules/)，本文件不再重复维护。人最常查的三条：
+
+- 一服务一库（`microhoov_<service>`），禁止跨库 JOIN；同步查询用 OpenFeign，异步解耦用 RocketMQ。
+- 对外统一 `Result<T>` / `PageResult<T>`，写接口带 `Idempotency-Key`；改接口先改 [`docs/api-contract.md`](docs/api-contract.md)。
+- 管理后台：开发期 Vite 代理 `/admin/api` 到网关，生产由 Nginx 托管静态资源并反代，前端不直连业务服务。
 
 ## 下一步
 
