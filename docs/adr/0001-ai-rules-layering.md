@@ -22,7 +22,7 @@
 | --- | --- | --- | --- |
 | 1 | `~/.claude/CLAUDE.md`（项目内副本 `.claude/CLAUDE.md`） | 个人习惯（中文回复、不自动 commit、遵循阿里手册） | 不进 Git，个人维护 |
 | 2 | `AGENTS.md` + `CLAUDE.md` | 项目唯一入口：硬约束与索引，≤200 行；`CLAUDE.md` 只写 `@AGENTS.md` | 每次必读 |
-| 3 | `.claude/rules/*.md` | `security` / `code-style` / `database` / `git` | 全量加载 |
+| 3 | `.claude/rules/*.md` | `security` / `code-style` / `database` / `git` / `backend-javadoc` | 全量加载 |
 | 4 | `docs/*.md` + `docs/adr/` | `architecture` / `domain` / `api-contract` / `db` / `pitfalls` 专题 + ADR | 按需读取 |
 | 5 | 各模块 `AGENTS.md` | 模块级补充规则 | 就近生效，冲突时覆盖上层 |
 
@@ -30,7 +30,7 @@
 
 - 规则只维护一份；`CLAUDE.md` 不重复规则，`CODEBUDDY.md` 不再单独维护。
 - `docs/backend-development.md` 的内容拆分到 `.claude/rules/` 与 `docs/` 后删除，避免与规则文件双写。
-- `microhoov-admin-web/frontend/DEVELOPMENT.md` 的硬规则并入 `frontend/AGENTS.md`，人看的工程说明保留在 `README.md`。
+- `atifah-admin-web/frontend/DEVELOPMENT.md` 的硬规则并入 `frontend/AGENTS.md`，人看的工程说明保留在 `README.md`。
 - 重要架构决策新增 ADR，不再只留在对话或提交信息里。
 
 ## 备选方案
@@ -48,7 +48,7 @@
 - 已同步：
   - 新增 `CLAUDE.md`（仅 `@AGENTS.md`）；
   - 项目内 `.claude/CLAUDE.md` 作为个人偏好副本，已加入 `.gitignore`，不进入版本库；
-  - 新增 `.claude/rules/security.md`、`code-style.md`、`database.md`、`git.md`；
+  - 新增 `.claude/rules/security.md`、`code-style.md`、`database.md`、`git.md`、`backend-javadoc.md`；
   - 新增 `docs/domain.md`、`docs/db.md`、`docs/pitfalls.md`、`docs/adr/`；
-  - 新增 `microhoov-common/AGENTS.md`、`microhoov-admin-web/frontend/AGENTS.md`；
-  - 删除 `CODEBUDDY.md`、`docs/backend-development.md`、`microhoov-admin-web/frontend/DEVELOPMENT.md`。
+  - 新增 `atifah-common/AGENTS.md`、`atifah-admin-web/frontend/AGENTS.md`；
+  - 删除 `CODEBUDDY.md`、`docs/backend-development.md`、`atifah-admin-web/frontend/DEVELOPMENT.md`。

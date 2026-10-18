@@ -95,7 +95,7 @@
 
 ## 5. 鉴权
 
-- C 端：请求头 `Authorization: Bearer <access_token>`，由网关 `AuthGlobalFilter` 校验（当前 `microhoov.gateway.auth.enabled=false`，接入 auth-service 后开启）。
+- C 端：请求头 `Authorization: Bearer <access_token>`，由网关 `AuthGlobalFilter` 校验（当前 `atifah.gateway.auth.enabled=false`，接入 auth-service 后开启）。
 - 网关校验通过后写入下游请求头 `X-User-Id`、`X-Username`，业务服务直接读取，不重复验签。
 - 管理端：独立鉴权链（独立密钥 + MFA），复用 `/admin/api` 前缀但走管理端 Token，待接入。
 - 前端收到 401 统一清理登录态并跳转登录页。

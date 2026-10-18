@@ -1,4 +1,4 @@
-# 业务服务共享配置（Nacos data-id: common-application.yaml, group: MICROHOOV_GROUP）
+# 业务服务共享配置（Nacos data-id: common-application.yaml, group: atifah_GROUP）
 # 由各服务通过 spring.config.import 引入。此处仅放各服务完全一致、且与连接 Nacos
 # 本身无关的配置；连接 Nacos 所需的 spring.cloud.nacos.* 与差异化项
 # （端口、应用名、数据源 URL、生产者组）保留在各服务本地 application.yml。
@@ -62,13 +62,13 @@ management:
       show-details: always
   metrics:
     tags:
-      application: ${spring.application.name:microhoov}
+      application: ${spring.application.name:atifah}
 
-microhoov:
+atifah:
   security:
     jwt:
-      secret: ${JWT_SECRET:microhoov-dev-secret-change-me-please-32bytes}
-      issuer: microhoov
+      secret: ${JWT_SECRET:atifah-dev-secret-change-me-please-32bytes}
+      issuer: atifah
       access-token-ttl: 2h
 
 logging:

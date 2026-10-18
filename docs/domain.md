@@ -20,17 +20,17 @@
 
 | 模块 | 服务名 | 职责 | 数据归属 |
 | --- | --- | --- | --- |
-| `microhoov-gateway` | `microhoov-gateway` | 路由、鉴权、限流、灰度、TraceId | 无 |
-| `auth-service` | `microhoov-auth` | 登录注册、验证码、三方登录、Token 签发/注销 | `microhoov_auth` |
-| `user-service` | `microhoov-user` | 用户资料、隐私设置、黑名单 | `microhoov_user` |
-| `mood-service` | `microhoov-mood` | 打卡、日记、标签、附件、日历查询 | `microhoov_mood` |
-| `analysis-service` | `microhoov-analysis` | 趋势统计、连续打卡、量表、周报月报、AI 摘要 | `microhoov_analysis` |
-| `community-service` | `microhoov-community` | 树洞、动态、评论、点赞、关注、举报、Feed | `microhoov_community` |
-| `content-service` | `microhoov-content` | 音频/文章/课程、推荐、播放进度 | `microhoov_content` |
-| `message-service` | `microhoov-message` | 站内信、WebSocket、推送、提醒 | `microhoov_message` |
-| `growth-service` | `microhoov-growth` | 签到、任务、积分、成就 | `microhoov_growth` |
-| `stats-service` | `microhoov-stats` | 埋点消费、运营聚合报表 | `microhoov_stats` |
-| `admin-service` | `microhoov-admin` | 管理后台 BFF、RBAC、审核工作台、运营配置 | `microhoov_admin` |
+| `atifah-gateway` | `atifah-gateway` | 路由、鉴权、限流、灰度、TraceId | 无 |
+| `auth-service` | `atifah-auth` | 登录注册、验证码、三方登录、Token 签发/注销 | `atifah_auth` |
+| `user-service` | `atifah-user` | 用户资料、隐私设置、黑名单 | `atifah_user` |
+| `mood-service` | `atifah-mood` | 打卡、日记、标签、附件、日历查询 | `atifah_mood` |
+| `analysis-service` | `atifah-analysis` | 趋势统计、连续打卡、量表、周报月报、AI 摘要 | `atifah_analysis` |
+| `community-service` | `atifah-community` | 树洞、动态、评论、点赞、关注、举报、Feed | `atifah_community` |
+| `content-service` | `atifah-content` | 音频/文章/课程、推荐、播放进度 | `atifah_content` |
+| `message-service` | `atifah-message` | 站内信、WebSocket、推送、提醒 | `atifah_message` |
+| `growth-service` | `atifah-growth` | 签到、任务、积分、成就 | `atifah_growth` |
+| `stats-service` | `atifah-stats` | 埋点消费、运营聚合报表 | `atifah_stats` |
+| `admin-service` | `atifah-admin` | 管理后台 BFF、RBAC、审核工作台、运营配置 | `atifah_admin` |
 
 ## 3. 领域边界规则
 
@@ -56,4 +56,4 @@
 
 - 先问：是否只是现有域的一个功能？是则加到现有服务，不新建服务。
 - 只有同时满足「独立数据归属 + 独立伸缩需求 + 清晰边界」才拆新服务。
-- 新服务必须：分配端口、登记路由、建独立库、加入 `microhoov-services/pom.xml`、补 `docs/api/<service>.md` 与端口表。
+- 新服务必须：分配端口、登记路由、建独立库、加入 `atifah-services/pom.xml`、补 `docs/api/<service>.md` 与端口表。

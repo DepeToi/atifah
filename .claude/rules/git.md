@@ -52,7 +52,7 @@ alwaysApply: true
 
 ```bash
 mvn -o -q -DskipTests compile
-cd microhoov-admin-web/frontend && npm run type-check
+cd atifah-admin-web/frontend && npm run type-check
 git diff --check        # 行尾空白 / 冲突标记
 git status              # 确认没有无关文件
 ```

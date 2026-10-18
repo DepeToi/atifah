@@ -1,4 +1,4 @@
-# microhoov
+# atiFah
 
 情绪管理高并发微服务项目（App + 管理后台），基于 Spring Boot / Spring Cloud Alibaba 的多模块工程骨架。
 
@@ -7,7 +7,7 @@
 | 想了解 | 看这里 |
 | --- | --- |
 | AI 入口 | [`CLAUDE.md`](CLAUDE.md)（只导入 `@AGENTS.md`）/ [`AGENTS.md`](AGENTS.md)（唯一入口） |
-| 安全、编码、数据、Git 硬规则 | [`.claude/rules/`](.claude/rules/) |
+| 安全、编码、数据、Git、注释 硬规则 | [`.claude/rules/`](.claude/rules/) |
 | 模块继承、自动装配、配置分层 | [`docs/module-layout.md`](docs/module-layout.md) |
 | 业务架构、容量、缓存/MQ | [`docs/architecture.md`](docs/architecture.md) |
 | 业务域与服务边界 | [`docs/domain.md`](docs/domain.md) |
@@ -15,7 +15,7 @@
 | 数据模型、分片与加密 | [`docs/db.md`](docs/db.md) |
 | 已知坑与排查 | [`docs/pitfalls.md`](docs/pitfalls.md) |
 | 架构决策记录 | [`docs/adr/`](docs/adr/) |
-| 管理后台 | [`microhoov-admin-web/README.md`](microhoov-admin-web/README.md) |
+| 管理后台 | [`atifah-admin-web/README.md`](atifah-admin-web/README.md) |
 
 ## 技术基线
 
@@ -38,20 +38,20 @@
 ## 模块结构
 
 ```
-microhoov/
+atifah/
 ├── pom.xml                        # 聚合工程 + 版本管理
 ├── AGENTS.md                      # AI 规则唯一入口（≤200 行）
 ├── CLAUDE.md                      # 仅 @AGENTS.md 导入
-├── .claude/rules/                 # security · code-style · database · git
-├── microhoov-common/              # 公共能力（含 AGENTS.md）
+├── .claude/rules/                 # security · code-style · database · git · backend-javadoc
+├── atifah-common/              # 公共能力（含 AGENTS.md）
 │   ├── common-core                # Result / ErrorCode / BusinessException / 常量
 │   ├── common-web                 # 统一异常、TraceId、Sentinel、Actuator
 │   ├── common-redis               # RedisTemplate 序列化、缓存 Key、Redisson
 │   ├── common-mybatis             # 分页插件、审计字段填充、BaseEntity
 │   ├── common-mq                  # Topic / 消费组常量、MessagePublisher
 │   └── common-security            # JWT 签发校验、PasswordEncoder
-├── microhoov-gateway/             # Spring Cloud Gateway
-├── microhoov-services/            # C 端业务服务
+├── atifah-gateway/             # Spring Cloud Gateway
+├── atifah-services/            # C 端业务服务
 │   ├── auth-service               # 8081 认证授权
 │   ├── user-service               # 8082 用户与隐私设置
 │   ├── mood-service               # 8083 打卡与情绪日记
@@ -61,10 +61,10 @@ microhoov/
 │   ├── message-service            # 8087 站内信、WebSocket、推送
 │   ├── growth-service             # 8088 签到、任务、积分
 │   └── stats-service              # 8089 埋点与运营统计
-├── microhoov-admin-web/           # 管理后台（前后端分离，含 AGENTS.md）
+├── atifah-admin-web/           # 管理后台（前后端分离，含 AGENTS.md）
 │   ├── frontend/                  # Vue 3 前端（Vite，独立构建，含 AGENTS.md）
 │   └── backend/                   # 8090 管理后台 BFF（Spring Boot）
-├── microhoov-app/                 # Flutter App（占位）
+├── atifah-app/                 # Flutter App（占位）
 ├── deploy/
 │   ├── docker-compose/            # 本地中间件一键启动
 │   ├── k8s/                       # K8s 部署清单（占位）
@@ -112,28 +112,28 @@ mvn clean package -DskipTests
 
 ### 3. 启动后端服务
 
-启动顺序建议：先 `microhoov-gateway`，再按需启动业务服务。可在 IDEA 中直接运行各 `*ServiceApplication`，或使用：
+启动顺序建议：先 `atifah-gateway`，再按需启动业务服务。可在 IDEA 中直接运行各 `*ServiceApplication`，或使用：
 
 ```bash
-java -jar microhoov-gateway/target/microhoov-gateway-1.0.0-SNAPSHOT.jar
-java -jar microhoov-services/user-service/target/user-service-1.0.0-SNAPSHOT.jar
-java -jar microhoov-admin-web/backend/target/admin-service-1.0.0-SNAPSHOT.jar
+java -jar atifah-gateway/target/atifah-gateway-1.0.0-SNAPSHOT.jar
+java -jar atifah-services/user-service/target/user-service-1.0.0-SNAPSHOT.jar
+java -jar atifah-admin-web/backend/target/admin-service-1.0.0-SNAPSHOT.jar
 ```
 
-所有服务通过 Nacos 注册，网关按 `lb://microhoov-<service>` 路由。
+所有服务通过 Nacos 注册，网关按 `lb://atifah-<service>` 路由。
 
 ### 4. 启动管理后台前端
 
 管理后台为独立的 Vue 工程，开发期通过 Vite 代理 `/admin/api` 到网关：
 
 ```bash
-cd microhoov-admin-web/frontend
+cd atifah-admin-web/frontend
 npm install
 npm run dev
 ```
 
 访问 <http://localhost:5173>。前端环境变量与生产部署方式见
-[`microhoov-admin-web/README.md`](microhoov-admin-web/README.md)。
+[`atifah-admin-web/README.md`](atifah-admin-web/README.md)。
 
 ### 5. 健康检查
 
@@ -145,7 +145,7 @@ curl http://localhost:8090/actuator/health   # admin-service（管理后台 BFF�
 
 ## 配置约定
 
-- 配置优先级：环境变量 > Nacos（`MICROHOOV_GROUP`）> 本地 `application.yml`。
+- 配置优先级：环境变量 > Nacos（`atifah_GROUP`）> 本地 `application.yml`。
 - 常用环境变量：
 
 | 变量                                                            | 默认值                                    |
@@ -158,9 +158,9 @@ curl http://localhost:8090/actuator/health   # admin-service（管理后台 BFF�
 | `SENTINEL_DASHBOARD`                                          | `127.0.0.1:8858`                       |
 | `JWT_SECRET`                                                  | 开发默认值（生产必须替换）                          |
 
-- 管理后台前端环境变量（`VITE_API_BASE_URL`、`VITE_API_PROXY_TARGET`）见 `microhoov-admin-web/README.md`。
-- Servlet 业务服务已开启虚拟线程（`spring.threads.virtual.enabled=true`）；`microhoov-gateway` 为响应式 Netty 栈，不适用该配置。
-- 网关 JWT 鉴权当前默认关闭（`microhoov.gateway.auth.enabled=false`），接入 `auth-service` 签发 Token 后开启。
+- 管理后台前端环境变量（`VITE_API_BASE_URL`、`VITE_API_PROXY_TARGET`）见 `atifah-admin-web/README.md`。
+- Servlet 业务服务已开启虚拟线程（`spring.threads.virtual.enabled=true`）；`atifah-gateway` 为响应式 Netty 栈，不适用该配置。
+- 网关 JWT 鉴权当前默认关闭（`atifah.gateway.auth.enabled=false`），接入 `auth-service` 签发 Token 后开启。
 - 生产环境请将 `JWT_SECRET` 替换为至少 256 位的强随机密钥，或切换为 RS256 公私钥方案。
 - `growth-service` 的 Seata 默认关闭（`seata.enabled=false`），需要分布式事务时再启用。
 
@@ -172,7 +172,7 @@ curl http://localhost:8090/actuator/health   # admin-service（管理后台 BFF�
 
 完整规则从 [`CLAUDE.md`](CLAUDE.md) → [`AGENTS.md`](AGENTS.md) 进入，主题规则在 [`.claude/rules/`](.claude/rules/)，本文件不再重复维护。人最常查的三条：
 
-- 一服务一库（`microhoov_<service>`），禁止跨库 JOIN；同步查询用 OpenFeign，异步解耦用 RocketMQ。
+- 一服务一库（`atifah_<service>`），禁止跨库 JOIN；同步查询用 OpenFeign，异步解耦用 RocketMQ。
 - 对外统一 `Result<T>` / `PageResult<T>`，写接口带 `Idempotency-Key`；改接口先改 [`docs/api-contract.md`](docs/api-contract.md)。
 - 管理后台：开发期 Vite 代理 `/admin/api` 到网关，生产由 Nginx 托管静态资源并反代，前端不直连业务服务。
 

@@ -34,7 +34,7 @@ alwaysApply: true
 - 网关校验 JWT 后写入 `X-User-Id` / `X-Username`；业务服务直接读 `CommonConstants`，**不得重复验签**。
 - 业务服务与管理端不得绕过网关直连；管理端不得直连业务库。
 - 管理端使用独立鉴权链（独立密钥 + MFA + IP 白名单），不复用 C 端 Token。
-- 网关鉴权开关 `microhoov.gateway.auth.enabled` 默认 `false`；开启前必须补齐白名单（当前仅 `/api/v1/auth/`、`/actuator/`，`/ws/**`、`/admin/api/**` 会被 401）。
+- 网关鉴权开关 `atifah.gateway.auth.enabled` 默认 `false`；开启前必须补齐白名单（当前仅 `/api/v1/auth/`、`/actuator/`，`/ws/**`、`/admin/api/**` 会被 401）。
 - 401 统一清理登录态并跳转登录页；403 不得泄露资源是否存在。
 
 ## 4. 写入幂等

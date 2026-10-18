@@ -5,7 +5,7 @@
 
 ## 1. 数据库边界
 
-- 一服务一逻辑库：`microhoov_<service>`；初期可共用一个 MySQL 实例，但 Schema 独立。
+- 一服务一逻辑库：`atifah_<service>`；初期可共用一个 MySQL 实例，但 Schema 独立。
 - **禁止跨库 JOIN**；跨服务数据通过 OpenFeign 或 RocketMQ 获取。
 - 管理端 `admin-service` 不直连业务库，只通过 API / MQ 聚合。
 - 表名 `t_<业务名>`，字段 snake_case，主键雪花 ID，禁止自增。

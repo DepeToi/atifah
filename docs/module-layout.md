@@ -10,55 +10,55 @@
 
 ```text
 pom.xml (packaging=pom)
-├── microhoov-common/            packaging=pom，无自身依赖，只聚合 6 个子模块
+├── atifah-common/            packaging=pom，无自身依赖，只聚合 6 个子模块
 │   ├── common-core              Result / PageResult / ErrorCode / BusinessException / CommonConstants
 │   ├── common-web               GlobalExceptionHandler / TraceIdFilter / Sentinel / Actuator
 │   ├── common-redis             RedisTemplate 序列化 / CacheKeys / Redisson
 │   ├── common-mybatis           PaginationInnerInterceptor / MetaObjectHandler / BaseEntity / Flyway
 │   ├── common-mq                MqTopics / MqConsumerGroups / MessagePublisher
 │   └── common-security          JwtTokenProvider / JwtProperties / BCryptPasswordEncoder
-├── microhoov-gateway/           独立，响应式
-├── microhoov-services/          packaging=pom，9 个业务服务的实际父 POM
+├── atifah-gateway/           独立，响应式
+├── atifah-services/          packaging=pom，9 个业务服务的实际父 POM
 │   ├── auth-service 8081 · user-service 8082 · mood-service 8083
 │   ├── analysis-service 8084 · community-service 8085 · content-service 8086
 │   ├── message-service 8087（含 WebSocket）· growth-service 8088 · stats-service 8089
-└── microhoov-admin-web/
+└── atifah-admin-web/
     ├── frontend/                Vue 3 SPA，独立 npm 构建，不参与 Maven
     └── backend/                 artifactId = admin-service，8090
 ```
 
 ### 三条容易踩的继承关系
 
-1. **`microhoov-services/pom.xml` 是业务服务的真实父 POM**。它已声明 `common-web` / `common-mybatis` / `common-redis` / `common-mq` / `common-security`、Nacos discovery + config、OpenFeign、LoadBalancer 以及 `spring-boot-maven-plugin`。在 `mood-service` 等子模块里再写一遍 common 依赖属于重复声明，评审直接打回。
-2. **`admin-web/backend` 复用同一个父 POM 但不属于 `microhoov-services`**：它通过 `<relativePath>../../microhoov-services/pom.xml</relativePath>` + 同版本继承依赖，模块聚合位置却在根 pom。artifactId 是 `admin-service`，所以 jar 名是 `admin-service-1.0.0-SNAPSHOT.jar`。
-3. **`microhoov-gateway` 完全不继承上述两处**：只依赖 `common-core` + `common-security`，运行在响应式 Netty 上。因此它没有 `GlobalExceptionHandler`、没有 MyBatis、没有虚拟线程；往网关加 `common-web` 会引入 servlet 栈并导致启动失败。
+1. **`atifah-services/pom.xml` 是业务服务的真实父 POM**。它已声明 `common-web` / `common-mybatis` / `common-redis` / `common-mq` / `common-security`、Nacos discovery + config、OpenFeign、LoadBalancer 以及 `spring-boot-maven-plugin`。在 `mood-service` 等子模块里再写一遍 common 依赖属于重复声明，评审直接打回。
+2. **`admin-web/backend` 复用同一个父 POM 但不属于 `atifah-services`**：它通过 `<relativePath>../../atifah-services/pom.xml</relativePath>` + 同版本继承依赖，模块聚合位置却在根 pom。artifactId 是 `admin-service`，所以 jar 名是 `admin-service-1.0.0-SNAPSHOT.jar`。
+3. **`atifah-gateway` 完全不继承上述两处**：只依赖 `common-core` + `common-security`，运行在响应式 Netty 上。因此它没有 `GlobalExceptionHandler`、没有 MyBatis、没有虚拟线程；往网关加 `common-web` 会引入 servlet 栈并导致启动失败。
 
 ## 2. 公共能力靠自动装配，不靠包扫描
 
 每个 common 模块在 `src/main/resources/META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports` 里登记自己的配置类，例如：
 
 ```text
-com.microhoov.common.web.config.CommonWebAutoConfiguration
-com.microhoov.common.mybatis.config.MybatisPlusAutoConfiguration
-com.microhoov.common.redis.config.RedisAutoConfiguration
-com.microhoov.common.mq.config.MqAutoConfiguration
-com.microhoov.common.security.config.CommonSecurityAutoConfiguration
+com.atifah.common.web.config.CommonWebAutoConfiguration
+com.atifah.common.mybatis.config.MybatisPlusAutoConfiguration
+com.atifah.common.redis.config.RedisAutoConfiguration
+com.atifah.common.mq.config.MqAutoConfiguration
+com.atifah.common.security.config.CommonSecurityAutoConfiguration
 ```
 
-含义：只要依赖在 classpath 上，能力就自动出现，业务服务**不需要** `@ComponentScan("com.microhoov")`。反过来，新增公共能力时也应该走自动装配，而不是要求各服务扫包。
+含义：只要依赖在 classpath 上，能力就自动出现，业务服务**不需要** `@ComponentScan("com.atifah")`。反过来，新增公共能力时也应该走自动装配，而不是要求各服务扫包。
 
 `CommonWebAutoConfiguration` 标注了 `@ConditionalOnWebApplication(SERVLET)`，所以它对响应式网关自动失效——这也是网关可以安全依赖 `common-security`、却拿不到 Web 层能力的原因。
 
 ## 3. 配置分层
 
-优先级：**环境变量 > Nacos（group `MICROHOOV_GROUP`）> 本地 `application.yml`**。
+优先级：**环境变量 > Nacos（group `atifah_GROUP`）> 本地 `application.yml`**。
 
 业务服务启动时导入两条 Nacos 配置（均为 `optional:`，Nacos 挂了也能用本地默认值起来）：
 
 ```yaml
 spring.config.import:
-  - "optional:nacos:${spring.application.name}.yaml?group=MICROHOOV_GROUP&refreshEnabled=true"
-  - "optional:nacos:common-application.yaml?group=MICROHOOV_GROUP&refreshEnabled=true"
+  - "optional:nacos:${spring.application.name}.yaml?group=atifah_GROUP&refreshEnabled=true"
+  - "optional:nacos:common-application.yaml?group=atifah_GROUP&refreshEnabled=true"
 ```
 
 职责划分（改配置前先确认归属，避免两处都改）：
@@ -80,38 +80,38 @@ server:
 
 spring:
   application:
-    name: microhoov-mood
+    name: atifah-mood
   config:
     import:
-      - "optional:nacos:${spring.application.name}.yaml?group=MICROHOOV_GROUP&refreshEnabled=true"
-      - "optional:nacos:common-application.yaml?group=MICROHOOV_GROUP&refreshEnabled=true"
+      - "optional:nacos:${spring.application.name}.yaml?group=atifah_GROUP&refreshEnabled=true"
+      - "optional:nacos:common-application.yaml?group=atifah_GROUP&refreshEnabled=true"
   cloud:
     nacos:
       server-addr: ${NACOS_ADDR:127.0.0.1:8848}
       discovery:
         server-addr: ${NACOS_ADDR:127.0.0.1:8848}
         namespace: ${NACOS_NAMESPACE:}
-        group: MICROHOOV_GROUP
+        group: atifah_GROUP
       config:
         server-addr: ${NACOS_ADDR:127.0.0.1:8848}
         namespace: ${NACOS_NAMESPACE:}
-        group: MICROHOOV_GROUP
+        group: atifah_GROUP
         file-extension: yaml
   datasource:
-    url: "jdbc:mysql://${MYSQL_HOST:127.0.0.1}:${MYSQL_PORT:3306}/microhoov_mood?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true"
+    url: "jdbc:mysql://${MYSQL_HOST:127.0.0.1}:${MYSQL_PORT:3306}/atifah_mood?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true"
     username: ${MYSQL_USER:root}
     password: ${MYSQL_PASSWORD:root}
 
 rocketmq:
   producer:
-    group: microhoov-mood-producer
+    group: atifah-mood-producer
 ```
 
 ## 4. 网关与鉴权
 
-- 路由集中配在 `microhoov-gateway/src/main/resources/application.yml`，按前缀映射 `lb://microhoov-<service>`；新增服务必须补一条路由，否则 404。
+- 路由集中配在 `atifah-gateway/src/main/resources/application.yml`，按前缀映射 `lb://atifah-<service>`；新增服务必须补一条路由，否则 404。
 - 两个全局过滤器：`TraceIdGlobalFilter`（`HIGHEST_PRECEDENCE`，生成/透传 `X-Trace-Id` 并回写响应头）、`AuthGlobalFilter`（`-100`，校验 JWT 后注入 `X-User-Id` / `X-Username`）。
-- `AuthGlobalFilter` 由 `microhoov.gateway.auth.enabled` 控制，**当前默认 `false`**。开启前必须先把白名单补全：现状只有 `/api/v1/auth/` 与 `/actuator/`，`/ws/**`、`/admin/api/**` 会被直接 401。
+- `AuthGlobalFilter` 由 `atifah.gateway.auth.enabled` 控制，**当前默认 `false`**。开启前必须先把白名单补全：现状只有 `/api/v1/auth/` 与 `/actuator/`，`/ws/**`、`/admin/api/**` 会被直接 401。
 - CORS 由网关统一处理，`CORS_ALLOWED_ORIGINS` 默认 `*`，生产必须收敛为具体域名。
 
 ## 5. 已知约束

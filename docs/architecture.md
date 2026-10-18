@@ -240,12 +240,12 @@ App ──POST /api/v1/moods──▶ Nginx ──▶ Gateway
 ```
 Kubernetes 集群
 ├── ns: ingress          nginx-ingress-controller ×3（云 LB 前置）
-├── ns: microhoov-prod
+├── ns: atifah-prod
 │   ├── gateway-service        Deployment 3+，HPA
 │   ├── 各业务服务              Deployment 2–N，HPA
 │   ├── message-service(WS)    4+，连接数指标扩缩，粘性会话
-│   ├── admin-service          管理后台 BFF（microhoov-admin-web/backend），独立入口 + 白名单
-│   └── admin-web              管理后台前端（microhoov-admin-web/frontend），Nginx/CDN + 白名单
+│   ├── admin-service          管理后台 BFF（atifah-admin-web/backend），独立入口 + 白名单
+│   └── admin-web              管理后台前端（atifah-admin-web/frontend），Nginx/CDN + 白名单
 ├── ns: middleware
 │   ├── Nacos StatefulSet ×3
 │   ├── MySQL 主从（或云 RDS）
@@ -273,7 +273,7 @@ Git Push → 单测 + SonarQube → Maven 构建 → Jib 镜像 → Harbor
         → 金丝雀发布 → Prometheus 指标校验 → 全量/回滚
 ```
 
-管理后台前端在 `microhoov-admin-web/frontend` 独立执行 `npm ci && npm run build`，静态产物发布到 Nginx / CDN，与后端服务解耦发布。
+管理后台前端在 `atifah-admin-web/frontend` 独立执行 `npm ci && npm run build`，静态产物发布到 Nginx / CDN，与后端服务解耦发布。
 
 ## 9. 可观测性与非功能目标
 

@@ -11,19 +11,19 @@
         <relativePath/>
     </parent>
 
-    <groupId>com.microhoov</groupId>
-    <artifactId>microhoov</artifactId>
+    <groupId>com.atifah</groupId>
+    <artifactId>atifah</artifactId>
     <version>1.0.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
-    <name>microhoov</name>
+    <name>atiFah</name>
     <description>情绪管理高并发微服务项目</description>
 
     <modules>
-        <module>microhoov-common</module>
-        <module>microhoov-gateway</module>
-        <module>microhoov-services</module>
-        <module>microhoov-admin-web/backend</module>
+        <module>atifah-common</module>
+        <module>atifah-gateway</module>
+        <module>atifah-services</module>
+        <module>atifah-admin-web/backend</module>
     </modules>
 
     <properties>

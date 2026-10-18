@@ -5,13 +5,13 @@
 
 ## 1. Maven 与模块
 
-- `microhoov-services/pom.xml` 才是业务服务的**实际父 POM**，common×5、Nacos、OpenFeign、LoadBalancer 已声明；子服务 pom 里再写一遍属于重复依赖。
-- `microhoov-admin-web/backend` 通过 `<relativePath>../../microhoov-services/pom.xml</relativePath>` 复用父 POM，但聚合在**根** pom 下；artifactId 是 `admin-service`，不是 `admin-web-backend`。
-- `microhoov-gateway` 只依赖 `common-core` + `common-security`。加入 `common-web` / `common-mybatis` / `common-redis` / `spring-boot-starter-web` 会拉起 servlet 栈，网关启动失败或行为异常。
+- `atifah-services/pom.xml` 才是业务服务的**实际父 POM**，common×5、Nacos、OpenFeign、LoadBalancer 已声明；子服务 pom 里再写一遍属于重复依赖。
+- `atifah-admin-web/backend` 通过 `<relativePath>../../atifah-services/pom.xml</relativePath>` 复用父 POM，但聚合在**根** pom 下；artifactId 是 `admin-service`，不是 `admin-web-backend`。
+- `atifah-gateway` 只依赖 `common-core` + `common-security`。加入 `common-web` / `common-mybatis` / `common-redis` / `spring-boot-starter-web` 会拉起 servlet 栈，网关启动失败或行为异常。
 - 网关是响应式栈，**不要开启** `spring.threads.virtual.enabled`；业务服务（servlet）才开启虚拟线程。
-- 公共模块靠 `AutoConfiguration.imports` 自动装配，业务服务**不需要** `@ComponentScan("com.microhoov")`；新增自动配置类必须登记到对应 imports 文件。
+- 公共模块靠 `AutoConfiguration.imports` 自动装配，业务服务**不需要** `@ComponentScan("com.atifah")`；新增自动配置类必须登记到对应 imports 文件。
 - `common-web` 标注了 `@ConditionalOnWebApplication(SERVLET)`，所以网关拿不到 `GlobalExceptionHandler`，网关异常要在过滤器内自行转 `Result`。
-- `@MapperScan` 必须指向 `com.microhoov.<service>.mapper`；Mapper 放错包会启动即报 `Invalid bound statement`。
+- `@MapperScan` 必须指向 `com.atifah.<service>.mapper`；Mapper 放错包会启动即报 `Invalid bound statement`。
 
 ## 2. 配置
 
@@ -23,7 +23,7 @@
 
 ## 3. 网关与鉴权
 
-- `microhoov.gateway.auth.enabled` 默认 `false`；开启前必须补白名单。当前白名单只有 `/api/v1/auth/` 与 `/actuator/`，`/ws/**`、`/admin/api/**` 会被直接 401。
+- `atifah.gateway.auth.enabled` 默认 `false`；开启前必须补白名单。当前白名单只有 `/api/v1/auth/` 与 `/actuator/`，`/ws/**`、`/admin/api/**` 会被直接 401。
 - 网关过滤器链禁止阻塞调用（JDBC、同步 HTTP、`Thread.sleep`），必须返回 `Mono` / `Flux`。
 - 网关没有 `@RestControllerAdvice`（无 servlet 上下文），不要照搬业务服务的异常处理。
 - 启动时出现 `spring-cloud-starter-gateway` deprecation WARN 属预期：SCA 的 Sentinel 网关适配器仍依赖经典 starter，不要“顺手升级”。
@@ -66,7 +66,7 @@
 | --- | --- |
 | 服务启动失败 | 网关是否误引 servlet 依赖；虚拟线程配置；端口占用；Nacos 连接 |
 | 接口 404 | 网关路由是否缺失；服务是否注册到 Nacos；Path 前缀是否匹配 |
-| 接口 401 | `microhoov.gateway.auth.enabled`；白名单是否覆盖路径；Token 是否过期 |
+| 接口 401 | `atifah.gateway.auth.enabled`；白名单是否覆盖路径；Token 是否过期 |
 | 配置不生效 | Nacos 是否发布并导入；本地是否重复配置；配置项是否放错层级 |
 | Mapper 注入失败 | `@MapperScan` 路径；Mapper 是否继承 `BaseMapper`；是否在正确包 |
 | 表不存在 | 是否补了 Flyway `db/migration` 脚本；服务是否有建表权限 |

@@ -9,7 +9,7 @@
 | `common-application.yaml` | 10 个业务服务共享配置（Redis/MyBatis-Plus/Jackson/Sentinel/OpenFeign/RocketMQ/Actuator/JWT/日志） |
 | `${spring.application.name}.yaml` | 各服务私有覆盖配置（可选，用于按服务覆盖共享项） |
 
-均使用 group `MICROHOOV_GROUP`。
+均使用 group `atifah_GROUP`。
 
 ## 发布方式
 
@@ -17,7 +17,7 @@
 
 依次新建配置：
 - Data ID：`common-application.yaml`
-- Group：`MICROHOOV_GROUP`
+- Group：`atifah_GROUP`
 - 格式：YAML
 - 内容：`config/common-application.yaml` 全文
 
@@ -26,7 +26,7 @@
 ```bash
 curl -X POST "http://127.0.0.1:8848/nacos/v1/cs/configs" \
   -d "dataId=common-application.yaml" \
-  -d "group=MICROHOOV_GROUP" \
+  -d "group=atifah_GROUP" \
   -d "type=yaml" \
   --data-urlencode "content@config/common-application.yaml"
 ```

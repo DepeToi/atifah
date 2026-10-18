@@ -5,7 +5,7 @@
 >
 > 1. /`.claude/CLAUDE.md`：个人习惯（中文回复、不自动 commit、遵循阿里手册），**不进 Git**（项目内副本已加入 `.gitignore`）。
 > 2. 本文件：项目硬约束与索引，每次必读，全文 ≤200 行；`CLAUDE.md` 只写 `@AGENTS.md`。
-> 3. `.claude/rules/*.md`：`security` / `code-style` / `database` / `git`，全量加载。
+> 3. `.claude/rules/*.md`：`security` / `code-style` / `database` / `git` / `backend-javadoc`，全量加载。
 > 4. `docs/*.md` + `docs/adr/`：architecture / domain / api / db / pitfalls，按需读取。
 > 5. 模块级 `AGENTS.md`：就近生效，冲突时覆盖上层。
 >
@@ -16,10 +16,11 @@
 @.claude/rules/code-style.md
 @.claude/rules/database.md
 @.claude/rules/git.md
+@.claude/rules/backend-javadoc.md
 
 ## 1. 项目是什么
 
-- 情绪管理产品：C 端 App（Flutter，`microhoov-app/` 仅占位）+ 管理后台（Vue 3）+ 后端微服务。
+- 情绪管理产品：C 端 App（Flutter，`atifah-app/` 仅占位）+ 管理后台（Vue 3）+ 后端微服务。
 - 后端是 Spring Cloud Alibaba 多模块工程，**当前处于骨架阶段**：公共能力与网关已实现，9 个业务服务只有启动类，尚无 Controller / Service / Mapper / 表结构。
 - 业务域：账号、情绪打卡与日记、趋势与量表报告、社区树洞 Feed、冥想内容、消息推送、签到积分、运营统计。
 - 数据敏感：情绪日记、量表结果属敏感个人信息，**隐私与加密优先级高于任何性能优化**。
@@ -44,21 +45,21 @@
 
 ```text
 pom.xml (parent: spring-boot-starter-parent)
-├── microhoov-common/      core · web · redis · mybatis · mq · security（pom 聚合，无依赖）
-├── microhoov-gateway/     Spring Cloud Gateway，响应式，8080
-├── microhoov-services/    9 个业务服务（实际父 POM）
-└── microhoov-admin-web/   frontend（Vue，独立 npm）+ backend（admin-service，8090）
+├── atifah-common/      core · web · redis · mybatis · mq · security（pom 聚合，无依赖）
+├── atifah-gateway/     Spring Cloud Gateway，响应式，8080
+├── atifah-services/    9 个业务服务（实际父 POM）
+└── atifah-admin-web/   frontend（Vue，独立 npm）+ backend（admin-service，8090）
 ```
 
 端口：`gateway 8080 · auth 8081 · user 8082 · mood 8083 · analysis 8084 · community 8085 · content 8086 · message 8087 · growth 8088 · stats 8089 · admin 8090`
 
 三条单看文件看不出的继承关系（详见 `docs/module-layout.md`）：
 
-- `microhoov-services/pom.xml` 才是业务服务的实际父 POM，common×5 + Nacos + OpenFeign + LoadBalancer 已在此声明，**单个服务里不要再加 common 依赖**。
-- `microhoov-admin-web/backend` 用 `<relativePath>../../microhoov-services/pom.xml</relativePath>` 复用该父 POM，但直接聚合在**根** pom 下；其 artifactId 是 `admin-service`，不是目录名。
-- `microhoov-gateway` 独立，项目内只依赖 `common-core` + `common-security`，跑响应式栈，**不得引入 `common-web` / `common-mybatis`，不得开启虚拟线程**。
+- `atifah-services/pom.xml` 才是业务服务的实际父 POM，common×5 + Nacos + OpenFeign + LoadBalancer 已在此声明，**单个服务里不要再加 common 依赖**。
+- `atifah-admin-web/backend` 用 `<relativePath>../../atifah-services/pom.xml</relativePath>` 复用该父 POM，但直接聚合在**根** pom 下；其 artifactId 是 `admin-service`，不是目录名。
+- `atifah-gateway` 独立，项目内只依赖 `common-core` + `common-security`，跑响应式栈，**不得引入 `common-web` / `common-mybatis`，不得开启虚拟线程**。
 
-包约定：包根 `com.microhoov.<service>`；公共代码只在 `com.microhoov.common.*`，业务代码不得写进公共包。公共模块通过 `AutoConfiguration.imports` 自动装配，**不需要也不要加 `@ComponentScan`**。
+包约定：包根 `com.atifah.<service>`；公共代码只在 `com.atifah.common.*`，业务代码不得写进公共包。公共模块通过 `AutoConfiguration.imports` 自动装配，**不需要也不要加 `@ComponentScan`**。
 
 ## 4. 硬约束速查
 
@@ -93,6 +94,7 @@ pom.xml (parent: spring-boot-starter-parent)
 | `.claude/rules/code-style.md` | Java 命名/分层/响应/异常/实体/日志 |
 | `.claude/rules/database.md` | 数据库、事务、缓存、MQ、分库分表 |
 | `.claude/rules/git.md` | 提交、分支、变更边界、文档同步 |
+| `.claude/rules/backend-javadoc.md` | 后端 Java 注释规范与补充/修正注释红线 |
 | `docs/architecture.md` | 设计目标、技术架构、核心链路、高并发与一致性 |
 | `docs/domain.md` | 业务域、服务归属、边界规则 |
 | `docs/api-contract.md` | 接口契约总纲；`docs/api/<service>.md` 为各服务明细（待补） |
@@ -101,9 +103,9 @@ pom.xml (parent: spring-boot-starter-parent)
 | `docs/pitfalls.md` | 已知坑与排查清单 |
 | `docs/adr/` | 架构决策记录 |
 | `README.md` | 给人看：定位、快速开始、中间件地址与账号 |
-| `microhoov-admin-web/README.md` | 管理后台工程与部署 |
+| `atifah-admin-web/README.md` | 管理后台工程与部署 |
 
-模块级规则（就近生效）：`microhoov-common/AGENTS.md`、`microhoov-gateway/AGENTS.md`、`microhoov-services/AGENTS.md`、`microhoov-admin-web/AGENTS.md`、`microhoov-admin-web/frontend/AGENTS.md`。
+模块级规则（就近生效）：`atifah-common/AGENTS.md`、`atifah-gateway/AGENTS.md`、`atifah-services/AGENTS.md`、`atifah-admin-web/AGENTS.md`、`atifah-admin-web/frontend/AGENTS.md`。
 
 ## 8. 工作方式
 
@@ -120,8 +122,8 @@ pom.xml (parent: spring-boot-starter-parent)
 ```bash
 mvn clean package -DskipTests                    # 全量构建
 mvn -o -q -DskipTests compile                    # 快速编译（改完代码先跑这个）
-mvn -pl microhoov-admin-web/backend -am package -DskipTests   # 只构建 admin BFF 及其上游
+mvn -pl atifah-admin-web/backend -am package -DskipTests   # 只构建 admin BFF 及其上游
 docker compose -f deploy/docker-compose/docker-compose.yml up -d   # 本地中间件
-java -jar microhoov-gateway/target/microhoov-gateway-1.0.0-SNAPSHOT.jar
-cd microhoov-admin-web/frontend && npm run dev   # 管理后台前端 :5173
+java -jar atifah-gateway/target/atifah-gateway-1.0.0-SNAPSHOT.jar
+cd atifah-admin-web/frontend && npm run dev   # 管理后台前端 :5173
 ```

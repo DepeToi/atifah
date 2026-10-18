@@ -1,9 +1,9 @@
-name: microhoov
+name: atifah
 
 services:
   mysql:
     image: mysql:8.0.39
-    container_name: microhoov-mysql
+    container_name: atifah-mysql
     restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: root
@@ -23,11 +23,11 @@ services:
       timeout: 5s
       retries: 10
     networks:
-      - microhoov-net
+      - atifah-net
 
   redis:
     image: redis:7.4-alpine
-    container_name: microhoov-redis
+    container_name: atifah-redis
     restart: unless-stopped
     command: [ "redis-server", "--appendonly", "yes" ]
     ports:
@@ -40,11 +40,11 @@ services:
       timeout: 5s
       retries: 10
     networks:
-      - microhoov-net
+      - atifah-net
 
   nacos:
     image: nacos/nacos-server:v3.0.3
-    container_name: microhoov-nacos
+    container_name: atifah-nacos
     restart: unless-stopped
     environment:
       MODE: standalone
@@ -59,11 +59,11 @@ services:
       # Nacos 3.x 控制台端口，宿主机使用 8849 避免与网关 8080 冲突
       - "8849:8080"
     networks:
-      - microhoov-net
+      - atifah-net
 
   rocketmq-namesrv:
     image: apache/rocketmq:5.3.1
-    container_name: microhoov-rocketmq-namesrv
+    container_name: atifah-rocketmq-namesrv
     restart: unless-stopped
     command: sh mqnamesrv
     environment:
@@ -71,11 +71,11 @@ services:
     ports:
       - "9876:9876"
     networks:
-      - microhoov-net
+      - atifah-net
 
   rocketmq-broker:
     image: apache/rocketmq:5.3.1
-    container_name: microhoov-rocketmq-broker
+    container_name: atifah-rocketmq-broker
     restart: unless-stopped
     depends_on:
       - rocketmq-namesrv
@@ -90,11 +90,11 @@ services:
       - ./rocketmq/broker.conf:/home/rocketmq/broker.conf:ro
       - rocketmq-store:/home/rocketmq/store
     networks:
-      - microhoov-net
+      - atifah-net
 
   rocketmq-dashboard:
     image: apacherocketmq/rocketmq-dashboard:1.0.0
-    container_name: microhoov-rocketmq-dashboard
+    container_name: atifah-rocketmq-dashboard
     restart: unless-stopped
     depends_on:
       - rocketmq-namesrv
@@ -103,21 +103,21 @@ services:
     ports:
       - "8180:8080"
     networks:
-      - microhoov-net
+      - atifah-net
 
   sentinel-dashboard:
     image: bladex/sentinel-dashboard:1.8.8
-    container_name: microhoov-sentinel-dashboard
+    container_name: atifah-sentinel-dashboard
     restart: unless-stopped
     ports:
       - "8858:8858"
     networks:
-      - microhoov-net
+      - atifah-net
 
   # 需要验证分布式事务时启用：docker compose --profile seata up -d
   seata-server:
     image: seataio/seata-server:2.5.0
-    container_name: microhoov-seata-server
+    container_name: atifah-seata-server
     profiles: [ "seata" ]
     restart: unless-stopped
     environment:
@@ -126,7 +126,7 @@ services:
       - "8091:8091"
       - "7091:7091"
     networks:
-      - microhoov-net
+      - atifah-net
 
 volumes:
   mysql-data:
@@ -134,5 +134,5 @@ volumes:
   rocketmq-store:
 
 networks:
-  microhoov-net:
+  atifah-net:
     driver: bridge

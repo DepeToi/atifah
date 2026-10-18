@@ -6,7 +6,7 @@ alwaysApply: true
 # 编码规范
 
 > 遵循《阿里巴巴 Java 开发手册》。本文件是硬约束；设计原理见 `docs/architecture.md`，模块继承见 `docs/module-layout.md`。
-> 前端 TypeScript / Vue 规则见 `microhoov-admin-web/frontend/AGENTS.md`。
+> 前端 TypeScript / Vue 规则见 `atifah-admin-web/frontend/AGENTS.md`。
 
 ## 1. 命名与基本风格
 
@@ -17,19 +17,19 @@ alwaysApply: true
 
 ## 2. 包与分层
 
-- 包根 `com.microhoov.<service>`；公共代码只在 `com.microhoov.common.*`，业务代码不得写进公共包。
+- 包根 `com.atifah.<service>`；公共代码只在 `com.atifah.common.*`，业务代码不得写进公共包。
 - 业务服务按 `controller` / `service` / `mapper` / `entity` / `dto` / `vo` / `config` 分包。
-- Mapper 必须在 `com.microhoov.<service>.mapper`，与启动类 `@MapperScan` 一致。
+- Mapper 必须在 `com.atifah.<service>.mapper`，与启动类 `@MapperScan` 一致。
 - 公共模块通过 `AutoConfiguration.imports` 自动装配，**不要也不要加 `@ComponentScan`**。
 - Controller 只做参数校验与组装；不写业务逻辑；Service 不读 `HttpServletRequest`。
 
 ## 3. 启动类
 
-- 三注解缺一不可：`@SpringBootApplication`、`@EnableDiscoveryClient`、`@MapperScan("com.microhoov.<service>.mapper")`。
+- 三注解缺一不可：`@SpringBootApplication`、`@EnableDiscoveryClient`、`@MapperScan("com.atifah.<service>.mapper")`。
 - 启动类内不写配置、不写业务逻辑。
 
 ```java
-package com.microhoov.mood;
+package com.atifah.mood;
 
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
@@ -37,7 +37,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 
 @EnableDiscoveryClient
-@MapperScan("com.microhoov.mood.mapper")
+@MapperScan("com.atifah.mood.mapper")
 @SpringBootApplication
 public class MoodServiceApplication {
 
@@ -77,5 +77,5 @@ public class MoodServiceApplication {
 ## 8. 自检
 
 - 后端改动：`mvn -o -q -DskipTests compile`。
-- 前端改动：在 `microhoov-admin-web/frontend` 执行 `npm run type-check`。
+- 前端改动：在 `atifah-admin-web/frontend` 执行 `npm run type-check`。
 - **不通过不得声称完成**；禁止删除测试、关校验、加 `@SuppressWarnings` 掩盖问题。

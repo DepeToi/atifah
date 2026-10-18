@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.atifah</groupId>
+        <artifactId>atifah-services</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+        <!-- 复用业务服务的公共依赖与构建配置，模块位置在管理端目录下 -->
+        <relativePath>../../atifah-services/pom.xml</relativePath>
+    </parent>
+    <artifactId>admin-service</artifactId>
+    <name>admin-service</name>
+    <description>管理后台 BFF、RBAC 与审核服务</description>
+</project>

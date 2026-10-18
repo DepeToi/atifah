@@ -1,0 +1,122 @@
+server:
+  port: 8080
+  shutdown: graceful
+  http2:
+    enabled: true
+
+spring:
+  application:
+    name: atifah-gateway
+  main:
+    web-application-type: reactive
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
+  config:
+    import: "optional:nacos:${spring.application.name}.yaml?group=atifah_GROUP&refreshEnabled=true"
+  cloud:
+    nacos:
+      server-addr: ${NACOS_ADDR:127.0.0.1:8848}
+      discovery:
+        server-addr: ${NACOS_ADDR:127.0.0.1:8848}
+        namespace: ${NACOS_NAMESPACE:}
+        group: atifah_GROUP
+      config:
+        server-addr: ${NACOS_ADDR:127.0.0.1:8848}
+        namespace: ${NACOS_NAMESPACE:}
+        group: atifah_GROUP
+        file-extension: yaml
+    gateway:
+      discovery:
+        locator:
+          enabled: false
+      routes:
+        - id: atifah-auth
+          uri: lb://atifah-auth
+          predicates:
+            - Path=/api/v1/auth/**
+        - id: atifah-user
+          uri: lb://atifah-user
+          predicates:
+            - Path=/api/v1/users/**
+        - id: atifah-mood
+          uri: lb://atifah-mood
+          predicates:
+            - Path=/api/v1/moods/**
+        - id: atifah-analysis
+          uri: lb://atifah-analysis
+          predicates:
+            - Path=/api/v1/analysis/**
+        - id: atifah-community
+          uri: lb://atifah-community
+          predicates:
+            - Path=/api/v1/community/**
+        - id: atifah-content
+          uri: lb://atifah-content
+          predicates:
+            - Path=/api/v1/contents/**
+        - id: atifah-message
+          uri: lb://atifah-message
+          predicates:
+            - Path=/api/v1/messages/**
+        - id: atifah-message-websocket
+          uri: lb:ws://atifah-message
+          predicates:
+            - Path=/ws/**
+        - id: atifah-growth
+          uri: lb://atifah-growth
+          predicates:
+            - Path=/api/v1/growth/**
+        - id: atifah-stats
+          uri: lb://atifah-stats
+          predicates:
+            - Path=/api/v1/stats/**
+        - id: atifah-admin
+          uri: lb://atifah-admin
+          predicates:
+            - Path=/admin/api/**
+      globalcors:
+        add-to-simple-url-handler-mapping: true
+        cors-configurations:
+          '[/**]':
+            # 生产务必收敛为具体域名：CORS_ALLOWED_ORIGINS=https://admin.example.com,https://app.example.com
+            # 不使用 Cookie 凭据，故 allow-credentials 关闭，避免与通配源组合产生安全风险
+            allowed-origin-patterns: ${CORS_ALLOWED_ORIGINS:*}
+            allowed-methods: "*"
+            allowed-headers: "*"
+            allow-credentials: false
+            max-age: 3600
+    sentinel:
+      transport:
+        dashboard: ${SENTINEL_DASHBOARD:127.0.0.1:8858}
+      eager: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    tags:
+      application: ${spring.application.name}
+
+atifah:
+  gateway:
+    auth:
+      enabled: false
+      whitelist:
+        - /api/v1/auth/
+        - /actuator/
+  security:
+    jwt:
+      secret: ${JWT_SECRET:atifah-dev-secret-change-me-please-32bytes}
+      issuer: atifah
+      access-token-ttl: 2h
+
+logging:
+  pattern:
+    level: "%5p [%X{traceId:-}]"
+  level:
+    org.springframework.cloud.gateway: info

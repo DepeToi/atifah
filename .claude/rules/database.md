@@ -9,7 +9,7 @@ alwaysApply: true
 
 ## 1. 数据库边界
 
-- 一服务一逻辑库：`microhoov_<service>`；**禁止跨库 JOIN**。
+- 一服务一逻辑库：`atifah_<service>`；**禁止跨库 JOIN**。
 - 跨服务同步查询走 OpenFeign，异步解耦走 RocketMQ；不允许共享库绕过接口。
 - 管理端 `admin-service` 不直连业务库，只通过 API / MQ 聚合。
 - 表名 `t_<业务名>`；字段 snake_case；主键雪花 ID，禁止自增。
