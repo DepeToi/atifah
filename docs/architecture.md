@@ -3,8 +3,6 @@
 > 文档版本：v1.0（2026-10-18）
 >
 > 技术基线：JDK 21 / Spring Boot 3.5.x / Spring Cloud 2025.0.x / Spring Cloud Alibaba 2025.0.0.0
->
-> 这份文档讲「为什么这么设计」，按需阅读；AI 每次必读的硬约束与文档索引见根 [`AGENTS.md`](../AGENTS.md)，模块继承与配置分层见 [`module-layout.md`](module-layout.md)，业务边界见 [`domain.md`](domain.md)，数据模型见 [`db.md`](db.md)。
 
 ## 1. 设计目标与容量假设
 
@@ -223,8 +221,6 @@ App ──POST /api/v1/moods──▶ Nginx ──▶ Gateway
 - 日记正文、量表结果必须字段级加密（AES-256-GCM），密钥由 KMS/Vault 管理；日志禁止打印正文；备份加密存储。
 
 ## 7. 安全与隐私合规
-
-> 写代码时的执行细则见 [`.claude/rules/security.md`](../.claude/rules/security.md)。
 
 1. **认证授权**：OAuth2.1 + JWT；Access Token 短时有效、Refresh Token 轮换；`jti` 黑名单存 Redis；管理端独立密钥 + MFA + IP 白名单。
 2. **传输与存储**：全站 HTTPS/TLS1.3、HSTS；密码 Argon2id/BCrypt；手机号、正文加密；数据库最小权限账号。

@@ -1,7 +1,5 @@
 # atifah-admin-web
 
-> 本目录的 AI 规则（边界、前端硬约束、当前阶段约定）见 [`AGENTS.md`](AGENTS.md)；前端细则见 [`frontend/AGENTS.md`](frontend/AGENTS.md)。
-
 管理后台工程，前后端分离开发，统一放在本目录下：
 
 | 目录          | 说明                                                   |
