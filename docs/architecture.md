@@ -80,6 +80,7 @@
 | 微服务   | Spring Cloud 2025.0.x + Spring Cloud Alibaba 2025.0.0.0 | 版本通过 BOM 对齐             |
 | 注册/配置 | Nacos                                                   | AP 注册中心，配置热更新、灰度开关      |
 | 网关    | Spring Cloud Gateway                                    | 响应式、可编程限流，适合高并发入口       |
+| 入口代理  | Nginx / Ingress-Nginx                                   | TLS 终止、反向代理、静态资源与 IP 限流 |
 | 管理后台  | Vue 3 + Vite + TypeScript + Element Plus                 | 前后端分离、组件生态成熟、独立构建与发布      |
 | RPC   | OpenFeign（默认）/ Dubbo 3（热点链路可选）                          | 优先简单，避免双协议复杂度           |
 | 流控熔断  | Sentinel                                                | 规则持久化到 Nacos，网关+服务双层防护  |
