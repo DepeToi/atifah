@@ -76,6 +76,7 @@
 
 | 层次    | 选型                                                      | 理由                      |
 | ----- | ------------------------------------------------------- | ----------------------- |
+| 接入层   | Nginx / Ingress-Nginx                                    | 静态资源托管、反向代理、限流/连接复用、WAF |
 | 运行时   | JDK 21 + Spring Boot 3.5.x                              | LTS、虚拟线程、容器友好           |
 | 微服务   | Spring Cloud 2025.0.x + Spring Cloud Alibaba 2025.0.0.0 | 版本通过 BOM 对齐             |
 | 注册/配置 | Nacos                                                   | AP 注册中心，配置热更新、灰度开关      |
@@ -252,6 +253,20 @@ Kubernetes 集群
 └── ns: cicd             Harbor / ArgoCD / CI Runner
 ```
 
+### 8.1 Nginx 部署架构
+
+Nginx 是接入层唯一入口，分两类部署形态：
+
+| 形态            | 部署位置                    | 职责                            |
+| ------------- | ----------------------- | ----------------------------- |
+| Ingress-Nginx | `ns: ingress`，×3，云 LB 前置 | TLS 终止、路由到网关、限流/灰度、安全响应头    |
+| admin-web 静态 Nginx | 管理后台前端构建产物           | 托管 Vue SPA 静态资源，反代 `/admin/api` 到网关 |
+
+- **Ingress-Nginx**：跨可用区反亲和 + HPA 保证高可用；TLS1.3/HTTP/2 统一终止，证书由 cert-manager 管理；`/api/v1/**` 与 `/admin/api/**` 路由到网关（管理端加 IP 白名单）；`/ws` 透传 WebSocket 升级并开启粘性会话；`limit_req/limit_conn` 限流、WAF 前置；透传 `X-Forwarded-For` 等代理头保证风控拿到真实 IP；Ingress canary 按权重灰度（5% → 25% → 100%）。
+- **admin-web 静态 Nginx**：独立发布，与后端解耦；gzip/brotli 压缩、hash 文件强缓存、`try_files` 支持 history 路由；`/admin/api` 反代到网关，白名单隔离。
+
+Ingress 与 admin-web 的 Nginx 清单统一维护在 `deploy/k8s/`，与 `deploy/k8s/README.md` 目录约定一致。
+
 **K8s 生产实践**：
 
 - readiness/liveness/startup 探针；`preStop` + `terminationGracePeriodSeconds > 30` 优雅下线。
@@ -270,6 +285,21 @@ Git Push → 单测 + SonarQube → Maven 构建 → Jib 镜像 → Harbor
 ```
 
 管理后台前端在 `atifah-admin-web/frontend` 独立执行 `npm ci && npm run build`，静态产物发布到 Nginx / CDN，与后端服务解耦发布。
+
+**部署检查清单**：
+
+| 类别 | 检查项 |
+| --- | --- |
+| 中间件 | MySQL 主从 / Redis Cluster / RocketMQ / Nacos 就绪，监控已接入 |
+| 配置 | Nacos `common-application.yaml` 已导入；密钥走环境变量/KMS，`JWT_SECRET` 非明文 |
+| 数据库 | Flyway 脚本已执行；敏感字段 AES 密钥就绪 |
+| 安全 | TLS1.3/HSTS、WAF、管理端白名单、安全响应头生效 |
+| 网关 | 路由 / 幂等 / 限流 / JWT 验签配置校验通过 |
+| 容量 | HPA、request/limit、PDB、跨可用区反亲和已设置 |
+| 可观测 | Prometheus/Grafana/Loki/SkyWalking 采集正常，告警规则启用 |
+| 网络 | Ingress 路由、域名解析、NetworkPolicy 生效 |
+| 发布 | 金丝雀权重、回滚方案、数据备份（RPO≤5min / RTO≤30min）就绪 |
+| 验证 | 健康探针、冒烟测试、核心链路压测通过 |
 
 ## 9. 可观测性与非功能目标
 
