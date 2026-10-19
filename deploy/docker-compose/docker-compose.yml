@@ -136,9 +136,10 @@ services:
     networks:
       - atifah-net
 
-  # 本地验证管理后台生产静态托管（可选）：docker compose up -d nginx
+  # 本地验证管理后台生产静态托管（可选）：docker compose --profile nginx up -d nginx
   nginx:
     image: nginx:1.27-alpine
+    profiles: [ "nginx" ]
     container_name: atifah-nginx
     restart: unless-stopped
     ports:
