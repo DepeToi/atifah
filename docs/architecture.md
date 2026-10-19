@@ -81,6 +81,7 @@
 | 微服务   | Spring Cloud 2025.0.x + Spring Cloud Alibaba 2025.0.0.0 | 版本通过 BOM 对齐             |
 | 注册/配置 | Nacos                                                   | AP 注册中心，配置热更新、灰度开关      |
 | 网关    | Spring Cloud Gateway                                    | 响应式、可编程限流，适合高并发入口       |
+| 入口代理  | Nginx / Ingress-Nginx                                   | TLS 终止、反向代理、静态资源与 IP 限流 |
 | 管理后台  | Vue 3 + Vite + TypeScript + Element Plus                 | 前后端分离、组件生态成熟、独立构建与发布      |
 | RPC   | OpenFeign（默认）/ Dubbo 3（热点链路可选）                          | 优先简单，避免双协议复杂度           |
 | 流控熔断  | Sentinel                                                | 规则持久化到 Nacos，网关+服务双层防护  |
@@ -275,6 +276,49 @@ Ingress 与 admin-web 的 Nginx 清单统一维护在 `deploy/k8s/`，与 `deplo
 - 生产中间件优先使用云托管；自建时使用 Operator/StatefulSet + PVC。
 - NetworkPolicy 限制服务间访问；容器非 root、镜像 Trivy 扫描、Secret 管理密钥。
 - 发布：滚动更新 + 金丝雀（Argo Rollouts 或 Nginx Ingress 权重）5% → 25% → 100%，指标异常自动回滚。
+
+**最小机器配置（可运行基线，非容量承诺）**：
+
+> 适用于本地联调或初期小流量生产；面向 §1 的 100 万 DAU 容量目标，必须按压测结果扩容，并单独评估 MySQL / Redis / RocketMQ 的规格与分片。
+
+| 场景 | 最小配置 | 说明 |
+| --- | --- | --- |
+| 本地开发 / 单机联调 | 8 vCPU / 16 GB / 200 GB SSD | docker-compose 启动全部中间件 + 1 个服务实例；建议 12 vCPU / 32 GB |
+| 最小生产 K8s 工作节点 | 3 × (8 vCPU / 16 GB / 200 GB SSD) | 网关 3 副本、业务服务 2 副本、admin 2 副本；不含自建中间件 |
+| 自建 MySQL | 4 vCPU / 8 GB / 200 GB ESSD | 主从或高可用版；一服务一库 |
+| 自建 Redis | 2 vCPU / 4 GB / 50 GB SSD | 最小可先用主从；生产按图使用 3 主 3 从 |
+| 自建 RocketMQ | 4 vCPU / 8 GB / 500 GB SSD | namesrv ×2 + broker ×2 |
+| 自建 Nacos | 3 × (2 vCPU / 4 GB) | 注册与配置；生产 3 节点 |
+| Sentinel / XXL-Job / Seata（可选） | 2 vCPU / 4 GB | Sentinel / XXL-Job 常驻；Seata 按需启用 |
+| 可观测 | 4 vCPU / 8 GB / 200 GB | Prometheus / Grafana / Loki / SkyWalking；可与中间件混部 |
+
+> 上表自建中间件合计约 22 vCPU / 44 GB（不含 CI/CD 与 Harbor/ArgoCD）；生产建议独立节点，开发环境可与工作节点混部但需预留资源。
+
+**云服务最小配置（参考）**：
+
+| 云服务 | 最小规格 | 说明 |
+| --- | --- | --- |
+| 托管 K8s（ACK / TKE / CCE） | 3 × (8 vCPU / 16 GB) worker | 网关与业务服务；开启 HPA / PDB |
+| RDS MySQL 8.0 | 4 vCPU / 8 GB / 200 GB ESSD，高可用版 | 一服务一库；开启备份与监控 |
+| Redis 7 | 4 GB 主从 / 标准版 | 缓存、锁、幂等；按命中率扩容 |
+| RocketMQ 5.x | 4 vCPU / 8 GB broker ×2 | 或云厂商最小生产实例 |
+| Nacos（MSE） | 2 vCPU / 4 GB ×3 | 注册与配置 |
+| Sentinel / XXL-Job | 2 vCPU / 4 GB 或托管 | Seata 按需启用 |
+| SLB / NAT | 1 实例，带宽 ≥100 Mbps | 入口；按实际流量调整 |
+| OSS / CDN | 标准存储 + CDN | 语音、图片、静态资源 |
+| 日志 / 监控 | 4 vCPU / 8 GB 或托管 | Prometheus / Loki / SkyWalking |
+
+**容器 requests/limits 建议**（按单副本）：
+
+| 组件 | 副本 | requests | limits |
+| --- | --- | --- | --- |
+| gateway | 3 | 0.5 vCPU / 512 MiB | 1 vCPU / 1 GiB |
+| 业务服务 | 2 | 0.5 vCPU / 512 MiB | 1 vCPU / 1 GiB |
+| message-service（WS） | 2+（生产 4+） | 1 vCPU / 1 GiB | 2 vCPU / 2 GiB |
+| admin-service | 2 | 0.5 vCPU / 512 MiB | 1 vCPU / 1 GiB |
+
+- JVM 堆建议不超过容器 limit 的 75%；业务服务从 `-Xms512m -Xmx768m` 起步，按 GC 与 P99 调整。
+- 以上为最小可运行基线；生产规格必须结合 §1 容量假设与全链路压测确定，不以本表作为容量承诺。
 
 **CI/CD**：
 
