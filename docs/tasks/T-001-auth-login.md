@@ -1,7 +1,7 @@
 ---
 id: T-001
 title: auth-service 注册与登录（签发 access / refresh token）
-status: ready
+status: in-review
 owner: codebuddy
 created: 2026-10-19
 contract_baseline: arch-baseline-v0.1（待人工确认后打标签）
