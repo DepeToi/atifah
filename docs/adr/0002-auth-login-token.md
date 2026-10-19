@@ -5,6 +5,8 @@
 - 最后更新：2026-10-19（新增 §5.1 并发幂等语义）
 - 决策人：项目维护者
 
+> 本文记录决策与理由；令牌与幂等的契约正文以 `docs/contracts/` 为准。
+
 ## 背景
 
 `auth-service` 目前只有启动类；网关鉴权默认关闭（`atifah.gateway.auth.enabled=false`）；`common-security` 的 `JwtTokenProvider` 只提供 HS256 access token 签发与解析，不含 `jti` / `type`；`common-redis` 已提供 `RedisTemplate` 与 `CacheKeys`；`common-security` 已提供 BCrypt `PasswordEncoder`。
@@ -70,19 +72,15 @@ T-001 不修改网关、公共模块、其他服务；只写 `atifah-services/au
 
 ### 5. 幂等规则
 
-- **注册**：必须携带 `Idempotency-Key`；Redis `CacheKeys.IDEMPOTENT`（prefix `auth:register`，24h）保存 userId，串行重复请求返回首次结果；手机号唯一索引兜底。
-- **登录 / 刷新 / 登出**：豁免 `Idempotency-Key`。登录有失败计数；刷新令牌轮换本身防重放；登出是幂等的。
-- 该例外已同步到 `docs/contracts/api-conventions.md`、`docs/rules/security.md`、`docs/review/standards.md`。
+- **注册**：必须携带 `Idempotency-Key`；实现使用 Redis `CacheKeys.IDEMPOTENT`（prefix `auth:register`，24h）保存 userId，串行重复请求返回首次结果，手机号唯一索引兜底。格式与并发语义见 `docs/contracts/api-conventions.md` §7。
+- **登录 / 刷新 / 登出**：豁免 `Idempotency-Key`；例外清单以契约 §7 为准。
 
 #### 5.1 并发幂等语义（2026-10-19 维护者确认）
 
-- `Idempotency-Key` 必须是规范 UUID（`8-4-4-4-12`）；缺失返回 `40000`，格式非法同样返回 `40000`。契约 `format: uuid` 不变。
-- 相同幂等键的**串行重复请求**返回首次结果，不产生副作用。
-- **并发**使用相同幂等键时，由 `t_auth_account` 手机号唯一索引兜底：冲突方捕获 `DuplicateKeyException` 后**有界短暂重读**幂等结果（最多 3 次、间隔 50ms，总等待 ≤100ms）；取到则返回首次 userId，未取到返回 `40900`。
-- 不为并发场景引入 Redis 原子占位（SETNX）或额外错误码；`40900` 与“手机号已注册”共用。
-- 理由：注册是低频写接口，严格 SETNX 占位的复杂度与事务/Redis 一致性成本高于收益；有界重读覆盖实际竞态窗口，契约措辞明确限定「串行重试」保证。
-- 同步范围：`docs/contracts/api-conventions.md` §7、`docs/contracts/openapi/auth-service.yaml`（register / 409 / IdempotencyKey）、`docs/rules/security.md` SEC-04；实现跟进见 `docs/tasks/T-005-auth-register-idempotency-hardening.md`。
-- 版本：契约语义澄清，请求/响应结构不变；随 `arch-baseline-v0.2` 冻结。
+- **决策**：并发相同幂等键由 `t_auth_account` 手机号唯一索引兜底，冲突方捕获 `DuplicateKeyException` 后**有界短暂重读**幂等结果；不引入 Redis 原子占位（SETNX）或额外错误码。具体重读次数、间隔、总等待与错误码以 `docs/contracts/api-conventions.md` §7 为准，本 ADR 不重复契约正文。
+- **理由**：注册是低频写接口，严格 SETNX 占位的复杂度与事务/Redis 一致性成本高于收益；有界重读覆盖实际竞态窗口，契约措辞明确限定「串行重试」保证。
+- **同步范围**：`docs/contracts/api-conventions.md` §7、`docs/contracts/openapi/auth-service.yaml`（register / 409 / IdempotencyKey）、`docs/rules/security.md` SEC-04；实现跟进见 `docs/tasks/T-005-auth-register-idempotency-hardening.md`。
+- **版本**：契约语义澄清，请求/响应结构不变；随 `arch-baseline-v0.2` 冻结。
 
 ### 6. 网关集成（T-003，不在 T-001）
 

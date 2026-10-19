@@ -32,9 +32,9 @@
 
 **并发约束**：同一工作区同一时刻只允许一个角色写文件。并行任务用独立分支或 `git worktree`，禁止两个工具同时改同一批文件。
 
-**任务状态权限**：Claude 只设 `draft` / `ready`（`ready` 需人工确认）；CodeBuddy 只设 `in-progress` / `in-review`；人类维护者设 `done` 与强制回退；Codex 不得改状态。每次变更必须更新 front matter 的 `status` / `updated` / `status_reason`，并在任务包 §12 追加记录；没有 PR 证据不得标 `in-review`，没有合并与报告证据不得标 `done`（DOC-04）。
+**任务状态权限**：Claude 只设 `draft` / `ready`（`ready` 需人工确认）；CodeBuddy 只设 `in-progress` / `in-review`；人类维护者设 `done` 与强制回退；Codex 不得改状态。状态机、front matter 与 §12 记录要求见 `docs/tasks/README.md` §2（DOC-04）。
 
-**Codex 自测试与报告**：在独立 worktree / 干净检出中执行，记录 commit、命令、结果；完整报告写入 `docs/review/reports/`；不得只信 CI，不得修改代码/测试，不得提交构建产物。
+**Codex 自测试与报告**：必须在独立 worktree / 干净检出中执行，并写完整报告到 `docs/review/reports/`；具体命令、记录与判定见 `docs/review/standards.md` §4/§6.1。不得只信 CI，不得修改代码/测试，不得提交构建产物。
 
 ## 1. 项目是什么
 
@@ -58,6 +58,7 @@
 
 - 新增依赖必须先人工确认；不得为一个工具方法引入新库。
 - 禁止改根 `pom.xml` 的 parent 与 BOM 版本；禁止引入第二套 JSON / 日志 / HTTP 客户端。
+- 版本以根 `pom.xml` 为准；`docs/architecture.md` 中的 ShardingSphere、Caffeine、XXL-Job、SkyWalking 等属于规划/可选组件，启用前必须新增 ADR 并人工确认，不视为已批准依赖。
 
 ## 3. 模块、端口与包边界
 
@@ -69,7 +70,7 @@ pom.xml (parent: spring-boot-starter-parent)
 └── atifah-admin-web/   frontend（Vue 3，独立 npm）+ backend（admin-service，8090）
 ```
 
-端口：`gateway 8080 · auth 8081 · user 8082 · mood 8083 · analysis 8084 · community 8085 · content 8086 · message 8087 · growth 8088 · stats 8089 · admin 8090`。
+端口与服务名以 [`README.md`](README.md) 的模块结构（含端口）为准；新增或调整端口必须同步该表与相关契约。
 
 三条单看文件看不出的继承关系：
 
@@ -82,7 +83,7 @@ pom.xml (parent: spring-boot-starter-parent)
 ## 4. 硬约束速查（规则编号与 `docs/review/standards.md` 一致）
 
 - **安全 SEC**：敏感字段加密存储；日志、异常、MQ、URL 不得出现明文；密钥只走环境变量；唯一入口是网关（见 `docs/rules/security.md`）。
-- **接口 API**：统一 `Result<T>` / `PageResult<T>`；错误码只取 `ErrorCode`；业务写接口必须支持 `Idempotency-Key`（登录/刷新/登出例外，注册必须）；C 端 `/api/v1/**`，管理端 `/admin/api/**`（见 `docs/contracts/api-conventions.md`）。
+- **接口 API**：统一 `Result<T>` / `PageResult<T>`；错误码只取 `ErrorCode`；业务写接口必须支持 `Idempotency-Key`（例外与细则见 `docs/contracts/api-conventions.md` §7）；C 端 `/api/v1/**`，管理端 `/admin/api/**`。
 - **数据 DB**：一服务一库，禁止跨库 JOIN、`SELECT *`、拼接 SQL、循环查库；实体继承 `BaseEntity`；Flyway 管理 DDL（见 `docs/rules/database.md`）。
 - **消息 MQ**：Topic / 消费组先登记 `MqTopics` / `MqConsumerGroups`；只用 `MessagePublisher`；消费端必须幂等并配重试/死信（见 `docs/rules/database.md`）。
 - **编码 CODE**：构造注入、禁止字段 `@Autowired`；统一异常；`@Valid` 校验；日志用 `@Slf4j` 占位符（见 `docs/rules/code-style.md`）。
@@ -91,10 +92,10 @@ pom.xml (parent: spring-boot-starter-parent)
 
 ## 5. 契约、任务包与评审
 
-- **契约冻结**：`docs/contracts/` 是接口唯一依据；架构基线通过 `main` 上的 `arch-baseline-vX.Y` 标签冻结。
+- **契约冻结**：`docs/contracts/` 是接口唯一依据；架构基线通过 `main` 上的 `arch-baseline-vX.Y` 标签冻结。冻结与变更流程见 `docs/contracts/README.md` §3。
 - **先改契约再改代码**：任何接口/DDL/事件变更必须先由 Claude 出 ADR 并单独提交契约 PR；CodeBuddy 与 Codex 不得修改 `docs/contracts/**`。
-- **任务包**：每个实现任务必须有 `docs/tasks/T-xxx-<slug>.md`，包含目标、必读文件、允许/禁止修改路径、验收标准与测试要求。
-- **评审**：Codex 只读评审并独立执行自测试，按 `docs/review/standards.md` 输出固定格式；报告落盘到 `docs/review/reports/`，任务包 §11 归档路径与 Verdict；校验任务状态与 PR/合并证据一致；`Blocker` / `Major` 未清零、自测试失败、报告未归档或状态证据不符不得合并。
+- **任务包**：每个实现任务必须有 `docs/tasks/T-xxx-<slug>.md`，规范与状态机见 `docs/tasks/README.md`。
+- **评审**：Codex 只读评审并独立执行自测试，判据与输出格式见 `docs/review/standards.md`；报告落盘与归档要求见该文件 §6.1。
 - **PR 上限**：单服务、单任务、diff ≤400 行；超出请拆任务，不要提交大杂烩。
 
 ## 6. 禁止事项（违反即打回）

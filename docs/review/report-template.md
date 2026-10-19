@@ -1,5 +1,6 @@
 # 评审报告
 
+> 本文件只定义报告版式；必填内容、判定规则与归档要求见 [`standards.md`](standards.md) §6/§6.1，不在此重复。
 > 报告路径：docs/review/reports/T-xxx-<head-short-sha>.md
 > 评审对象：<PR 链接 / 分支 / commit 范围>
 > 任务包：<docs/tasks/T-xxx-xxx.md>

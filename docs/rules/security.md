@@ -38,8 +38,7 @@
 - 业务写接口（POST / PUT / DELETE）必须校验 `Idempotency-Key`（`CommonConstants.HEADER_IDEMPOTENCY_KEY`）。
 - 认证类接口例外：登录、刷新、登出不强制；注册必须带。详见 `docs/contracts/api-conventions.md` §7。
 - 服务端用 Redis `CacheKeys.IDEMPOTENT`（24h）+ 数据库唯一索引双保险。
-- `Idempotency-Key` 必须为规范 UUID（`8-4-4-4-12`）；缺失或格式非法返回 `40000`。
-- 相同幂等键的串行重复请求返回首次结果，不产生副作用；并发相同键由数据库唯一索引兜底，冲突后最多读取 3 次（含首次、间隔 50ms，总等待 ≤100ms），仍未取到返回 `40900`。详见 `docs/contracts/api-conventions.md` §7。
+- `Idempotency-Key` 的格式、串行/并发语义与错误码以 `docs/contracts/api-conventions.md` §7 为准，本文件不重复阈值与实现细节。
 
 ## SEC-05 传输、CORS、上传与防刷
 

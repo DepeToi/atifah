@@ -62,6 +62,6 @@
 
 ## DB-06 分库分表
 
-- 逻辑库按服务拆分；`t_mood_record`、`t_mood_diary`、`t_post`、`t_comment`、`t_message` 按 `user_id` 哈希分片。
-- 分片键必须命中查询条件；评论按 `post_id` 分片，避免跨分片聚合。
+- 逻辑库按服务拆分；`t_mood_record`、`t_mood_diary`、`t_post`、`t_message` 按 `user_id` 哈希分片。
+- `t_comment` 按 `post_id` 分片；分片键必须命中查询条件，避免跨分片聚合。
 - 跨分片统计走 `stats-service` 聚合表，不在线广播查询。

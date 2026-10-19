@@ -19,13 +19,10 @@
 - 报告随任务长期保留；不删除历史轮次。
 - 报告中的手机号、token、密钥等敏感信息必须脱敏。
 
-## 最低内容
+## 内容与格式
 
-- commit SHA、Verdict、Blocker/Major/Minor/Question 计数；
-- 发现详情（级别、file:line、规则编号、证据、影响、建议）；
-- `Self-test` 块：环境、命令、结果、未覆盖范围；
-- 与 CI 结果是否一致。
+报告内容、Self-test 块与判定规则见 [`../standards.md`](../standards.md) §6/§6.1；本文件只规定命名、写入权限与保留策略。
 
 ## 合并门禁
 
-未落盘报告，或任务包 §11 未归档报告路径与 Verdict → 不得合并（DOC-03）。
+未落盘报告，或任务包 §11 未归档报告路径与 Verdict → 不得合并（DOC-03，细则见 `../standards.md` §6.1）。

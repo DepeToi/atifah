@@ -1,6 +1,6 @@
 # 代码评审规则（Codex）
 
-> 本文件是 **Codex 只读评审 + 独立自测试**的唯一判据。规则编号同时被 `AGENTS.md`、`docs/rules/*` 与任务包引用。
+> 本文件是 **Codex 只读评审 + 独立自测试**的流程、分级与规则编号判据；具体规则正文与阈值以 `docs/rules/*`、`docs/contracts/*` 为准，本表只保留检查点与默认级别。规则编号同时被 `AGENTS.md`、`docs/rules/*` 与任务包引用。
 > 目标：让评审结果稳定、可追踪、可自动化；不把风格偏好伪装成缺陷。
 
 ## 1. 评审输入（缺一不可）
@@ -104,7 +104,7 @@ cd atifah-admin-web/frontend && npm ci && npm run build
 | API-01 | 统一 `Result<T>` / `PageResult<T>`，`code=0` 成功，无自定义响应壳 | Blocker |
 | API-02 | 错误码只取 `ErrorCode`；业务失败抛 `BusinessException`；Controller 不 try-catch 包装 | Major |
 | API-03 | 路径 `/api/v1/**`、`/admin/api/**`；只经网关访问 | Blocker |
-| API-04 | 业务写接口校验 `Idempotency-Key`（注册必须；登录/刷新/登出豁免），Redis + 数据库唯一索引双保险 | Blocker |
+| API-04 | 写接口幂等：要求见 `docs/contracts/api-conventions.md` §7（与 SEC-04 同一根因合并报告） | Blocker |
 | API-05 | 分页 `page`/`size` 有上限；禁止无界查询 | Major |
 | API-06 | ID 以 string 返回；时间 `yyyy-MM-dd HH:mm:ss`；camelCase；变更向后兼容 | Major |
 
@@ -129,7 +129,7 @@ cd atifah-admin-web/frontend && npm ci && npm run build
 | SEC-01 | 敏感字段加密；日志、异常、MQ、URL 无明文 | Blocker |
 | SEC-02 | 无硬编码密码、密钥、Token、AK/SK | Blocker |
 | SEC-03 | 不绕过网关；业务服务不重复验签；管理端不直连业务库 | Blocker |
-| SEC-04 | 写接口幂等（与 API-04 同一根因时合并报告） | Blocker |
+| SEC-04 | 写接口幂等：执行契约 §7 与 `docs/rules/security.md` SEC-04（与 API-04 合并报告） | Blocker |
 | SEC-05 | CORS、上传校验、SSRF 白名单、防刷符合规则 | Major |
 
 ### 5.5 编码、依赖与测试
@@ -205,6 +205,8 @@ Verdict: REQUEST_CHANGES
 - 必须附报告落盘路径：`docs/review/reports/T-xxx-<head-short-sha>.md`。
 
 ### 6.1 评审记录归档（强制）
+
+> 报告命名、写入权限与保留策略见 [`reports/README.md`](reports/README.md)；本节只定义必须归档的内容。
 
 - Codex 必须把完整评审报告写入 `docs/review/reports/T-xxx-<head-short-sha>.md`，使用 [`report-template.md`](report-template.md)；PR 评论只放摘要与报告链接。
 - Codex 的写入范围仅限 `docs/review/reports/**`；不得修改代码、契约、规则、任务实现或测试。

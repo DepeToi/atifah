@@ -10,20 +10,9 @@
 - 管理端使用独立鉴权链（独立密钥 + MFA + IP 白名单），不复用 C 端 Token；未接入前不要把登录逻辑写死在页面里。
 - 涉及管理端接口的变更先改 `docs/contracts/`，再改 `admin-service` 与前端类型。
 
-## 前端硬规则
+## 前端规则
 
-- 只通过 `src/api/http.ts` 的 `request<T>()` 发请求，不裸调 axios；新接口按域建 `src/api/<domain>.ts`，显式标注返回类型。
-- 类型导入必须 `import type`（`verbatimModuleSyntax`）；`strict` + `noUnusedLocals` 全开，构建失败即不通过。
-- 响应类型以 `src/api/types.ts` 为准，与 `common-core` 的 `Result` / `PageResult` 一致；改结构要同步契约、后端、前端三处。
-- 样式用 `src/styles/index.css` 的 CSS 变量，不写死色值；类名 kebab-case；避免内联 `style`。
-- 新增路由必须有 `meta.title`（顶栏与 `document.title` 都依赖它），组件一律懒加载。
-- 敏感数据（手机号、情绪 / 量表）默认脱敏，禁止 `console` 输出。
-- 新增 `VITE_*` 变量时同步 `src/vite-env.d.ts` 的 `ImportMetaEnv`。
-
-## 当前阶段
-
-- 页面为骨架，数据用 `--` 或 `<span class="badge">待接入</span>` 占位；接入接口后替换占位并移除徽标。
-- 未引入 ESLint / Prettier，风格为手工约定：无分号、单引号、2 空格缩进、尾逗号。
+前端硬规则、工程结构与当前阶段统一见 [`frontend/AGENTS.md`](frontend/AGENTS.md)；本文件只保留管理端边界与自检。
 
 ## 自检
 

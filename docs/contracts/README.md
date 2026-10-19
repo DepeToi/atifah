@@ -25,12 +25,7 @@ docs/contracts/
 
 ## 2. 所有权与写入权限
 
-| 路径 | 写入者 | 其他角色 |
-| --- | --- | --- |
-| `docs/contracts/**` | Claude（架构） | CodeBuddy / Codex 只读（Codex 可运行自测试） |
-| `docs/adr/**` | Claude | 只读 |
-| `docs/tasks/**` | Claude | CodeBuddy 按任务包执行，Codex 只读 |
-| `docs/review/**` | Claude 维护规则；Codex 可写 `docs/review/reports/**` 评审报告 | CodeBuddy 只读 |
+角色与可写范围以 `AGENTS.md` §0 为唯一来源。契约相关约束只有一条：`docs/contracts/**` 由 Claude 写入，CodeBuddy / Codex 只读（Codex 可运行自测试）。
 
 CodeBuddy **禁止**修改契约来迁就实现。发现契约缺失或矛盾时，在 PR 中标注 `[Contract-Question]` 并等待 Claude 更新。
 
@@ -62,8 +57,8 @@ CodeBuddy **禁止**修改契约来迁就实现。发现契约缺失或矛盾时
 ## 5. 工具如何消费契约
 
 - **Claude**：写契约、维护模板与总纲；通过 ADR 记录取舍。
-- **CodeBuddy**：任务包“必读文件”列出具体契约路径；实现时以契约为准，不自行扩展字段。
-- **Codex**：评审时对照契约检查 diff，并在独立工作区执行自测试（`mvn -B -ntp verify`、前端 `npm ci && npm run build`），完整报告落盘到 `docs/review/reports/`；契约缺失/不一致、实现偏离契约、自测试失败均判 `Blocker`。
+- **CodeBuddy**：任务包“必读文件”列出具体契约路径；实现以契约为准，不自行扩展字段。
+- **Codex**：评审时对照契约检查 diff；自测试与报告要求见 `docs/review/standards.md` §4/§6.1。
 
 ## 6. 相关文档
 

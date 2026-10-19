@@ -176,13 +176,13 @@ App ──POST /api/v1/moods──▶ Nginx ──▶ Gateway
 | 场景       | 方案                                               |
 | -------- | ------------------------------------------------ |
 | 用户/内容详情  | Caffeine(3–10s) + Redis(30–60min 随机 TTL) + MySQL |
-| 今日打卡状态   | `mood:today:{uid}:{date}`，过期到次日凌晨                |
+| 今日打卡状态   | `CacheKeys.MOOD_TODAY`，过期到次日凌晨                |
 | 连续打卡     | Redis Bitmap/Set，异步落库                            |
 | 点赞去重     | Redis Set + Lua 原子操作                             |
 | Feed 收件箱 | Redis ZSET，score=时间戳                             |
 | 热门/榜单    | Redis ZSET                                       |
 | 分布式锁     | Redisson（watchdog 续期，Lua 安全释放）                   |
-| 接口幂等     | `idem:{uid}:{key}`，24h                           |
+| 接口幂等     | `CacheKeys.IDEMPOTENT`，24h                           |
 
 **三大缓存问题**：穿透 → 空值缓存 + 布隆过滤器；击穿 → 逻辑过期/互斥重建；雪崩 → 随机 TTL + 多级缓存 + Sentinel 兜底。缓存一致性采用 Cache Aside，关键场景可加延迟双删或订阅 Binlog（Canal）刷新。
 
@@ -211,7 +211,7 @@ App ──POST /api/v1/moods──▶ Nginx ──▶ Gateway
 
 ### 5.5 分库分表
 
-分片键必须命中查询条件；`t_mood_record`、`t_mood_diary`、`t_post`、`t_comment`、`t_message` 按 `user_id` 哈希分片，评论按 `post_id` 分片；统一雪花 ID，跨分片统计走 `stats-service` 聚合表。完整规则与表清单见 [`db.md`](db.md) §3。
+分片键必须命中查询条件；`t_mood_record`、`t_mood_diary`、`t_post`、`t_message` 按 `user_id` 哈希分片，`t_comment` 按 `post_id` 分片；统一雪花 ID，跨分片统计走 `stats-service` 聚合表。完整规则与表清单见 [`db.md`](db.md) §3。
 
 ## 6. 数据模型（核心表）
 

@@ -6,7 +6,7 @@
 ## 运行环境
 
 - 响应式 Netty + Spring Cloud Gateway，端口 8080，`spring.main.web-application-type: reactive`。
-- 项目内公共模块只依赖 `common-core` + `common-security`（其余为 actuator / prometheus / Nacos / Sentinel / LoadBalancer）。**禁止**引入 `common-web` / `common-mybatis` / `common-redis` / `spring-boot-starter-web`——会拉起 servlet 栈导致启动失败。
+- 依赖边界见根 `AGENTS.md` §3：只依赖 `common-core` + `common-security`，**禁止**引入 `common-web` / `common-mybatis` / `common-redis` / `spring-boot-starter-web`（会拉起 servlet 栈导致启动失败）。
 - 禁止开启 `spring.threads.virtual.enabled`。
 
 ## 代码约束

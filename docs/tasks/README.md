@@ -11,6 +11,8 @@
 
 ## 2. 状态机与修改权限
 
+> `AGENTS.md` §0 是工作流摘要；本文件 §2 是状态机与修改权限的唯一细则。
+
 | 状态 | 含义 | 进入条件 | 可设置者 |
 | --- | --- | --- | --- |
 | `draft` | Claude 正在设计，契约可能变化 | 任务包创建 | Claude |
@@ -46,7 +48,7 @@
 - 必须列出“允许修改路径”和“禁止修改路径”；CodeBuddy 只能改允许路径。
 - 验收标准必须可验证（命令、断言、接口行为），不能写“体验良好”。
 - 单任务单服务、diff ≤400 行；超出请拆分。
-- 任务包不复制契约内容，只引用路径与锚点，避免双写漂移。
+- 任务包不复制契约内容，只引用路径与锚点，避免双写漂移；已完成的历史任务包不回改。
 
 ## 4. Definition of Ready（进入开发前）
 
@@ -60,7 +62,7 @@
 
 - [ ] 实现符合任务包与契约，未越界修改。
 - [ ] 新增/修改代码有对应测试；核心链路覆盖成功与失败路径。
-- [ ] 后端 `mvn -B -ntp verify` 通过；前端 `npm run build` 通过。
+- [ ] 后端 `mvn -B -ntp verify` 通过；前端 `npm ci && npm run build` 通过。
 - [ ] CI 全绿，且 Codex 在独立工作区复跑自测试通过。
 - [ ] Codex 评审报告已落盘到 `docs/review/reports/`，任务包 §11 已归档报告路径与 Verdict。
 - [ ] Codex 评审无 `Blocker` / `Major`，或已有维护者明确豁免记录。
@@ -78,7 +80,7 @@ git checkout -b feat/T-001-auth-login
 mvn -pl atifah-services/auth-service -am test
 cd atifah-admin-web/frontend && npm run type-check   # 如涉及前端
 
-# 开 PR（不要自动 push，除非用户明确要求）
+# 开 PR（以下 push / gh 命令仅在用户明确要求时执行）
 git push -u origin feat/T-001-auth-login
 gh pr create --base main --title "feat(auth): T-001 登录与 Token 签发" \
   --body-file docs/tasks/T-001-auth-login.md

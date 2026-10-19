@@ -5,8 +5,8 @@
 
 ## 依赖
 
-- 本模块父 POM 已声明 common×5、Nacos discovery/config、OpenFeign、LoadBalancer 和 `spring-boot-maven-plugin`，**子服务 pom 里不要再写这些依赖**，只加本服务独有的（如 `growth-service` 的 Seata）。
-- 新增依赖先确认；不加第二套 JSON / 日志 / HTTP 客户端。
+- 父 POM 已声明的依赖见根 `AGENTS.md` §3；**子服务 pom 不重复声明**，只加本服务独有的（如 `growth-service` 的 Seata）。
+- 新增依赖规则见根 `AGENTS.md` §2/§4 DEPS。
 - 服务名 `atifah-<service>`，生产者组 `atifah-<service>-producer`，库名 `atifah_<service>`。
 
 ## 单服务骨架
@@ -41,7 +41,7 @@
 
 ## 禁止事项
 
-- 禁止跨库 JOIN、`SELECT *`、循环内查库、拼接 SQL。
+- 数据与 SQL 约束见 `docs/rules/database.md`，不在本文件重复。
 - 禁止在 Controller 写业务逻辑；禁止在 Service 里读 `HttpServletRequest`。
 - 禁止服务间用共享数据库“绕过”接口；同步查询走 OpenFeign，异步走 `MessagePublisher`。
 - 当前 9 个服务都只有启动类，新增代码不要顺手改动其他服务的同名类。

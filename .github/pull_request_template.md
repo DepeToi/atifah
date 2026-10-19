@@ -7,7 +7,7 @@
 ## 1. 关联
 
 - 任务包：`docs/tasks/T-xxx-<slug>.md`
-- 任务状态：`in-review`（PR 创建后；合并后由人类维护者改为 `done`）
+- 任务状态：`in-review`（PR 创建后；状态机见 `docs/tasks/README.md` §2，合并后由人类维护者改为 `done`）
 - 契约基线：`arch-baseline-vX.Y`
 - 关联 ADR / Issue：
 
@@ -36,6 +36,8 @@ cd atifah-admin-web/frontend && npm run build
 
 ## 5. 自检清单
 
+> 细则见 `AGENTS.md` §4 与 `docs/rules/*`；此处只保留提交前确认项。
+
 - [ ] 只修改任务包“允许修改”的路径
 - [ ] 未修改 `docs/contracts/**`、`docs/rules/**`、根 `pom.xml`、受保护部署文件
 - [ ] 接口符合 `Result<T>` / `PageResult<T>` 与 `ErrorCode`
@@ -56,12 +58,11 @@ cd atifah-admin-web/frontend && npm run build
 
 ## 7. Codex 评审记录
 
+> 完整格式、自测试记录与归档要求见 `docs/review/standards.md` §6.1；此处只记录摘要。
+
 - 结论：`APPROVE` / `REQUEST_CHANGES`
 - 评审报告：`docs/review/reports/T-xxx-<head-short-sha>.md`
-- 自测试：`mvn -B -ntp verify` / `npm ci && npm run build` → PASS / FAIL
-- 自测试环境：独立 worktree / 干净检出（commit：）
-- Blocker：
-- Major：
+- Blocker / Major：
 - 处理说明：
 
 ## 8. 给评审者的提示

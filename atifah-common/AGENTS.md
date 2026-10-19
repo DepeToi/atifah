@@ -12,12 +12,12 @@
 - `common-core` 是基础模块，不依赖其他 common 模块。
 - `common-web` / `common-redis` / `common-mybatis` / `common-mq` / `common-security` 只依赖 `common-core`。
 - 禁止在 common 模块之间新增横向依赖；确需复用时先抽到 `common-core` 并评估影响。
-- 新增第三方依赖先确认；禁止引入第二套 JSON / 日志 / HTTP 客户端。
+- 依赖新增与版本规则见根 `AGENTS.md` §2/§4 DEPS。
 
 ## 自动装配
 
 - 每个公共能力通过 `META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports` 注册配置类。
-- **不要**在业务服务里加 `@ComponentScan("com.atifah")`；公共能力应依赖 classpath 自动生效。
+- **不要**在业务服务里加 `@ComponentScan("com.atifah")`；公共能力应依赖 classpath 自动生效（同根 `AGENTS.md` §3）。
 - 自动配置必须加条件注解（`@ConditionalOnClass` / `@ConditionalOnMissingBean` / `@ConditionalOnWebApplication`），避免污染不需要它的服务。
 - `common-web` 只适用于 servlet 栈；`atifah-gateway` 不得依赖它。
 
@@ -36,7 +36,7 @@
 
 - `Result` / `PageResult` / `ErrorCode` / `CommonConstants` / `CacheKeys` / `MqTopics` / `MqConsumerGroups` 是全服务契约；修改前先同步 `docs/contracts/api-conventions.md`、`docs/rules/*` 与前端 `src/api/types.ts`。
 - 新增缓存 Key / Topic 必须先登记再引用；删除或改名视为破坏性变更，需评估所有服务。
-- `JWT_SECRET` 只能通过环境变量注入，默认值仅限本地开发。
+- 密钥与凭据规则见 `docs/rules/security.md` SEC-02。
 - 修改公共能力属于架构工作，应由 Claude 执行或先经 Claude 评审；CodeBuddy 不得擅自改契约类。
 
 ## 自检

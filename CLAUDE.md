@@ -22,24 +22,7 @@
 - 不把任务状态设为 `in-progress` / `in-review` / `done`；Claude 只设 `draft` / `ready`（`ready` 需人工确认）。
 - 不自动 `git commit` / `git push`，除非用户明确要求。
 
-## 交付物位置
+## 交付物与交接
 
-| 内容 | 路径 |
-| --- | --- |
-| 架构决策 | `docs/adr/NNNN-*.md` |
-| 接口契约 | `docs/contracts/openapi/<service>.yaml` |
-| 数据库契约 | `docs/contracts/db/<service>.sql` |
-| 事件契约 | `docs/contracts/events/<event>.md` |
-| 任务包 | `docs/tasks/T-xxx-<slug>.md` |
-| 评审规则 | `docs/review/standards.md` |
-| 架构说明 | `docs/architecture.md` |
-
-## 交接检查
-
-架构工作完成前，确认：
-
-- [ ] 决策已写入 ADR，而不是只存在于对话中。
-- [ ] 本次涉及的接口 / DDL / 事件契约已更新并自洽。
-- [ ] 任务包写清允许修改路径、验收标准与测试要求。
-- [ ] 契约有版本基线（`arch-baseline-vX.Y`），CodeBuddy 不需要猜设计。
-- [ ] 需要人工确认的取舍已明确列出，没有替用户做未授权的产品决策。
+- 交付物路径见 `AGENTS.md` §7；角色边界、任务状态机与交接步骤见 `AGENTS.md` §0 与 [`docs/tasks/README.md`](docs/tasks/README.md) §2，本文件不重复。
+- 架构工作完成前，按 `AGENTS.md` §0 的交接约束自检：决策已写入 ADR、契约自洽、任务包写清允许路径/验收标准/测试要求、需要人工确认的取舍已列出。
