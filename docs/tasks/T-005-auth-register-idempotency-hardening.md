@@ -1,11 +1,11 @@
 ---
 id: T-005
 title: auth-service 注册幂等加固（UUID 校验 + 并发有界重读）
-status: ready
+status: in-progress
 owner: codebuddy
 created: 2026-10-19
 updated: 2026-10-19
-status_reason: 契约语义已确认并随 arch-baseline-v0.2 冻结，维护者确认开始实现
+status_reason: CodeBuddy 完成实现与单测，mvn verify 通过，待提交 PR
 contract_baseline: arch-baseline-v0.2
 related_adr:
   - docs/adr/0002-auth-login-token.md
@@ -183,3 +183,4 @@ git status
 | --- | --- | --- | --- | --- |
 | 2026-10-19 | — | draft | Claude | 由 T-001 Codex 报告遗留项创建；并发语义经维护者确认（ADR-0002 §5.1） |
 | 2026-10-19 | draft | ready | Claude | 维护者确认开始实现；契约随 arch-baseline-v0.2 冻结 |
+| 2026-10-19 | ready | in-progress | CodeBuddy | 完成 UUID 校验 + 有界重读实现与单测，`mvn -pl atifah-services/auth-service -am verify` 通过 |

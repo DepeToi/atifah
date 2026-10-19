@@ -36,6 +36,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -47,6 +48,12 @@ class AuthServiceImplTest {
 
     private static final String PHONE = "13800138000";
     private static final String PASSWORD = "Passw0rd1";
+    private static final String FIRST_USER_ID = "1234567890123456789";
+
+    private static final String IDEM_1 = "11111111-1111-1111-1111-111111111111";
+    private static final String IDEM_2 = "22222222-2222-2222-2222-222222222222";
+    private static final String IDEM_3 = "33333333-3333-3333-3333-333333333333";
+    private static final String IDEM_4 = "44444444-4444-4444-4444-444444444444";
 
     @Mock
     private AuthAccountMapper authAccountMapper;
@@ -108,7 +115,7 @@ class AuthServiceImplTest {
     void register_success_returnsUserId_andStoresBcryptHash() {
         when(authAccountMapper.selectCount(any())).thenReturn(0L);
 
-        RegisterResponse response = authService.register(registerRequest(), "idem-1");
+        RegisterResponse response = authService.register(registerRequest(), IDEM_1);
 
         assertThat(response.getUserId()).isNotBlank();
 
@@ -125,7 +132,7 @@ class AuthServiceImplTest {
     void register_duplicatePhone_throws40900() {
         when(authAccountMapper.selectCount(any())).thenReturn(1L);
 
-        assertThatThrownBy(() -> authService.register(registerRequest(), "idem-2"))
+        assertThatThrownBy(() -> authService.register(registerRequest(), IDEM_2))
                 .isInstanceOf(BusinessException.class)
                 .hasMessage("手机号已注册")
                 .extracting("code").isEqualTo(40900);
@@ -134,11 +141,11 @@ class AuthServiceImplTest {
 
     @Test
     void register_sameIdempotencyKey_returnsFirstUserId() {
-        when(valueOperations.get(anyString())).thenReturn("1234567890123456789");
+        when(valueOperations.get(anyString())).thenReturn(FIRST_USER_ID);
 
-        RegisterResponse response = authService.register(registerRequest(), "idem-3");
+        RegisterResponse response = authService.register(registerRequest(), IDEM_3);
 
-        assertThat(response.getUserId()).isEqualTo("1234567890123456789");
+        assertThat(response.getUserId()).isEqualTo(FIRST_USER_ID);
         verify(authAccountMapper, never()).insert(any(AuthAccount.class));
     }
 
@@ -152,15 +159,42 @@ class AuthServiceImplTest {
     }
 
     @Test
-    void register_duplicateKeyOnInsert_throws40900() {
+    void register_malformedIdempotencyKey_throws40000() {
+        assertThatThrownBy(() -> authService.register(registerRequest(), "not-a-uuid"))
+                .isInstanceOf(BusinessException.class)
+                .hasMessage("Idempotency-Key 必须为 UUID")
+                .extracting("code").isEqualTo(40000);
+        verify(authAccountMapper, never()).selectCount(any());
+        verify(authAccountMapper, never()).insert(any(AuthAccount.class));
+        verify(valueOperations, never()).get(anyString());
+    }
+
+    @Test
+    void register_duplicateKey_retryFindsFirstResult_returnsUserId() {
+        when(authAccountMapper.selectCount(any())).thenReturn(0L);
+        when(authAccountMapper.insert(any(AuthAccount.class))).thenThrow(new DuplicateKeyException("uk_auth_account_phone"));
+        when(valueOperations.get(anyString())).thenReturn(null, null, FIRST_USER_ID);
+
+        RegisterResponse response = authService.register(registerRequest(), IDEM_4);
+
+        assertThat(response.getUserId()).isEqualTo(FIRST_USER_ID);
+        // 冲突前首次查询 1 次 + 冲突分支重读 2 次
+        verify(valueOperations, times(3)).get(anyString());
+        verify(authAccountMapper).insert(any(AuthAccount.class));
+    }
+
+    @Test
+    void register_duplicateKey_retryExhausted_throws40900() {
         when(authAccountMapper.selectCount(any())).thenReturn(0L);
         when(authAccountMapper.insert(any(AuthAccount.class))).thenThrow(new DuplicateKeyException("uk_auth_account_phone"));
         when(valueOperations.get(anyString())).thenReturn(null);
 
-        assertThatThrownBy(() -> authService.register(registerRequest(), "idem-4"))
+        assertThatThrownBy(() -> authService.register(registerRequest(), IDEM_4))
                 .isInstanceOf(BusinessException.class)
                 .hasMessage("手机号已注册")
                 .extracting("code").isEqualTo(40900);
+        // 冲突前首次查询 1 次 + 冲突分支重读 3 次
+        verify(valueOperations, times(4)).get(anyString());
     }
 
     @Test
