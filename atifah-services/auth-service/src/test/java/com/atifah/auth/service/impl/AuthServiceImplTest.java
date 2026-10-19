@@ -14,14 +14,17 @@ import com.atifah.common.core.enums.ErrorCode;
 import com.atifah.common.core.exception.BusinessException;
 import com.atifah.common.security.config.JwtProperties;
 import com.atifah.common.security.jwt.JwtTokenProvider;
+import io.jsonwebtoken.Claims;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.Duration;
@@ -55,21 +58,18 @@ class AuthServiceImplTest {
     private ValueOperations<String, String> valueOperations;
 
     @Mock
-    private PasswordEncoder passwordEncoder;
-
-    @Mock
-    private JwtTokenProvider jwtTokenProvider;
-
-    @Mock
-    private JwtProperties jwtProperties;
-
-    @Mock
     private RefreshTokenService refreshTokenService;
 
     @Mock
     private LoginAttemptService loginAttemptService;
 
     private final AuthProperties authProperties = new AuthProperties();
+
+    private final JwtProperties jwtProperties = new JwtProperties();
+
+    private final JwtTokenProvider jwtTokenProvider = new JwtTokenProvider(jwtProperties);
+
+    private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     private AuthServiceImpl authService;
 
@@ -105,14 +105,19 @@ class AuthServiceImplTest {
     }
 
     @Test
-    void register_success_returnsUserId_andStoresEncodedPassword() {
+    void register_success_returnsUserId_andStoresBcryptHash() {
         when(authAccountMapper.selectCount(any())).thenReturn(0L);
-        when(passwordEncoder.encode(PASSWORD)).thenReturn("$2a$10$encoded");
 
         RegisterResponse response = authService.register(registerRequest(), "idem-1");
 
         assertThat(response.getUserId()).isNotBlank();
-        verify(authAccountMapper).insert(any(AuthAccount.class));
+
+        ArgumentCaptor<AuthAccount> captor = ArgumentCaptor.forClass(AuthAccount.class);
+        verify(authAccountMapper).insert(captor.capture());
+        AuthAccount inserted = captor.getValue();
+        assertThat(inserted.getPasswordHash()).startsWith("$2").isNotEqualTo(PASSWORD);
+        assertThat(passwordEncoder.matches(PASSWORD, inserted.getPasswordHash())).isTrue();
+
         verify(valueOperations).set(anyString(), eq(response.getUserId()), eq(authProperties.getIdempotentTtl()));
     }
 
@@ -149,7 +154,6 @@ class AuthServiceImplTest {
     @Test
     void register_duplicateKeyOnInsert_throws40900() {
         when(authAccountMapper.selectCount(any())).thenReturn(0L);
-        when(passwordEncoder.encode(PASSWORD)).thenReturn("$2a$10$encoded");
         when(authAccountMapper.insert(any(AuthAccount.class))).thenThrow(new DuplicateKeyException("uk_auth_account_phone"));
         when(valueOperations.get(anyString())).thenReturn(null);
 
@@ -160,20 +164,25 @@ class AuthServiceImplTest {
     }
 
     @Test
-    void login_success_returnsTokens() {
-        when(authAccountMapper.selectOne(any())).thenReturn(account(123L, AuthAccountStatus.NORMAL.getCode(), "hash"));
-        when(passwordEncoder.matches(PASSWORD, "hash")).thenReturn(true);
-        when(jwtTokenProvider.generateToken(123L, "123")).thenReturn("access-token");
+    void login_success_returnsParsableToken_withSubUserId_and15mExpiry_andNoPhone() {
+        when(authAccountMapper.selectOne(any()))
+                .thenReturn(account(123L, AuthAccountStatus.NORMAL.getCode(), passwordEncoder.encode(PASSWORD)));
         when(refreshTokenService.issue(123L)).thenReturn("refresh-token");
-        when(jwtProperties.getAccessTokenTtl()).thenReturn(Duration.ofMinutes(15));
 
         AuthTokenVO vo = authService.login(loginRequest());
 
-        assertThat(vo.getAccessToken()).isEqualTo("access-token");
         assertThat(vo.getRefreshToken()).isEqualTo("refresh-token");
         assertThat(vo.getTokenType()).isEqualTo("Bearer");
         assertThat(vo.getExpiresIn()).isEqualTo(900L);
         assertThat(vo.getUserId()).isEqualTo("123");
+
+        Claims claims = jwtTokenProvider.parseToken(vo.getAccessToken());
+        assertThat(claims.getSubject()).isEqualTo("123");
+        assertThat(claims.get("username", String.class)).isEqualTo("123");
+        long ttlMillis = claims.getExpiration().getTime() - claims.getIssuedAt().getTime();
+        assertThat(ttlMillis).isEqualTo(Duration.ofMinutes(15).toMillis());
+        assertThat(vo.getAccessToken()).doesNotContain(PHONE);
+
         verify(loginAttemptService).clear(PHONE);
         verify(refreshTokenService).issue(123L);
     }
@@ -191,8 +200,8 @@ class AuthServiceImplTest {
 
     @Test
     void login_wrongPassword_throws40100_sameMessage() {
-        when(authAccountMapper.selectOne(any())).thenReturn(account(123L, AuthAccountStatus.NORMAL.getCode(), "hash"));
-        when(passwordEncoder.matches(PASSWORD, "hash")).thenReturn(false);
+        when(authAccountMapper.selectOne(any()))
+                .thenReturn(account(123L, AuthAccountStatus.NORMAL.getCode(), passwordEncoder.encode("DifferentPass1")));
 
         assertThatThrownBy(() -> authService.login(loginRequest()))
                 .isInstanceOf(BusinessException.class)
@@ -203,8 +212,8 @@ class AuthServiceImplTest {
 
     @Test
     void login_disabledAccount_throws40300_withoutRecordingFailure() {
-        when(authAccountMapper.selectOne(any())).thenReturn(account(123L, AuthAccountStatus.DISABLED.getCode(), "hash"));
-        when(passwordEncoder.matches(PASSWORD, "hash")).thenReturn(true);
+        when(authAccountMapper.selectOne(any()))
+                .thenReturn(account(123L, AuthAccountStatus.DISABLED.getCode(), passwordEncoder.encode(PASSWORD)));
 
         assertThatThrownBy(() -> authService.login(loginRequest()))
                 .isInstanceOf(BusinessException.class)
