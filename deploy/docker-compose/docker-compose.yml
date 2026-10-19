@@ -49,6 +49,12 @@ services:
     environment:
       MODE: standalone
       NACOS_AUTH_ENABLE: "false"
+      # Nacos 3.x 启动脚本强制校验：必须提供 base64 且解码后 >=32 字节的 token（本地开发值）
+      NACOS_AUTH_TOKEN: "${NACOS_AUTH_TOKEN:?NACOS_AUTH_TOKEN 未设置，见 deploy/docker-compose/.env.example}"
+      NACOS_AUTH_IDENTITY_KEY: "atifah-server-identity"
+      NACOS_AUTH_IDENTITY_VALUE: "atifah-server-identity-value"
+      # 本地开发：关闭 Nacos 3 运维 API 鉴权，便于脚本导入配置（生产必须开启）
+      NACOS_AUTH_ADMIN_ENABLE: "false"
       JVM_XMS: 256m
       JVM_XMX: 512m
       JVM_XMN: 128m
@@ -80,6 +86,8 @@ services:
     depends_on:
       - rocketmq-namesrv
     command: sh mqbroker -c /home/rocketmq/broker.conf
+    # 命名卷由 root 创建，镜像内 broker 以 uid 3000 运行无法写入 store（本地开发）
+    user: "0:0"
     environment:
       JAVA_OPT_EXT: "-Xms512m -Xmx1g -Xmn256m"
     ports:
@@ -125,6 +133,19 @@ services:
     ports:
       - "8091:8091"
       - "7091:7091"
+    networks:
+      - atifah-net
+
+  # 本地验证管理后台生产静态托管（可选）：docker compose up -d nginx
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: atifah-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ../nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ../../atifah-admin-web/frontend/dist:/usr/share/nginx/html:ro
     networks:
       - atifah-net
 
