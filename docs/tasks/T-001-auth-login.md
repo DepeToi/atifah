@@ -1,10 +1,12 @@
 ---
 id: T-001
 title: auth-service 注册与登录（签发 access / refresh token）
-status: in-review
+status: done
 owner: codebuddy
 created: 2026-10-19
-contract_baseline: arch-baseline-v0.1（待人工确认后打标签）
+updated: 2026-10-19
+status_reason: Codex 报告 APPROVE，PR #1 已合并（31b22b5），§11 已归档
+contract_baseline: arch-baseline-v0.1
 related_adr:
   - docs/adr/0002-auth-login-token.md
 ---
@@ -235,8 +237,32 @@ git status
 - **回滚**：删除 auth-service 新增代码与 `V1__init.sql`，保留契约；不涉及网关和公共模块，回滚成本低。
 - **数据迁移**：首次上线只新增 `t_auth_account`，无历史数据迁移；回滚时删除表即可（需确认无生产数据）。
 
-## 11. 评审记录
+## 11. 评审与自测试记录
+
+- 评审报告：`docs/review/reports/T-001-7ae8964.md`
+- 评审对象：PR #1，head `7ae8964`，base `58b7e8f`（`arch-baseline-v0.1`）
+- Verdict：`APPROVE`（Blocker 0 / Major 0 / Minor 1 / Question 1）
+- 自测试：`mvn -B -ntp verify` PASS（round1 `8641fca`、round2 `7ae8964`；20/20 模块，auth-service 25 测试全通过）
+- 未覆盖：评审环境无 Docker，未执行 MySQL/Redis/Flyway 集成测试，`V1__init.sql` 未在真实 MySQL 上执行
 
 | 轮次 | 评审人 | 自测试命令/结果 | 结论 | Blocker/Major | 处理 |
 | --- | --- | --- | --- | --- | --- |
-| 1 | Codex |  |  |  |  |
+| 1 | Codex | `mvn -B -ntp verify` @8641fca PASS | REQUEST_CHANGES | 0/2 | SCOPE-02 由维护者书面豁免（PR 评论 6264650073）；TEST-01 已由 `7ae8964` 修复 |
+| 2 | Codex | `mvn -B -ntp verify` @7ae8964 PASS | APPROVE | 0/0 | 遗留 Minor（API-04 UUID 校验）与 Question（并发幂等语义），见下 |
+
+遗留跟进：
+
+- `[Impl]` `AuthServiceImpl.java:57` — API-04：`Idempotency-Key` 仅校验非空，未校验 UUID；契约要求 `format: uuid`。已转入 `docs/tasks/T-005-auth-register-idempotency-hardening.md`。
+- `[Question]` 已由维护者确认（2026-10-19）：采用**有界短重读**，不引入 Redis 原子占位；冲突后最多读取 3 次（含首次、间隔 50ms），未取到返回 `40900`。决策见 ADR-0002 §5.1，契约措辞已同步；实现跟进见 T-005。
+- 集成测试缺口：上线前需在有 MySQL/Redis 的环境补跑 Flyway `V1__init.sql` 与真实中间件验证。
+
+> 流程说明：报告落盘晚于 PR 合并（合并 commit `31b22b5`），属 DOC-03 顺序偏差；代码、CI 与自测试结论不受影响，归档由维护者确认。
+
+## 12. 状态变更记录
+
+| 日期 | 从 | 到 | 操作人 | 依据/证据 |
+| --- | --- | --- | --- | --- |
+| 2026-10-19 | draft | ready | Claude | 契约冻结 + 维护者确认（arch-baseline-v0.1） |
+| 2026-10-19 | ready | in-progress | CodeBuddy | 开始 T-001 实现 |
+| 2026-10-19 | in-progress | in-review | CodeBuddy | 分支 feat/T-001-auth-login 已推送；PR 链接待补（DOC-04） |
+| 2026-10-19 | in-review | done | 维护者 | PR #1 已合并（31b22b5）+ Codex 报告 `docs/review/reports/T-001-7ae8964.md`（APPROVE）+ §11 已归档 |
