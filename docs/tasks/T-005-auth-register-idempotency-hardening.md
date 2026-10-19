@@ -171,11 +171,11 @@ git status
 
 ## 11. 评审与自测试记录
 
-- 评审报告：`docs/review/reports/T-005-<head-short-sha>.md`
+- 评审报告：`docs/review/reports/T-005-6fcf4be.md`
 
 | 轮次 | 评审人 | 自测试命令/结果 | 结论 | Blocker/Major | 处理 |
 | --- | --- | --- | --- | --- | --- |
-| 1 | Codex |  |  |  |  |
+| 1 | Codex | `mvn -B -ntp verify` → PASS（20 模块 SUCCESS，auth-service 27 tests） | APPROVE | 0 / 0 | 无需处理 |
 
 ## 12. 状态变更记录
 
