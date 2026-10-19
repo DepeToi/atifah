@@ -37,7 +37,7 @@ components:
       name: Idempotency-Key
       in: header
       required: true
-      description: 写接口必填，UUID；相同键的重复请求返回首次结果。
+      description: 写接口必填，规范 UUID（8-4-4-4-12）；相同键的串行重复请求返回首次结果。
       schema:
         type: string
         format: uuid

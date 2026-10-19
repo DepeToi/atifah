@@ -32,7 +32,8 @@ paths:
       summary: 注册认证账号
       description: |
         只创建认证账号，不创建用户资料；user-service 的资料创建由后续任务负责。
-        必须携带 Idempotency-Key；相同键重复请求返回首次结果。
+        必须携带 Idempotency-Key（规范 UUID）；相同键的串行重复请求返回首次结果。
+        并发使用相同键时由手机号唯一索引兜底，冲突后短暂重读首次结果，未取到返回 40900。
       operationId: register
       x-implementation-task: T-001
       security: []
@@ -64,7 +65,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResult'
         '409':
-          description: 手机号已注册（40900）
+          description: 手机号已注册，或并发相同幂等键请求在有界重读后仍未取回首次结果（40900）
           content:
             application/json:
               schema:
@@ -216,7 +217,7 @@ components:
       name: Idempotency-Key
       in: header
       required: true
-      description: 注册必填，UUID；相同键的重复请求返回首次结果。
+      description: 注册必填，规范 UUID（8-4-4-4-12）；相同键的串行重复请求返回首次结果。
       schema:
         type: string
         format: uuid
