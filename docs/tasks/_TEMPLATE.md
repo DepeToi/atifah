@@ -4,6 +4,8 @@ title: <服务> <功能>
 status: draft
 owner: codebuddy
 created: YYYY-MM-DD
+updated: YYYY-MM-DD
+status_reason: <为什么处于当前状态>
 contract_baseline: arch-baseline-v0.1
 related_adr: []
 ---
@@ -106,6 +108,16 @@ mvn -B -ntp verify
 
 ## 11. 评审与自测试记录
 
+- 评审报告：`docs/review/reports/T-xxx-<head-short-sha>.md`
+
 | 轮次 | 评审人 | 自测试命令/结果 | 结论 | Blocker/Major | 处理 |
 | --- | --- | --- | --- | --- | --- |
 | 1 | Codex |  |  |  |  |
+
+## 12. 状态变更记录
+
+> 每次状态变更必须更新 front matter 的 `status` / `updated` / `status_reason`，并在此追加一行；没有记录的状态变更无效（DOC-04）。
+
+| 日期 | 从 | 到 | 操作人 | 依据/证据 |
+| --- | --- | --- | --- | --- |
+| YYYY-MM-DD | draft | ready | Claude | 契约冻结 + 维护者确认 |

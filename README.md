@@ -233,11 +233,13 @@ curl http://localhost:8090/actuator/health   # admin-service（管理后台 BFF�
 | 角色 | 负责 | 可写范围 | 禁止 |
 | --- | --- | --- | --- |
 | **Claude**（架构） | 需求拆解、ADR、接口/DDL/事件契约、公共能力、CI 与规则 | `docs/`、根 `pom.xml`、`atifah-common/`、模块骨架、`.github/` | 不实现业务 CRUD |
-| **CodeBuddy**（开发） | 按任务包实现功能与测试 | 任务包“允许修改”的路径，通常为单个服务 | 不改契约、规则、父 pom、其他服务 |
-| **Codex**（评审） | 只读评审 diff、合规检查、**独立自测试** | PR 评论（可执行构建/测试，不改代码） | 不直接改代码 |
+| **CodeBuddy**（开发） | 按任务包实现功能与测试 | 任务包“允许修改”的路径，通常为单个服务；任务包 `status` / §12 状态记录（仅此字段） | 不改契约、规则、父 pom、其他服务 |
+| **Codex**（评审） | 只读评审 diff、合规检查、**独立自测试** | PR 评论 + `docs/review/reports/**`（只写评审报告；可执行构建/测试） | 不改代码/契约 |
 | **人类**（维护者） | 确认架构、合并 PR、导入 Nacos、打基线标签 | 全部 | — |
 
 **并发约束**：同一工作区同一时刻只允许一个角色写文件；并行任务用独立分支或 `git worktree`。
+
+**任务状态权限**：Claude 只设 `draft` / `ready`（`ready` 需人工确认）；CodeBuddy 只设 `in-progress` / `in-review`；`done` 只能由人类维护者在合并且报告归档后设置；Codex 不得改状态。每次变更必须更新 front matter 的 `status` / `updated` / `status_reason`，并在任务包 §12 记录；无 PR 证据不得标 `in-review`，无合并/报告证据不得标 `done`（DOC-04）。
 
 ### 2. 启动位置与必读文件
 
@@ -283,6 +285,8 @@ git checkout main && git pull
 git checkout -b feat/T-001-auth-login
 ```
 
+开始实现时把任务包状态改为 `in-progress`；提交、推送并创建 PR 后改为 `in-review`。
+
 ```text
 读取 AGENTS.md、目标模块 AGENTS.md、docs/tasks/T-001-auth-login.md
 及其引用的契约。只修改任务包“允许修改”的路径；实现并补充测试；
@@ -315,6 +319,8 @@ mvn -B -ntp verify
 cd atifah-admin-web/frontend && npm ci && npm run build
 ```
 
+完整报告写入 `docs/review/reports/T-xxx-<head-short-sha>.md`；PR 评论只放摘要与链接。
+
 输出固定格式，直接贴 PR 评论：
 
 ```text
@@ -329,6 +335,7 @@ Self-test:
   npm ci && npm run build: PASS
   notes: 未运行 MySQL/Redis 集成测试
 
+Report: docs/review/reports/T-001-<head-short-sha>.md
 Verdict: REQUEST_CHANGES
 ```
 
@@ -340,14 +347,14 @@ docs/tasks/<任务包>.md 和相关契约，评审 git diff main...HEAD。
 给出证据、影响、建议、Self-test 和 Verdict。不要修改代码或测试。
 ```
 
-结论规则：任一 `Blocker` / `Major`、自测试失败或未执行 → `REQUEST_CHANGES`；零 `Blocker` / `Major` 且自测试通过 → `APPROVE`。
+结论规则：任一 `Blocker` / `Major`、自测试失败或未执行、任务状态与 PR/合并/报告证据不符 → `REQUEST_CHANGES`；零 `Blocker` / `Major` 且自测试通过 → `APPROVE`。报告未落盘或任务包 §11 未归档 → 不得合并。
 
 #### 步骤 5：修复、合并与回流
 
 - 实现问题（`[Impl]`）或自测试失败 → CodeBuddy 修复，Codex 复审。
 - 架构/契约问题（`[Arch]`）→ 回到 Claude，先改 ADR/契约，再实现。
 - 信息不足（`[Question]`）→ 人类维护者确认。
-- 人类合并 PR；CodeBuddy 更新任务包 `status: done`。
+- 人类合并 PR 前，CodeBuddy/维护者把报告路径与 Verdict 归档到任务包 §11；合并后由人类维护者更新 `status: done`（CodeBuddy 不得自行设 `done`）。
 - 同一规则反复触发 → 更新 `AGENTS.md` / `docs/rules/`，或做成 CI/ArchUnit 自动检查。
 
 ### 4. 分支、提交与 PR
@@ -376,6 +383,8 @@ docs/tasks/<任务包>.md 和相关契约，评审 git diff main...HEAD。
 - 让 CodeBuddy 修改 `docs/contracts/` 来“迁就实现” → 契约漂移，Codex 必然打回。
 - 让 Codex 直接改代码 → 评审失去独立性；修复一律回 CodeBuddy。
 - Codex 只看 diff、只信 CI 不跑自测试 → 结论不可信；必须在独立工作区复跑。
+- 只把评审结论留在 PR 评论/聊天，不落盘 → 无审计记录；必须写 `docs/review/reports/` 并在任务包 §11 归档。
+- CodeBuddy 自行把任务状态设为 `done`、Codex 改状态、没有 PR 就标 `in-review` → 状态与证据不符，按 DOC-04 打回。
 - 三个工具同时改同一工作区 → 冲突与覆盖；必须串行或用独立 worktree。
 - 契约未冻结就开工 → 返工成本最高。
 - 把架构文档整篇粘贴进 prompt → 上下文浪费且容易过期；引用路径即可。

@@ -24,7 +24,7 @@
 | --- | --- | --- |
 | Claude | 架构、契约、ADR、任务拆解、公共能力、脚手架 | `docs/`、根 `pom.xml`、`atifah-common/`、模块骨架、`.github/` |
 | CodeBuddy | 按任务包实现功能与测试 | 任务包允许的单个服务目录 |
-| Codex | 只读评审、合规检查与独立自测试 | PR 评论（可运行构建/测试，不改代码） |
+| Codex | 只读评审、合规检查与独立自测试 | PR 评论 + `docs/review/reports/**`（只写评审报告；可运行构建/测试） |
 | 人类 | 确认架构、合并 PR、处理升级 | 全部 |
 
 ### 2. 仓库契约
@@ -34,13 +34,15 @@
 - 接口/DDL/事件契约放 `docs/contracts/`；冻结后在 `main` 打 `arch-baseline-vX.Y` 标签。
 - 每个实现任务必须有 `docs/tasks/T-xxx-<slug>.md` 任务包；一个任务对应一个分支、一个 PR。
 - 评审判据放 `docs/review/standards.md`，规则编号化（SCOPE/ARCH/API/DB/MQ/SEC/CODE/DEPS/TEST/DOC/OPS/GIT）。
+- 评审报告落盘到 `docs/review/reports/T-xxx-<head-short-sha>.md`；任务包 §11 归档路径与 Verdict。
+- 任务状态由授权角色维护：Claude `draft`/`ready`、CodeBuddy `in-progress`/`in-review`、人类 `done`；Codex 只读。每次变更写 front matter 与任务包 §12（DOC-04）。
 
 ### 3. 串行交接
 
 1. Claude 产出 ADR + 契约 + 任务包 → 人工确认 → 冻结基线。
 2. CodeBuddy 从 `main` 拉 `feat/T-xxx-<slug>` → 实现 → 自检 → PR。
 3. CI 通过。
-4. Codex 只读评审 + 在独立工作区执行自测试 → `Blocker`/`Major` 或自测试失败回 CodeBuddy，架构/契约问题回 Claude。
+4. Codex 只读评审 + 在独立工作区执行自测试，完整报告落盘到 `docs/review/reports/` → `Blocker`/`Major` 或自测试失败回 CodeBuddy，架构/契约问题回 Claude。
 5. 人类合并。
 
 同一工作区同一时刻只允许一个角色写文件；并行任务使用独立分支或 `git worktree`。
@@ -48,7 +50,7 @@
 ### 4. 门禁
 
 - CI：`mvn -B -ntp verify`、前端 `npm ci && npm run build`、密钥扫描。
-- 评审：任一 `Blocker` / `Major` 未清零，或 Codex 自测试未执行/失败，不得合并。
+- 评审：任一 `Blocker` / `Major` 未清零、Codex 自测试未执行/失败、报告未落盘/任务包 §11 未归档，或任务状态与 PR/合并证据不符，不得合并。
 - 契约：功能 PR 不得夹带契约修改；契约变更必须单独 PR + ADR。
 
 ## 备选方案
@@ -71,6 +73,7 @@
   - 单任务拆小后，PR 数量增加。
   - 需要人工维护角色边界，避免工具越界修改。
   - Codex 需要独立执行构建/测试，评审时间与资源增加。
+  - 评审报告需要额外归档，增加少量维护成本。
 - 需要同步修改的文档与代码：
   - `AGENTS.md`、`CLAUDE.md`
   - `docs/rules/*.md`

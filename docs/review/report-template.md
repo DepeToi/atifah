@@ -1,5 +1,6 @@
 # 评审报告
 
+> 报告路径：docs/review/reports/T-xxx-<head-short-sha>.md
 > 评审对象：<PR 链接 / 分支 / commit 范围>
 > 任务包：<docs/tasks/T-xxx-xxx.md>
 > 契约基线：<arch-baseline-vX.Y>
@@ -23,6 +24,8 @@
 - [ ] 单任务、单服务、diff ≤400 行
 - [ ] CI 通过
 - [ ] 已在独立 worktree / 干净检出执行自测试并记录
+- [ ] 报告已落盘到 `docs/review/reports/`
+- [ ] 任务状态与证据一致（`in-review` 有 PR，`done` 已合并且报告已归档；状态变更在 §12 有记录）
 
 ## 自测试记录
 

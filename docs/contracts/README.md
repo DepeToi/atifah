@@ -30,7 +30,7 @@ docs/contracts/
 | `docs/contracts/**` | Claude（架构） | CodeBuddy / Codex 只读（Codex 可运行自测试） |
 | `docs/adr/**` | Claude | 只读 |
 | `docs/tasks/**` | Claude | CodeBuddy 按任务包执行，Codex 只读 |
-| `docs/review/**` | Claude 维护规则 | Codex 只读，独立跑自测试，评审结论贴 PR 评论 |
+| `docs/review/**` | Claude 维护规则；Codex 可写 `docs/review/reports/**` 评审报告 | CodeBuddy 只读 |
 
 CodeBuddy **禁止**修改契约来迁就实现。发现契约缺失或矛盾时，在 PR 中标注 `[Contract-Question]` 并等待 Claude 更新。
 
@@ -63,7 +63,7 @@ CodeBuddy **禁止**修改契约来迁就实现。发现契约缺失或矛盾时
 
 - **Claude**：写契约、维护模板与总纲；通过 ADR 记录取舍。
 - **CodeBuddy**：任务包“必读文件”列出具体契约路径；实现时以契约为准，不自行扩展字段。
-- **Codex**：评审时对照契约检查 diff，并在独立工作区执行自测试（`mvn -B -ntp verify`、前端 `npm ci && npm run build`）；契约缺失/不一致、实现偏离契约、自测试失败均判 `Blocker`。
+- **Codex**：评审时对照契约检查 diff，并在独立工作区执行自测试（`mvn -B -ntp verify`、前端 `npm ci && npm run build`），完整报告落盘到 `docs/review/reports/`；契约缺失/不一致、实现偏离契约、自测试失败均判 `Blocker`。
 
 ## 6. 相关文档
 

@@ -64,6 +64,7 @@ git status              # 确认没有无关文件
 ## GIT-07 三角色交接约束
 
 - 同一工作区同一时刻只允许一个角色写文件；并行任务用独立分支或 `git worktree`。
-- Codex 只读评审，可在独立 worktree / 干净检出中执行构建与测试；不得修改文件、提交修复或提交构建产物；修复必须回到 CodeBuddy。
+- Codex 只读评审，可在独立 worktree / 干净检出中执行构建与测试，并写 `docs/review/reports/**` 评审报告；不得修改代码/契约/任务实现，不得提交修复或构建产物；修复必须回到 CodeBuddy。
+- 任务状态只能由授权角色按 `docs/tasks/README.md` 状态机修改；Codex 不得改状态；每次变更必须更新 front matter 的 `status` / `updated` / `status_reason`，并在任务包 §12 追加记录（DOC-04）。
 - CodeBuddy 不得修改契约、规则、父 pom 或其他服务；需要变更时回到 Claude 走 ADR/契约 PR。
 - Claude 的架构变更与 CodeBuddy 的功能实现不得混在同一个 PR。

@@ -32,7 +32,7 @@
 
 ## 3. 评审流程
 
-1. **范围**：diff 是否只在任务包允许路径内；是否夹带契约/规则/其他服务修改。
+1. **范围与状态**：diff 是否只在任务包允许路径内；是否夹带契约/规则/其他服务修改；任务状态是否由授权角色设置、是否与 PR/合并/报告证据一致。
 2. **契约一致性**：接口路径、字段、错误码、DDL、事件 payload 是否与冻结契约一致。
 3. **架构与数据**：服务边界、跨库访问、同步/异步方式、公共模块依赖。
 4. **安全**：敏感字段、日志、密钥、鉴权、幂等。
@@ -156,6 +156,8 @@ cd atifah-admin-web/frontend && npm ci && npm run build
 | --- | --- | --- |
 | DOC-01 | 契约变更先有 ADR，并单独开 PR | Blocker |
 | DOC-02 | 接口/路由/端口/配置变更同步文档与常量登记 | Major |
+| DOC-03 | Codex 评审报告未落盘到 `docs/review/reports/`，或任务包 §11 未归档 | Blocker（流程检查） |
+| DOC-04 | 任务状态被未授权角色修改、跳过必经状态，或与 PR/合并/报告证据不符 | Blocker（流程检查） |
 | OPS-01 | 配置分层正确；共享配置只改 `common-application.yaml` 并提醒导入 Nacos | Major |
 | OPS-02 | 修改受保护部署文件、端口映射、已执行 SQL、`.gitattributes` | Blocker |
 | GIT-01 | AI 未经用户要求自动 `commit` / `push` | Blocker（流程检查） |
@@ -200,6 +202,16 @@ Verdict: REQUEST_CHANGES
 - 不要写“建议重构”“可以考虑优化”这类无法执行的结论。
 - `Minor` 可以合并为一条列表，但仍需带规则编号与位置。
 - 必须附 `Self-test` 块：commit、命令、结果、未覆盖范围；没有自测试结果不得给出 `APPROVE`。
+- 必须附报告落盘路径：`docs/review/reports/T-xxx-<head-short-sha>.md`。
+
+### 6.1 评审记录归档（强制）
+
+- Codex 必须把完整评审报告写入 `docs/review/reports/T-xxx-<head-short-sha>.md`，使用 [`report-template.md`](report-template.md)；PR 评论只放摘要与报告链接。
+- Codex 的写入范围仅限 `docs/review/reports/**`；不得修改代码、契约、规则、任务实现或测试。
+- 报告必须包含：commit SHA、Verdict、Blocker/Major/Minor/Question 计数、发现详情、Self-test 块、未覆盖范围。
+- CodeBuddy 在开 PR 或合并前，把报告路径与 Verdict 写入 `docs/tasks/T-xxx.md` §11；不得修改报告正文。
+- 未落盘报告或 §11 未归档 → 不得合并（DOC-03）。
+- 如果 Codex 所在环境不能写文件：在 PR 评论输出完整报告，由 CodeBuddy/维护者原样保存到上述路径后再合并。
 
 ## 7. 分流与升级
 
@@ -210,14 +222,16 @@ Verdict: REQUEST_CHANGES
 
 ## 8. Codex 禁止事项
 
-- 不直接修改代码、不提交修复；评审是只读的，但可以在独立工作区运行构建与测试。
+- 不直接修改代码、不提交修复；评审是只读的，但可以在独立工作区运行构建与测试，并写 `docs/review/reports/**` 评审报告。
 - 不评审任务范围外的文件，不提出大规模重构。
 - 不发明需求或验收标准；以任务包和契约为准。
 - 不因个人风格偏好判 `Blocker` / `Major`；无规则依据的只算 `Minor` 或不报。
 - 不得只依赖 CI 结果；必须按 §4 独立执行自测试。
 - 不得修改代码/测试/配置让自测试通过，不得提交构建产物。
-- 不在 CI 失败、自测试未执行或失败、契约缺失时给出 `APPROVE`。
+- 不得只把评审结论留在 PR 评论/聊天而不落盘；必须写入 `docs/review/reports/`。
+- 不得修改任务包状态或 §12 状态记录；状态由授权角色维护。
+- 不在 CI 失败、自测试未执行或失败、报告未落盘、任务状态与证据不符、契约缺失时给出 `APPROVE`。
 
 ## 9. 报告模板
 
-见 [`report-template.md`](report-template.md)。报告可直接贴 PR 评论，不一定落盘。
+见 [`report-template.md`](report-template.md)。报告必须落盘到 `docs/review/reports/T-xxx-<head-short-sha>.md`；PR 评论只放摘要与链接。

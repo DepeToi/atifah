@@ -7,6 +7,7 @@
 ## 1. 关联
 
 - 任务包：`docs/tasks/T-xxx-<slug>.md`
+- 任务状态：`in-review`（PR 创建后；合并后由人类维护者改为 `done`）
 - 契约基线：`arch-baseline-vX.Y`
 - 关联 ADR / Issue：
 
@@ -44,6 +45,7 @@ cd atifah-admin-web/frontend && npm run build
 - [ ] 日志、异常、MQ、URL 无敏感明文
 - [ ] 无硬编码密钥/密码/Token
 - [ ] 新增依赖已确认，版本只在根 `pom.xml`
+- [ ] 任务状态按状态机更新，并在任务包 §12 记录（无 PR 不标 `in-review`，未合并不标 `done`）
 - [ ] 文档、常量登记、前端类型已同步
 
 ## 6. 风险与回滚
@@ -55,6 +57,7 @@ cd atifah-admin-web/frontend && npm run build
 ## 7. Codex 评审记录
 
 - 结论：`APPROVE` / `REQUEST_CHANGES`
+- 评审报告：`docs/review/reports/T-xxx-<head-short-sha>.md`
 - 自测试：`mvn -B -ntp verify` / `npm ci && npm run build` → PASS / FAIL
 - 自测试环境：独立 worktree / 干净检出（commit：）
 - Blocker：

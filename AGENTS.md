@@ -17,22 +17,24 @@
 | 角色 | 职责 | 可写范围 | 禁止 |
 | --- | --- | --- | --- |
 | Claude（架构） | 架构设计、接口/DDL/事件契约、ADR、任务拆解、公共能力与脚手架 | `docs/`、根 `pom.xml`、`atifah-common/`、模块骨架、`.github/`、根规则文件 | 不实现业务 CRUD |
-| CodeBuddy（开发） | 按任务包实现功能与测试 | 任务包“允许修改”列出的目录，通常为单个服务 | 不改契约、规则、父 pom、其他服务 |
-| Codex（评审） | 只读评审 diff、合规检查与**独立自测试** | 仅 PR 评论（可运行构建/测试，不改文件） | 不直接改代码 |
+| CodeBuddy（开发） | 按任务包实现功能与测试 | 任务包“允许修改”列出的目录，通常为单个服务；任务包 `status` / §12 状态记录（仅此字段） | 不改契约、规则、父 pom、其他服务 |
+| Codex（评审） | 只读评审 diff、合规检查与**独立自测试** | PR 评论 + `docs/review/reports/**`（只写评审报告；可运行构建/测试） | 不改代码/契约/规则/任务实现 |
 | 人类（维护者） | 确认架构、合并 PR、处理升级 | 全部 | — |
 
 **交接只通过仓库完成**，不依赖对话记忆：
 
 1. Claude 产出 ADR + 契约 + `docs/tasks/T-xxx.md`；人工确认后在 `main` 打 `arch-baseline-vX.Y` 标签，契约冻结。
-2. CodeBuddy 从 `main` 拉 `feat/T-xxx-<slug>`，只按任务包实现，跑通测试后开 PR。
+2. CodeBuddy 从 `main` 拉 `feat/T-xxx-<slug>`，把任务状态改为 `in-progress`；只按任务包实现，提交并推送、创建 PR 后改为 `in-review`。
 3. CI（`.github/workflows/ci.yml`）必须通过。
-4. Codex 按 `docs/review/standards.md` 只读评审 PR，并在独立工作区执行自测试（`mvn -B -ntp verify`、前端 `npm ci && npm run build`），结论与自测试结果写 PR 评论。
+4. Codex 按 `docs/review/standards.md` 只读评审 PR，并在独立工作区执行自测试（`mvn -B -ntp verify`、前端 `npm ci && npm run build`）；完整报告落盘到 `docs/review/reports/T-xxx-<sha>.md`，PR 评论只放摘要与链接。
 5. `Blocker` / `Major` 或自测试失败由 CodeBuddy 修复；架构或契约问题回到 Claude，先改 ADR/契约再改代码。
-6. 人类合并；AI 不得自动 `git commit` / `git push`，除非用户明确要求。
+6. 人类在 PR 合并且报告归档后把任务状态改为 `done`；合并前任务包 §11 必须归档评审报告路径与 Verdict。AI 不得自动 `git commit` / `git push`，除非用户明确要求。
 
 **并发约束**：同一工作区同一时刻只允许一个角色写文件。并行任务用独立分支或 `git worktree`，禁止两个工具同时改同一批文件。
 
-**Codex 自测试**：在独立 worktree / 干净检出中执行，记录 commit、命令、结果；不得只信 CI，不得修改代码/测试，不得提交构建产物。
+**任务状态权限**：Claude 只设 `draft` / `ready`（`ready` 需人工确认）；CodeBuddy 只设 `in-progress` / `in-review`；人类维护者设 `done` 与强制回退；Codex 不得改状态。每次变更必须更新 front matter 的 `status` / `updated` / `status_reason`，并在任务包 §12 追加记录；没有 PR 证据不得标 `in-review`，没有合并与报告证据不得标 `done`（DOC-04）。
+
+**Codex 自测试与报告**：在独立 worktree / 干净检出中执行，记录 commit、命令、结果；完整报告写入 `docs/review/reports/`；不得只信 CI，不得修改代码/测试，不得提交构建产物。
 
 ## 1. 项目是什么
 
@@ -92,7 +94,7 @@ pom.xml (parent: spring-boot-starter-parent)
 - **契约冻结**：`docs/contracts/` 是接口唯一依据；架构基线通过 `main` 上的 `arch-baseline-vX.Y` 标签冻结。
 - **先改契约再改代码**：任何接口/DDL/事件变更必须先由 Claude 出 ADR 并单独提交契约 PR；CodeBuddy 与 Codex 不得修改 `docs/contracts/**`。
 - **任务包**：每个实现任务必须有 `docs/tasks/T-xxx-<slug>.md`，包含目标、必读文件、允许/禁止修改路径、验收标准与测试要求。
-- **评审**：Codex 只读评审并独立执行自测试，按 `docs/review/standards.md` 输出固定格式；`Blocker` / `Major` 未清零或自测试失败不得合并。
+- **评审**：Codex 只读评审并独立执行自测试，按 `docs/review/standards.md` 输出固定格式；报告落盘到 `docs/review/reports/`，任务包 §11 归档路径与 Verdict；校验任务状态与 PR/合并证据一致；`Blocker` / `Major` 未清零、自测试失败、报告未归档或状态证据不符不得合并。
 - **PR 上限**：单服务、单任务、diff ≤400 行；超出请拆任务，不要提交大杂烩。
 
 ## 6. 禁止事项（违反即打回）
@@ -116,6 +118,7 @@ pom.xml (parent: spring-boot-starter-parent)
 | `docs/contracts/api-conventions.md` | 接口总纲（响应、错误码、鉴权、分页） |
 | `docs/tasks/README.md` | 任务包规范与状态流转 |
 | `docs/review/standards.md` | Codex 评审规则、自测试要求、分级与结论 |
+| `docs/review/reports/` | Codex 评审报告归档（按任务 + head SHA 命名） |
 | `docs/adr/` | 架构决策记录 |
 | `docs/architecture.md` | 设计目标、核心链路、高并发与一致性 |
 | `docs/domain.md` | 业务域、服务归属、领域边界 |
