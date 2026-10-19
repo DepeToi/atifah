@@ -32,6 +32,12 @@ public final class CacheKeys {
     /** 接口幂等键。 */
     public static final String IDEMPOTENT = "idem:%s:%s";
 
+    /** 刷新令牌（key 为令牌哈希，value 为 userId）。 */
+    public static final String AUTH_REFRESH = "auth:refresh:%s";
+
+    /** 登录失败计数（key 为登录标识的 SHA-256 哈希，value 为失败次数）。 */
+    public static final String AUTH_LOGIN_FAIL = "auth:login:fail:%s";
+
     /** 分布式锁。 */
     public static final String LOCK = "lock:%s:%s";
 

@@ -23,6 +23,6 @@ public class JwtProperties {
     /** 令牌签发者。 */
     private String issuer = "atifah";
 
-    /** 访问令牌有效期。 */
-    private Duration accessTokenTtl = Duration.ofHours(2);
+    /** 访问令牌有效期；短 TTL 降低令牌泄露后的影响面。 */
+    private Duration accessTokenTtl = Duration.ofMinutes(15);
 }

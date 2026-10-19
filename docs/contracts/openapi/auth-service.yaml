@@ -1,0 +1,390 @@
+openapi: 3.1.0
+
+info:
+  title: atifah auth-service API
+  version: 0.1.0
+  license:
+    name: Proprietary
+    identifier: LicenseRef-Proprietary
+  description: |
+    认证服务接口契约，覆盖注册、登录、刷新与登出。
+    - T-001 实现注册与登录（签发 access / refresh token）
+    - T-002 实现刷新与登出
+    通用规则见 ../api-conventions.md；冻结后由 Claude 维护，CodeBuddy 只读。
+
+servers:
+  - url: http://localhost:8080
+    description: 本地网关
+  - url: https://api.atifah.com
+    description: 生产网关（按环境替换）
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: auth
+    description: 认证与令牌
+
+paths:
+  /api/v1/auth/register:
+    post:
+      tags: [auth]
+      summary: 注册认证账号
+      description: |
+        只创建认证账号，不创建用户资料；user-service 的资料创建由后续任务负责。
+        必须携带 Idempotency-Key；相同键重复请求返回首次结果。
+      operationId: register
+      x-implementation-task: T-001
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/TraceId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+            examples:
+              default:
+                value:
+                  phone: "13800138000"
+                  password: "Passw0rd!"
+      responses:
+        '200':
+          description: 注册成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultRegisterResponse'
+        '400':
+          description: 参数错误（40000），包括缺少或非法的 Idempotency-Key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResult'
+        '409':
+          description: 手机号已注册（40900）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResult'
+        '429':
+          description: 请求过于频繁（42900）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResult'
+
+  /api/v1/auth/login:
+    post:
+      tags: [auth]
+      summary: 手机号 + 密码登录
+      description: |
+        登录成功返回 access token 与 refresh token。
+        手机号不存在与密码错误统一返回 40100，避免用户枚举。
+        连续失败 5 次 / 10 分钟后返回 42900。
+        认证接口不强制 Idempotency-Key。
+      operationId: login
+      x-implementation-task: T-001
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/TraceId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+            examples:
+              default:
+                value:
+                  phone: "13800138000"
+                  password: "Passw0rd!"
+      responses:
+        '200':
+          description: 登录成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultLoginResponse'
+        '400':
+          description: 参数错误（40000）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResult'
+        '401':
+          description: 手机号或密码错误（40100）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResult'
+        '403':
+          description: 账号已禁用（40300，密码正确后返回）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResult'
+        '429':
+          description: 登录失败次数过多（42900）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResult'
+
+  /api/v1/auth/refresh:
+    post:
+      tags: [auth]
+      summary: 刷新令牌
+      description: |
+        使用 refresh token 换取新的 access token 与 refresh token。
+        旧 refresh token 立即失效（轮换）；重复使用返回 40100。
+      operationId: refresh
+      x-implementation-task: T-002
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/TraceId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshRequest'
+      responses:
+        '200':
+          description: 刷新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultLoginResponse'
+        '401':
+          description: refresh token 无效、已过期或已被轮换（40100）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResult'
+        '429':
+          description: 请求过于频繁（42900）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResult'
+
+  /api/v1/auth/logout:
+    post:
+      tags: [auth]
+      summary: 登出
+      description: |
+        撤销 refresh token；access token 在 15 分钟 TTL 内自然过期。
+        重复登出返回成功（幂等）。需要有效 access token。
+      operationId: logout
+      x-implementation-task: T-002
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/TraceId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LogoutRequest'
+      responses:
+        '200':
+          description: 登出成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultVoid'
+        '401':
+          description: 未认证或 access token 无效（40100）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResult'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      description: 注册必填，UUID；相同键的重复请求返回首次结果。
+      schema:
+        type: string
+        format: uuid
+
+    TraceId:
+      name: X-Trace-Id
+      in: header
+      required: false
+      description: 链路追踪 ID，网关生成/透传。
+      schema:
+        type: string
+        maxLength: 64
+
+  schemas:
+    RegisterRequest:
+      type: object
+      required: [phone, password]
+      properties:
+        phone:
+          type: string
+          pattern: '^1[3-9]\d{9}$'
+          description: 中国大陆手机号。
+          example: "13800138000"
+        password:
+          type: string
+          format: password
+          writeOnly: true
+          minLength: 8
+          maxLength: 64
+          pattern: '^(?=.*[A-Za-z])(?=.*\d).{8,64}$'
+          description: 8-64 位，至少包含一个字母和一个数字。
+
+    LoginRequest:
+      type: object
+      required: [phone, password]
+      properties:
+        phone:
+          type: string
+          pattern: '^1[3-9]\d{9}$'
+          example: "13800138000"
+        password:
+          type: string
+          format: password
+          writeOnly: true
+          minLength: 1
+          maxLength: 64
+
+    RefreshRequest:
+      type: object
+      required: [refreshToken]
+      properties:
+        refreshToken:
+          type: string
+          format: password
+          writeOnly: true
+          minLength: 32
+          description: 登录时返回的 refresh token。
+          example: "bXlfc3VwZXJfc2VjcmV0X3JlZnJlc2hfdG9rZW5fMTIzNDU2Nzg5MA"
+
+    LogoutRequest:
+      type: object
+      required: [refreshToken]
+      properties:
+        refreshToken:
+          type: string
+          format: password
+          writeOnly: true
+          minLength: 32
+          description: 需要撤销的 refresh token。
+
+    RegisterResponse:
+      type: object
+      required: [userId]
+      properties:
+        userId:
+          type: string
+          description: 全局用户 ID（雪花 ID，字符串返回）。
+          example: "1234567890123456789"
+
+    AuthToken:
+      type: object
+      required: [accessToken, refreshToken, tokenType, expiresIn, userId]
+      properties:
+        accessToken:
+          type: string
+          description: JWT access token。
+        refreshToken:
+          type: string
+          description: 不透明 refresh token，仅返回一次，客户端需安全存储。
+        tokenType:
+          type: string
+          enum: [Bearer]
+          example: Bearer
+        expiresIn:
+          type: integer
+          format: int32
+          description: access token 有效期（秒）。
+          example: 900
+        userId:
+          type: string
+          description: 全局用户 ID（字符串返回）。
+          example: "1234567890123456789"
+
+    ResultRegisterResponse:
+      type: object
+      required: [code, message, timestamp]
+      properties:
+        code:
+          type: integer
+          example: 0
+        message:
+          type: string
+          example: OK
+        data:
+          $ref: '#/components/schemas/RegisterResponse'
+        timestamp:
+          type: integer
+          format: int64
+          example: 1700000000000
+
+    ResultLoginResponse:
+      type: object
+      required: [code, message, timestamp]
+      properties:
+        code:
+          type: integer
+          example: 0
+        message:
+          type: string
+          example: OK
+        data:
+          $ref: '#/components/schemas/AuthToken'
+        timestamp:
+          type: integer
+          format: int64
+          example: 1700000000000
+
+    ResultVoid:
+      type: object
+      required: [code, message, timestamp]
+      properties:
+        code:
+          type: integer
+          example: 0
+        message:
+          type: string
+          example: OK
+        data:
+          type: 'null'
+        timestamp:
+          type: integer
+          format: int64
+          example: 1700000000000
+
+    ErrorResult:
+      type: object
+      required: [code, message, timestamp]
+      properties:
+        code:
+          type: integer
+          description: 40000 / 40100 / 40300 / 40900 / 42900 / 50000
+          example: 40100
+        message:
+          type: string
+          example: 手机号或密码错误
+        data:
+          type: 'null'
+        timestamp:
+          type: integer
+          format: int64
+          example: 1700000000000

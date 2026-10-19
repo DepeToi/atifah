@@ -69,7 +69,8 @@ atifah:
     jwt:
       secret: ${JWT_SECRET:atifah-dev-secret-change-me-please-32bytes}
       issuer: atifah
-      access-token-ttl: 2h
+      # Access Token 短 TTL；Refresh Token 由 auth-service 单独管理。
+      access-token-ttl: 15m
 
 logging:
   pattern:
