@@ -29,6 +29,11 @@
 
 1. **Nacos**：把 `deploy/nacos/config/common-application.yaml` 与各服务私有配置发布到生产
    Nacos（group `atifah_GROUP`）；生产差异化项用 Nacos 或环境变量覆盖。
+   Nacos 3 的鉴权相关环境变量必须显式配置，值由 KMS / External Secrets 注入，禁止落仓库：
+   - `NACOS_AUTH_TOKEN`：base64，解码后 ≥32 字节，缺失时启动脚本直接 exit 255
+   - `NACOS_AUTH_IDENTITY_KEY` / `NACOS_AUTH_IDENTITY_VALUE`：服务端身份，缺失同样启动失败
+   - `NACOS_AUTH_ENABLE=true`，并保持 `nacos.core.auth.admin.enabled=true`（运维 API 鉴权默认开启，
+     生产不得像本地 compose 那样用 `NACOS_AUTH_ADMIN_ENABLE=false` 关闭）
 2. **Secret 替换**：`k8s/secret.yaml` 内是开发默认值，生产必须替换——
    `JWT_SECRET` 至少 256 位强随机（或切 RS256）、`MYSQL_PASSWORD` / `REDIS_PASSWORD` 走 KMS；
    推荐 SealedSecret / External Secrets 注入，不落明文到仓库。
