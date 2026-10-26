@@ -12,19 +12,23 @@ spring:
   lifecycle:
     timeout-per-shutdown-phase: 30s
   config:
-    import: "optional:nacos:${spring.application.name}.yaml?group=atifah_GROUP&refreshEnabled=true"
+    import: "optional:nacos:${spring.application.name}.yaml?group=ATIFAH_GATEWAY_GROUP&refreshEnabled=true"
   cloud:
     nacos:
       server-addr: ${NACOS_ADDR:127.0.0.1:8848}
       discovery:
         server-addr: ${NACOS_ADDR:127.0.0.1:8848}
-        namespace: ${NACOS_NAMESPACE:}
+        namespace: ${NACOS_NAMESPACE:atifah_dev}
         group: atifah_GROUP
+        username: ${NACOS_USERNAME:}
+        password: ${NACOS_PASSWORD:}
       config:
         server-addr: ${NACOS_ADDR:127.0.0.1:8848}
-        namespace: ${NACOS_NAMESPACE:}
-        group: atifah_GROUP
+        namespace: ${NACOS_NAMESPACE:atifah_dev}
+        group: ATIFAH_GATEWAY_GROUP
         file-extension: yaml
+        username: ${NACOS_USERNAME:}
+        password: ${NACOS_PASSWORD:}
     gateway:
       discovery:
         locator:
@@ -97,7 +101,7 @@ management:
         include: health,info,gateway,metrics,prometheus
   endpoint:
     health:
-      show-details: always
+      show-details: never
   metrics:
     tags:
       application: ${spring.application.name}

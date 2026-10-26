@@ -120,13 +120,13 @@ curl http://localhost:8090/actuator/health   # admin-service（管理后台 BFF�
 
 ## 配置约定
 
-- 配置优先级：环境变量 > Nacos（`atifah_GROUP`）> 本地 `application.yml`。
+- 配置优先级：环境变量 > Nacos（公共配置 `ATIFAH_PUBLIC_GROUP`，各服务私有配置在各自 group）> 本地 `application.yml`。
 - 常用环境变量：
 
 | 变量                                                            | 默认值                                    |
 | ------------------------------------------------------------- | -------------------------------------- |
 | `NACOS_ADDR`                                                  | `127.0.0.1:8848`                       |
-| `NACOS_NAMESPACE`                                             | 空（public）                              |
+| `NACOS_NAMESPACE`                                             | 默认 `atifah_dev`，生产 `atifah_prod`               |
 | `MYSQL_HOST` / `MYSQL_PORT` / `MYSQL_USER` / `MYSQL_PASSWORD` | `127.0.0.1` / `3306` / `root` / `root` |
 | `REDIS_HOST` / `REDIS_PORT` / `REDIS_PASSWORD`                | `127.0.0.1` / `6379` / 空               |
 | `ROCKETMQ_NAMESRV`                                            | `127.0.0.1:9876`                       |

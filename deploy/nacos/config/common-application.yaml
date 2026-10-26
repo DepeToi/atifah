@@ -1,4 +1,4 @@
-# 业务服务共享配置（Nacos data-id: common-application.yaml, group: atifah_GROUP）
+# 业务服务共享配置（Nacos data-id: common-application.yaml, group: ATIFAH_PUBLIC_GROUP）
 # 由各服务通过 spring.config.import 引入。此处仅放各服务完全一致、且与连接 Nacos
 # 本身无关的配置；连接 Nacos 所需的 spring.cloud.nacos.* 与差异化项
 # （端口、应用名、数据源 URL、生产者组）保留在各服务本地 application.yml。
@@ -59,12 +59,16 @@ management:
         include: health,info,metrics,prometheus
   endpoint:
     health:
-      show-details: always
+      show-details: never
   metrics:
     tags:
       application: ${spring.application.name:atifah}
 
 atifah:
+  common:
+    # 公共配置装载标记：common-security 的 NacosCommonConfigGuard 据此判断本配置是否真的
+    # 从 Nacos 拉取成功，缺失时服务拒绝启动（防止静默走本地默认值兜底）。
+    config-loaded: true
   security:
     jwt:
       secret: ${JWT_SECRET:atifah-dev-secret-change-me-please-32bytes}

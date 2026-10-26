@@ -28,15 +28,19 @@
 ## 3. 配置准备
 
 1. **Nacos**：把 `deploy/nacos/config/common-application.yaml` 与各服务私有配置发布到生产
-   Nacos（group `atifah_GROUP`）；生产差异化项用 Nacos 或环境变量覆盖。
+   Nacos（命名空间 `atifah_prod`；公共配置 group `ATIFAH_PUBLIC_GROUP`，各服务私有配置在各自的 `ATIFAH_<服务名大写>_GROUP`，归属应用均为 `atifah`）；生产差异化项用 Nacos 或环境变量覆盖。
    Nacos 3 的鉴权相关环境变量必须显式配置，值由 KMS / External Secrets 注入，禁止落仓库：
    - `NACOS_AUTH_TOKEN`：base64，解码后 ≥32 字节，缺失时启动脚本直接 exit 255
    - `NACOS_AUTH_IDENTITY_KEY` / `NACOS_AUTH_IDENTITY_VALUE`：服务端身份，缺失同样启动失败
    - `NACOS_AUTH_ENABLE=true`，并保持 `nacos.core.auth.admin.enabled=true`（运维 API 鉴权默认开启，
      生产不得像本地 compose 那样用 `NACOS_AUTH_ADMIN_ENABLE=false` 关闭）
-2. **Secret 替换**：`k8s/secret.yaml` 内是开发默认值，生产必须替换——
+   - `NACOS_USERNAME` / `NACOS_PASSWORD`：**客户端**鉴权凭据，服务端开启鉴权后缺失会导致服务注册
+     与配置拉取被 403 拒绝。建议创建专用应用账号并按最小权限授权，不复用 `nacos` 管理员；
+     由 `k8s/secret.yaml`（生产用 SealedSecret / External Secrets）经 `envFrom.secretRef` 注入
+2. **Secret 替换**：`k8s/secret.yaml` 仅供本地开发演示，生产不要直接应用该文件；必须通过 External Secrets / SealedSecret 创建部署所需的同名 Secret——
    `JWT_SECRET` 至少 256 位强随机（或切 RS256）、`MYSQL_PASSWORD` / `REDIS_PASSWORD` 走 KMS；
-   推荐 SealedSecret / External Secrets 注入，不落明文到仓库。
+   `NACOS_USERNAME` / `NACOS_PASSWORD` 使用专用最小权限客户端账号。推荐 SealedSecret / External Secrets 注入，
+   不落明文到仓库；仓库的 Secret 示例不包含 Nacos 默认账号。
 3. **ConfigMap 覆盖**：`k8s/configmap.yaml` 默认 `host.docker.internal`，生产改为云托管地址；
    `CORS_ALLOWED_ORIGINS` 收敛为具体域名。用 Kustomize overlay 覆盖，不直接改源清单。
 4. **敏感字段加密**：日记正文/量表结果/手机号字段级加密（AES-256-GCM），密钥由 KMS 管理。
