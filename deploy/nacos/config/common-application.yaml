@@ -26,6 +26,15 @@ spring:
     time-zone: Asia/Shanghai
     date-format: yyyy-MM-dd HH:mm:ss
   cloud:
+    # 排除 Windows 开发机虚拟网卡，避免 Nacos 注册到 172.x 虚拟 IP。
+    # 注意：spring-cloud-commons 按 Java NetworkInterface.getDisplayName()（即驱动描述，
+    # 如 "Hyper-V Virtual Ethernet Adapter"）全串正则匹配，不是控制台里的 "vEthernet (...)" 友好名；
+    # Linux 生产环境无匹配接口，配置无害
+    inetutils:
+      ignored-interfaces:
+        - 'Hyper-V Virtual.*'
+        - 'VMware.*'
+        - 'VirtualBox.*'
     sentinel:
       transport:
         dashboard: ${SENTINEL_DASHBOARD:127.0.0.1:8858}

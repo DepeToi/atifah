@@ -46,6 +46,7 @@ SealedSecret / External Secrets）经 `envFrom.secretRef` 注入。
 | data-id | Group | 用途 |
 |---|---|---|
 | `common-application.yaml` | `ATIFAH_PUBLIC_GROUP` | 10 个业务服务共享配置（Redis/MyBatis-Plus/Jackson/Sentinel/OpenFeign/RocketMQ/Actuator/JWT/日志） |
+| `atifah-gateway.yaml` | `ATIFAH_GATEWAY_GROUP` | 网关私有配置（鉴权开关/白名单；`auth.enabled` 改动需重启网关，`whitelist` 发布即生效） |
 | `${spring.application.name}.yaml` | 各服务自己的 `ATIFAH_<服务名大写>_GROUP` | 各服务私有覆盖配置（可选，用于按服务覆盖共享项） |
 
 ## 发布方式
@@ -82,11 +83,24 @@ curl -X POST "http://127.0.0.1:8848/nacos/v3/admin/cs/config" \
 注意 v3 参数名是 `groupName`（v1 为 `group`）。鉴权开启时请求还需带 `accessToken`，
 本地 compose 已关闭运维 API 鉴权，可直接调用。
 
+> **Windows 下含中文的参数禁止内联**（如 `namespaceDesc=本地开发环境`）：终端会按 GBK 发出导致乱码入库
+> （且不可逆）。中文值先写入 UTF-8 文件再传：`--data-urlencode "namespaceDesc@desc.txt"`，
+> curl 读不到 `/tmp/...` 路径时用 `cygpath -w` 转 Windows 路径。ASCII 参数不受影响。
+
 ## 本地开发
 
 ```bash
 docker compose -f deploy/docker-compose/docker-compose.yml up -d nacos
 ```
+
+配置持久化到 MySQL（库 `nacos_config`，与中间件同实例；表结构见 `deploy/sql/02-nacos-config.sql`），
+nacos 容器重建后配置不丢失。注意：
+
+- 已有 mysql-data 卷的环境首次切换时需手动执行一次该 SQL 建库建表：
+  `docker exec -i atifah-mysql mysql -uroot -proot < deploy/sql/02-nacos-config.sql`
+- 从 Derby 切到 MySQL 属于更换存储，旧配置不会自动迁移，需重建命名空间并重新发布配置。
+- `NACOS_CONFIG_NAMESPACE_COMPATIBLE_MODE=false` 关闭 2.x→3.x 兼容迁移：Nacos 3.0.3 的迁移预检
+  SQL 在 Derby 上触发 bad grammar 会导致启动失败（全新 MySQL 库无 2.x 遗留数据，无需迁移）。
 
 发布 `common-application.yaml`（命名空间 `atifah_dev`）后再启动各服务。各服务通过
 `spring.config.import: nacos:common-application.yaml?group=ATIFAH_PUBLIC_GROUP` **必选**引入，

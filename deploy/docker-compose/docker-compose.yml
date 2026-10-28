@@ -46,8 +46,24 @@ services:
     image: nacos/nacos-server:v3.0.3
     container_name: atifah-nacos
     restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
     environment:
       MODE: standalone
+      # 配置持久化到 MySQL（默认 Derby 内嵌存储，容器重建即丢失）
+      SPRING_DATASOURCE_PLATFORM: mysql
+      MYSQL_SERVICE_HOST: mysql
+      MYSQL_SERVICE_PORT: "3306"
+      MYSQL_SERVICE_DB_NAME: nacos_config
+      # 本地开发凭据，与 mysql 服务保持一致；生产必须独立账号并走环境变量注入
+      MYSQL_SERVICE_USER: root
+      MYSQL_SERVICE_PASSWORD: root
+      # MySQL 8 caching_sha2_password 需允许公钥获取；时区对齐容器默认值
+      MYSQL_SERVICE_DB_PARAM: characterEncoding=utf8&connectTimeout=1000&socketTimeout=3000&autoReconnect=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai
+      # 关闭 2.x→3.x 命名空间兼容迁移（Nacos 3.0.3 预检 SQL 在 Derby CLOB 上触发 bad grammar，导致启动失败）；
+      # 本地为全新 MySQL 库，无 2.x 遗留数据，无需迁移
+      NACOS_CONFIG_NAMESPACE_COMPATIBLE_MODE: "false"
       NACOS_AUTH_ENABLE: "false"
       # Nacos 3.x 启动脚本强制校验：必须提供 base64 且解码后 >=32 字节的 token（本地开发值）
       NACOS_AUTH_TOKEN: "${NACOS_AUTH_TOKEN:?NACOS_AUTH_TOKEN 未设置，见 deploy/docker-compose/.env.example}"
