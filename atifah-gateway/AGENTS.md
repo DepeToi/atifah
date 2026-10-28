@@ -14,9 +14,13 @@
 - 过滤器实现 `GlobalFilter` + `Ordered`；链路上禁止任何阻塞调用（JDBC、同步 HTTP、`Thread.sleep`），必须返回 `Mono` / `Flux`。
 - 需要直接写响应体时保持与 `Result` 一致（`{code,message,data,timestamp}`），不要引入 servlet 侧的序列化工具。
 - 网关没有 `@RestControllerAdvice`（无 servlet 上下文），异常在过滤器内自行转成 `Result` 并设置状态码。
-- 新增路由：在 `application.yml` 的 `spring.cloud.gateway.routes` 追加 `lb://atifah-<service>`，并同步 `README.md` 端口表与相关契约/文档。
+- 新增路由：在 `application.yml` 的 `spring.cloud.gateway.server.webflux.routes` 追加 `lb://atifah-<service>`，并同步 `README.md` 端口表与相关契约/文档。
 - 鉴权开关 `atifah.gateway.auth.enabled` 默认 `false`。开启前必须补齐白名单（现状只有 `/api/v1/auth/`、`/actuator/`，`/ws/**` 与 `/admin/api/**` 会被 401）。
-- 已弃用 `spring-cloud-starter-gateway` 但暂时保留（Sentinel 网关适配器依赖经典 starter），不要“顺手升级”。
+- 2026-10-29 已按 [ADR 0003](../docs/adr/0003-gateway-starter-webflux-migration.md) 路线 B 迁移至
+  `spring-cloud-starter-gateway-server-webflux`（key 同步迁移到 `spring.cloud.gateway.server.webflux.*`）；
+  `spring-cloud-alibaba-sentinel-gateway` 上的 exclusion 用于阻断 SCA 2025.0.0.0 的经典 starter 回流，
+  升级 SCA 2025.1.0.0（随 Boot 4 平台迁移，另立项目）后移除。网关 actuator 端点（/actuator/gateway/**）
+  在 SCG 4.3.5 上始终未注册（迁移前即如此），如需路由巡检用逐路径探测代替。
 
 ## 契约
 

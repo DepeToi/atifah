@@ -37,7 +37,7 @@
 
         <dependency>
             <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-starter-gateway</artifactId>
+            <artifactId>spring-cloud-starter-gateway-server-webflux</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.cloud</groupId>
@@ -58,6 +58,14 @@
         <dependency>
             <groupId>com.alibaba.cloud</groupId>
             <artifactId>spring-cloud-alibaba-sentinel-gateway</artifactId>
+            <exclusions>
+                <!-- SCA 2025.0.0.0 仍非 optional 依赖经典 starter，排除以阻断经典 jar 经传递回流；
+                     升级 SCA 2025.1.0.0 后其已 optional 化，届时移除本 exclusion（见 ADR 0003 路线 A） -->
+                <exclusion>
+                    <groupId>org.springframework.cloud</groupId>
+                    <artifactId>spring-cloud-starter-gateway</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
     </dependencies>
 
