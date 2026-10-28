@@ -1,0 +1,16 @@
+# 网关私有配置（Nacos data-id: atifah-gateway.yaml, group: ATIFAH_GATEWAY_GROUP）
+# 通过 spring.config.import 可选引入，发布后覆盖本地 application.yml 同名项。
+# 只放需要按环境覆盖或运行时调整的项；路由表、JWT 等稳定/敏感配置保留在本地
+# application.yml 与环境变量，避免两处真相（不要把本地文件整份复制过来）。
+# 刷新语义：whitelist 由 Spring Cloud 重绑定 @ConfigurationProperties，改后发布即生效；
+# auth.enabled 由 @ConditionalOnProperty 在启动时判定过滤器是否装配，修改后需重启网关。
+
+atifah:
+  gateway:
+    auth:
+      # 与本地默认一致：本地骨架关闭，接入 auth-service 联调通过后再开启
+      enabled: false
+      # 免鉴权路径前缀白名单，当前与 docs/rules/security.md SEC-03 保持一致
+      whitelist:
+        - /api/v1/auth/
+        - /actuator/

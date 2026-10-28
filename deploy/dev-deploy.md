@@ -106,7 +106,8 @@ docker compose -f deploy/docker-compose/docker-compose.yml up -d nginx
 控制台 <http://localhost:8849/> 导入，或用 v3 运维 API 脚本导入（见 `deploy/nacos/README.md`）；
 未发布、不可达或装载标记缺失时，业务服务会拒绝启动；请先确认配置已发布到正确的 namespace 和 group。
 
-Nacos 未挂数据卷，容器重建后配置会丢失，需要重新导入。
+Nacos 配置已持久化到 MySQL（库 `nacos_config`，表结构见 `deploy/sql/02-nacos-config.sql`），
+容器重建后配置不丢失；仅在 mysql-data 卷清空时才需重新导入。
 
 ## 5. 编译
 
