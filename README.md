@@ -141,7 +141,12 @@ curl http://localhost:8090/actuator/health   # admin-service（管理后台 BFF�
 
 ## 已知依赖说明
 
-启动网关时会看到一条 `spring-cloud-starter-gateway` 的 deprecation WARN，属预期现象（SCA 的 Sentinel 网关适配器仍依赖经典 starter）。
+- 网关已于 2026-10-29 按 [ADR 0003](docs/adr/0003-gateway-starter-webflux-migration.md) 路线 B 迁移至
+  `spring-cloud-starter-gateway-server-webflux`（配置 key 同步迁移），启动不再有 deprecation / key 改名 WARN。
+  4.3.x 内新 artifact 仍编译依赖经典 jar，属 Spring 官方过渡设计，SC 2025.1.x（gateway 5.0）起才彻底分离。
+- `/actuator/gateway/**` 路由巡检端点在 SCG 4.3.5 上未注册（迁移前即如此，非迁移回归），路由验证用逐路径探测代替。
+- 后续平台升级（SC 2025.1.x + SCA 2025.1.0.0）要求 **Spring Boot 4.0**，属跨大版本迁移（Framework 7、
+  全模块回归，MyBatis-Plus/Redisson/RocketMQ 适配待核实），另立项目，不与本仓库日常迭代混做。
 
 ## 开发约定
 
