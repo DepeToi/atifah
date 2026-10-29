@@ -41,7 +41,7 @@
 └───────────────┬───────────────────────────────────┬───────────────────┘
                 │ HTTPS                             │ HTTPS
 ┌───────────────▼───────────────────────────────────▼───────────────────┐
-│ 接入层     CDN + 对象存储            Nginx / Ingress-Nginx              │
+│ 接入层     CDN + 对象存储            Nginx                            │
 │            TLS1.3、HTTP/2、静态缓存、WAF、IP/连接限流、灰度、安全响应头   │
 └───────────────┬───────────────────────────────────┬───────────────────┘
                 │                                   │
@@ -67,7 +67,7 @@
 │ 流控/熔断    │ │ 分布式事务   │ │ 社区搜索      │ │ 语音/图片    │
 └─────────────┘ └─────────────┘ └─────────────┘ └─────────────┘
 ┌───────────────────────────────────────────────────────────────────────┐
-│ 基础设施层  Docker + Kubernetes + Harbor + GitOps(ArgoCD)              │
+│ 基础设施层  Docker + Docker Compose（开发环境）                       │
 │ 可观测性：SkyWalking / Prometheus + Grafana / Loki / Alertmanager      │
 └───────────────────────────────────────────────────────────────────────┘
 ```
@@ -76,12 +76,12 @@
 
 | 层次    | 选型                                                      | 理由                      |
 | ----- | ------------------------------------------------------- | ----------------------- |
-| 接入层   | Nginx / Ingress-Nginx                                    | 静态资源托管、反向代理、限流/连接复用、WAF |
+| 接入层   | Nginx                                                   | 静态资源托管、反向代理、限流/连接复用、WAF |
 | 运行时   | JDK 21 + Spring Boot 3.5.x                              | LTS、虚拟线程、容器友好           |
 | 微服务   | Spring Cloud 2025.0.x + Spring Cloud Alibaba 2025.0.0.0 | 版本通过 BOM 对齐             |
 | 注册/配置 | Nacos                                                   | AP 注册中心，配置热更新、灰度开关      |
 | 网关    | Spring Cloud Gateway                                    | 响应式、可编程限流，适合高并发入口       |
-| 入口代理  | Nginx / Ingress-Nginx                                   | TLS 终止、反向代理、静态资源与 IP 限流 |
+| 入口代理  | Nginx                                                   | TLS 终止、反向代理、静态资源与 IP 限流 |
 | 管理后台  | Vue 3 + Vite + TypeScript + Element Plus                 | 前后端分离、组件生态成熟、独立构建与发布      |
 | RPC   | OpenFeign（默认）/ Dubbo 3（热点链路可选）                          | 优先简单，避免双协议复杂度           |
 | 流控熔断  | Sentinel                                                | 规则持久化到 Nacos，网关+服务双层防护  |
@@ -94,8 +94,8 @@
 | 定时任务  | XXL-Job                                                 | 周报生成、对账补偿、批量任务          |
 | 文件    | OSS/MinIO 预签名直传                                         | 服务端不中转大文件               |
 | 可观测   | SkyWalking + Prometheus/Grafana + Loki                  | 链路、指标、日志三件套             |
-| 容器    | Docker + Kubernetes + Helm/Kustomize                    | 弹性伸缩、滚动/灰度发布            |
-| CI/CD | GitLab CI/GitHub Actions + Harbor + ArgoCD              | 镜像可追溯、GitOps 发布         |
+| 容器    | Docker + Docker Compose                                 | 本地开发环境                   |
+| CI    | GitHub Actions                                          | 构建、测试、安全扫描               |
 
 > Servlet 业务服务统一启用 `spring.threads.virtual.enabled=true`，以虚拟线程处理 I/O 密集请求；Gateway 保持响应式事件循环，不启用该配置。自定义线程池、MQ 消费线程与定时任务仍需显式配置。
 
@@ -158,7 +158,7 @@ App ──POST /api/v1/moods──▶ Nginx ──▶ Gateway
 - 离线：站内信落库 + 厂商推送通道（APNs/FCM/国内厂商或统一推送平台）。
 - 频控：Redis 记录用户/设备推送频次，避免打扰。
 - 提醒：RocketMQ 延时消息实现“21:00 未打卡提醒”。
-- 长连接扩容：粘性会话（Ingress cookie affinity）+ 独立 Deployment，HPA 按连接数扩缩。
+- 长连接扩容：按连接数水平扩展，接入层开启粘性会话。
 
 ## 5. 高并发与一致性方案
 
@@ -168,7 +168,7 @@ App ──POST /api/v1/moods──▶ Nginx ──▶ Gateway
 | --- | ----------------------------------------------------- |
 | 接入层 | CDN 静态资源、Nginx `limit_req/limit_conn`、WAF、HTTP/2、连接复用 |
 | 网关层 | JWT 本地验签（无状态）、Sentinel QPS/热点参数限流、灰度分流                |
-| 服务层 | 全部无状态、HPA 水平扩展、线程池隔离、超时控制                             |
+| 服务层 | 全部无状态、水平扩展、线程池隔离、超时控制                               |
 | 缓存层 | Caffeine L1 + Redis L2、热点探测、随机 TTL                    |
 | 存储层 | 主从读写分离、ShardingSphere 分库分表、慢查询治理                      |
 | 消息层 | RocketMQ 削峰、批量消费、消费限流、死信队列                            |
@@ -233,117 +233,46 @@ App ──POST /api/v1/moods──▶ Nginx ──▶ Gateway
 7. **后台安全**：RBAC + 数据权限 + 全操作审计；匿名帖反查需专项授权并留痕。
 8. **防刷对抗**：设备指纹、验证码、UID/IP 频控、行为风控、文件类型与大小校验、SSRF 白名单。
 
-## 8. 部署架构（Docker + K8s）
+## 8. 部署架构（开发环境）
 
-```
-Kubernetes 集群
-├── ns: ingress          nginx-ingress-controller ×3（云 LB 前置）
-├── ns: atifah-prod
-│   ├── gateway-service        Deployment 3+，HPA
-│   ├── 各业务服务              Deployment 2–N，HPA
-│   ├── message-service(WS)    4+，连接数指标扩缩，粘性会话
-│   ├── admin-service          管理后台 BFF（atifah-admin-web/backend），独立入口 + 白名单
-│   └── admin-web              管理后台前端（atifah-admin-web/frontend），Nginx/CDN + 白名单
-├── ns: middleware
-│   ├── Nacos StatefulSet ×3
-│   ├── MySQL 主从（或云 RDS）
-│   ├── Redis Cluster（3 主 3 从）
-│   ├── RocketMQ namesrv ×2 + broker ×2
-│   └── Seata Server ×2 / XXL-Job / Sentinel Dashboard
-├── ns: observability    Prometheus / Grafana / Loki / SkyWalking
-└── ns: cicd             Harbor / ArgoCD / CI Runner
-```
+开发环境提供两套后端运行方案，中间件、Nacos 配置与构建产物共用；两套方案端口一致，不可同时启动：
 
-### 8.1 Nginx 部署架构
-
-Nginx 是接入层唯一入口，分两类部署形态：
-
-| 形态            | 部署位置                    | 职责                            |
-| ------------- | ----------------------- | ----------------------------- |
-| Ingress-Nginx | `ns: ingress`，×3，云 LB 前置 | TLS 终止、路由到网关、限流/灰度、安全响应头    |
-| admin-web 静态 Nginx | 管理后台前端构建产物           | 托管 Vue SPA 静态资源，反代 `/admin/api` 到网关 |
-
-- **Ingress-Nginx**：跨可用区反亲和 + HPA 保证高可用；TLS1.3/HTTP/2 统一终止，证书由 cert-manager 管理；`/api/v1/**` 与 `/admin/api/**` 路由到网关（管理端加 IP 白名单）；`/ws` 透传 WebSocket 升级并开启粘性会话；`limit_req/limit_conn` 限流、WAF 前置；透传 `X-Forwarded-For` 等代理头保证风控拿到真实 IP；Ingress canary 按权重灰度（5% → 25% → 100%）。
-- **admin-web 静态 Nginx**：独立发布，与后端解耦；gzip/brotli 压缩、hash 文件强缓存、`try_files` 支持 history 路由；`/admin/api` 反代到网关，白名单隔离。
-
-Ingress 与 admin-web 的 Nginx 清单统一维护在 `deploy/k8s/`，与 `deploy/k8s/README.md` 目录约定一致。
-
-**K8s 生产实践**：
-
-- readiness/liveness/startup 探针；`preStop` + `terminationGracePeriodSeconds > 30` 优雅下线。
-- HPA：CPU 70% + 自定义 QPS 指标（Prometheus Adapter）；PDB 保证滚动更新可用性。
-- 反亲和 + topologySpread 跨节点分布；资源 request/limit 必须设置。
-- 生产中间件优先使用云托管；自建时使用 Operator/StatefulSet + PVC。
-- NetworkPolicy 限制服务间访问；容器非 root、镜像 Trivy 扫描、Secret 管理密钥。
-- 发布：滚动更新 + 金丝雀（Argo Rollouts 或 Nginx Ingress 权重）5% → 25% → 100%，指标异常自动回滚。
-
-**最小机器配置（可运行基线，非容量承诺）**：
-
-> 适用于本地联调或初期小流量生产；面向 §1 的 100 万 DAU 容量目标，必须按压测结果扩容，并单独评估 MySQL / Redis / RocketMQ 的规格与分片。
-
-| 场景 | 最小配置 | 说明 |
+| 方案 | 后端运行方式 | 适用场景 |
 | --- | --- | --- |
-| 本地开发 / 单机联调 | 8 vCPU / 16 GB / 200 GB SSD | docker-compose 启动全部中间件 + 1 个服务实例；建议 12 vCPU / 32 GB |
-| 最小生产 K8s 工作节点 | 3 × (8 vCPU / 16 GB / 200 GB SSD) | 网关 3 副本、业务服务 2 副本、admin 2 副本；不含自建中间件 |
-| 自建 MySQL | 4 vCPU / 8 GB / 200 GB ESSD | 主从或高可用版；一服务一库 |
-| 自建 Redis | 2 vCPU / 4 GB / 50 GB SSD | 最小可先用主从；生产按图使用 3 主 3 从 |
-| 自建 RocketMQ | 4 vCPU / 8 GB / 500 GB SSD | namesrv ×2 + broker ×2 |
-| 自建 Nacos | 3 × (2 vCPU / 4 GB) | 注册与配置；生产 3 节点 |
-| Sentinel / XXL-Job / Seata（可选） | 2 vCPU / 4 GB | Sentinel / XXL-Job 常驻；Seata 按需启用 |
-| 可观测 | 4 vCPU / 8 GB / 200 GB | Prometheus / Grafana / Loki / SkyWalking；可与中间件混部 |
+| A. JVM（默认） | 宿主机 `java -jar` / IDEA | 日常开发、断点调试 |
+| B. Docker | 后端容器（`deploy/docker-compose/docker-compose.app.yml`） | 镜像验证、环境一致性联调 |
 
-> 上表自建中间件合计约 22 vCPU / 44 GB（不含 CI/CD 与 Harbor/ArgoCD）；生产建议独立节点，开发环境可与工作节点混部但需预留资源。
+```
+宿主机
+├── Docker Compose（deploy/docker-compose/docker-compose.yml，网络 atifah-net）
+│   ├── MySQL 8（3306，初始化各服务 Schema）
+│   ├── Redis 7（6379）
+│   ├── Nacos 3（8848，控制台 8849，配置持久化到 MySQL）
+│   ├── RocketMQ（NameServer 9876 / Broker 10911 / Dashboard 8180）
+│   ├── Sentinel Dashboard（8858）
+│   ├── Seata Server（8091，--profile seata，可选）
+│   └── Nginx（80，--profile nginx，可选：本地静态托管验证）
+├── 方案 A：atifah-gateway / 业务服务（宿主机 JVM，8080–8090）
+│   方案 B：网关与业务服务容器（宿主机端口相同，按需启动）
+└── atifah-admin-web/frontend（Vite，5173，代理 /admin/api → 网关）
+```
 
-**云服务最小配置（参考）**：
+- 启动中间件：`docker compose -f deploy/docker-compose/docker-compose.yml up -d`。
+- 方案 A：`mvn clean package -DskipTests` 后 IDE 运行或 `java -jar` 启动网关与业务服务。
+- 方案 B：同样先构建 jar，再 `docker compose -f deploy/docker-compose/docker-compose.app.yml up -d --build`；
+  镜像由 `deploy/docker-compose/Dockerfile` 从各模块 `target/*.jar` 构建，容器经 `atifah-net` 访问中间件。
+- 启动前端：`cd atifah-admin-web/frontend && npm run dev`。
+- Nacos 共享配置发布到 `atifah_dev`；未发布时业务服务拒绝启动。
+- 完整步骤、端口与排障见 [`deploy/dev-deploy.md`](../deploy/dev-deploy.md)。
 
-| 云服务 | 最小规格 | 说明 |
+**本地资源建议**：
+
+| 场景 | 建议配置 | 说明 |
 | --- | --- | --- |
-| 托管 K8s（ACK / TKE / CCE） | 3 × (8 vCPU / 16 GB) worker | 网关与业务服务；开启 HPA / PDB |
-| RDS MySQL 8.0 | 4 vCPU / 8 GB / 200 GB ESSD，高可用版 | 一服务一库；开启备份与监控 |
-| Redis 7 | 4 GB 主从 / 标准版 | 缓存、锁、幂等；按命中率扩容 |
-| RocketMQ 5.x | 4 vCPU / 8 GB broker ×2 | 或云厂商最小生产实例 |
-| Nacos（MSE） | 2 vCPU / 4 GB ×3 | 注册与配置 |
-| Sentinel / XXL-Job | 2 vCPU / 4 GB 或托管 | Seata 按需启用 |
-| SLB / NAT | 1 实例，带宽 ≥100 Mbps | 入口；按实际流量调整 |
-| OSS / CDN | 标准存储 + CDN | 语音、图片、静态资源 |
-| 日志 / 监控 | 4 vCPU / 8 GB 或托管 | Prometheus / Loki / SkyWalking |
+| 方案 A（JVM） | 8 vCPU / 16 GB / 200 GB SSD | 全部中间件 + 按需启动服务进程；12 vCPU / 32 GB 更佳 |
+| 方案 B（Docker） | 12 vCPU / 32 GB / 200 GB SSD | 单个后端容器默认内存上限 1g，全部 11 个容器上限合计约 11GB，建议按需启动 |
 
-**容器 requests/limits 建议**（按单副本）：
-
-| 组件 | 副本 | requests | limits |
-| --- | --- | --- | --- |
-| gateway | 3 | 0.5 vCPU / 512 MiB | 1 vCPU / 1 GiB |
-| 业务服务 | 2 | 0.5 vCPU / 512 MiB | 1 vCPU / 1 GiB |
-| message-service（WS） | 2+（生产 4+） | 1 vCPU / 1 GiB | 2 vCPU / 2 GiB |
-| admin-service | 2 | 0.5 vCPU / 512 MiB | 1 vCPU / 1 GiB |
-
-- JVM 堆建议不超过容器 limit 的 75%；业务服务从 `-Xms512m -Xmx768m` 起步，按 GC 与 P99 调整。
-- 以上为最小可运行基线；生产规格必须结合 §1 容量假设与全链路压测确定，不以本表作为容量承诺。
-
-**CI/CD**：
-
-```
-Git Push → 单测 + SonarQube → Maven 构建 → Jib 镜像 → Harbor
-        → ArgoCD 同步 → Dev/Test/Prod → Flyway 数据库迁移
-        → 金丝雀发布 → Prometheus 指标校验 → 全量/回滚
-```
-
-管理后台前端在 `atifah-admin-web/frontend` 独立执行 `npm ci && npm run build`，静态产物发布到 Nginx / CDN，与后端服务解耦发布。
-
-**部署检查清单**：
-
-| 类别 | 检查项 |
-| --- | --- |
-| 中间件 | MySQL 主从 / Redis Cluster / RocketMQ / Nacos 就绪，监控已接入 |
-| 配置 | Nacos `common-application.yaml` 已导入；密钥走环境变量/KMS，`JWT_SECRET` 非明文 |
-| 数据库 | Flyway 脚本已执行；敏感字段 AES 密钥就绪 |
-| 安全 | TLS1.3/HSTS、WAF、管理端白名单、安全响应头生效 |
-| 网关 | 路由 / 幂等 / 限流 / JWT 验签配置校验通过 |
-| 容量 | HPA、request/limit、PDB、跨可用区反亲和已设置 |
-| 可观测 | Prometheus/Grafana/Loki/SkyWalking 采集正常，告警规则启用 |
-| 网络 | Ingress 路由、域名解析、NetworkPolicy 生效 |
-| 发布 | 金丝雀权重、回滚方案、数据备份（RPO≤5min / RTO≤30min）就绪 |
-| 验证 | 健康探针、冒烟测试、核心链路压测通过 |
+> 生产环境部署清单与云资源不在当前仓库范围；需要时另立 ADR 与部署任务包。
 
 ## 9. 可观测性与非功能目标
 
@@ -367,6 +296,6 @@ Git Push → 单测 + SonarQube → Maven 构建 → Jib 镜像 → Harbor
 - **P1（2–3 周）**：auth/user/mood/content 核心闭环 + 管理后台 MVP。
 - **P2（2–3 周）**：社区、消息推送、增长模块、MQ 事件体系。
 - **P3（1–2 周）**：多级缓存、Feed 推拉、点赞计数、分库分表、限流降级专项。
-- **P4（2 周）**：K8s 生产化、可观测性、全链路压测、安全与隐私加固。
+- **P4（2 周）**：可观测性、全链路压测、安全与隐私加固。
 
 **关键取舍**：不要一开始就追求“全量微服务”，低流量服务允许合并部署；强一致范围最小化，优先最终一致 + 对账；缓存和 MQ 必须配套幂等、补偿和监控；情绪数据隐私的优先级高于任何性能优化。

@@ -36,9 +36,10 @@ atifah/
 │   └── backend/                   # 8090 管理后台 BFF（Spring Boot）
 ├── atifah-app/                 # Flutter App（占位）
 ├── deploy/
-│   ├── docker-compose/            # 本地中间件一键启动
-│   ├── k8s/                       # K8s 部署清单（占位）
+│   ├── dev-deploy.md              # 开发环境部署说明（JVM / Docker 两套方案）
+│   ├── docker-compose/            # 中间件 compose + 后端容器编排
 │   ├── nacos/                     # Nacos 共享配置源文件 + 导入说明
+│   ├── nginx/                     # 本地静态托管验证（可选）
 │   └── sql/                       # 初始化 Schema
 ```
 
@@ -56,9 +57,11 @@ atifah/
 - Docker / Docker Compose（用于启动 MySQL、Redis、Nacos、RocketMQ 等中间件）
 - IDE：IntelliJ IDEA（推荐）
 
-> 当前机器未检测到 Docker。仅编译 Maven 工程不需要 Docker；启动服务前需先准备中间件（本机安装或使用其他机器上的 Docker）。
+> 仅编译 Maven 工程不需要 Docker；启动服务前需先准备中间件（本机 Docker 或自建实例）。
 
 ## 快速开始
+
+> 完整的开发环境部署步骤见 [`deploy/dev-deploy.md`](deploy/dev-deploy.md)。
 
 ### 1. 启动中间件
 
@@ -97,6 +100,14 @@ java -jar atifah-admin-web/backend/target/admin-service-1.0.0-SNAPSHOT.jar
 
 所有服务通过 Nacos 注册，网关按 `lb://atifah-<service>` 路由。
 
+也可以把网关与业务服务全部跑在容器里（方案 B，需先完成上面的 `mvn package`）：
+
+```bash
+docker compose -f deploy/docker-compose/docker-compose.app.yml up -d --build
+```
+
+两套方案端口一致，二选一；镜像构建、按需启动与排障见 [`deploy/dev-deploy.md`](deploy/dev-deploy.md) §6.2。
+
 ### 4. 启动管理后台前端
 
 管理后台为独立的 Vue 工程，开发期通过 Vite 代理 `/admin/api` 到网关：
@@ -107,7 +118,7 @@ npm install
 npm run dev
 ```
 
-访问 <http://localhost:5173>。前端环境变量与生产部署方式见
+访问 <http://localhost:5173>。前端环境变量见
 [`atifah-admin-web/README.md`](atifah-admin-web/README.md)。
 
 ### 5. 健康检查
@@ -126,13 +137,15 @@ curl http://localhost:8090/actuator/health   # admin-service（管理后台 BFF�
 | 变量                                                            | 默认值                                    |
 | ------------------------------------------------------------- | -------------------------------------- |
 | `NACOS_ADDR`                                                  | `127.0.0.1:8848`                       |
-| `NACOS_NAMESPACE`                                             | 默认 `atifah_dev`，生产 `atifah_prod`               |
+| `NACOS_NAMESPACE`                                             | 默认 `atifah_dev`                       |
 | `MYSQL_HOST` / `MYSQL_PORT` / `MYSQL_USER` / `MYSQL_PASSWORD` | `127.0.0.1` / `3306` / `root` / `root` |
 | `REDIS_HOST` / `REDIS_PORT` / `REDIS_PASSWORD`                | `127.0.0.1` / `6379` / 空               |
 | `ROCKETMQ_NAMESRV`                                            | `127.0.0.1:9876`                       |
 | `SENTINEL_DASHBOARD`                                          | `127.0.0.1:8858`                       |
 | `JWT_SECRET`                                                  | 开发默认值（生产必须替换）                          |
 
+- 方案 B（Docker）额外支持 `BASE_IMAGE`（基础镜像，默认 `eclipse-temurin:21-jre-jammy`）与
+  `APP_MEM_LIMIT`（单容器内存上限，默认 `1g`），见 `deploy/dev-deploy.md` §6.2。
 - 管理后台前端环境变量（`VITE_API_BASE_URL`、`VITE_API_PROXY_TARGET`）见 `atifah-admin-web/README.md`。
 - Servlet 业务服务已开启虚拟线程（`spring.threads.virtual.enabled=true`）；`atifah-gateway` 为响应式 Netty 栈，不适用该配置。
 - 网关 JWT 鉴权当前默认关闭（`atifah.gateway.auth.enabled=false`），接入 `auth-service` 签发 Token 后开启。

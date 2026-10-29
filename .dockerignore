@@ -1,0 +1,18 @@
+# 后端镜像构建上下文为仓库根目录；仅 COPY 各模块 target/ 下的可执行 jar，
+# 因此必须保留 target/，其余无关内容全部排除以缩小上下文。
+.git
+.gitignore
+.gitattributes
+.idea
+.vscode
+**/node_modules
+atifah-admin-web/frontend/dist
+atifah-app
+docs
+logs
+**/*.log
+**/.env
+**/*.local.yml
+**/*.local.yaml
+deploy/sql
+deploy/nacos

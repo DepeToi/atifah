@@ -4,17 +4,15 @@
 
 ## 命名空间
 
-按环境隔离，ID 与显示名一致；客户端只认 **ID**，由环境变量 `NACOS_NAMESPACE` 注入
+命名空间 ID 与显示名一致；客户端只认 **ID**，由环境变量 `NACOS_NAMESPACE` 注入
 （各服务为 `namespace: ${NACOS_NAMESPACE:atifah_dev}`）：
 
 | namespace | 环境 | 注入方式 |
 |---|---|---|
 | `atifah_dev` | 本地开发 | 默认值，无需设置 |
-| `atifah_test` | 测试 | `NACOS_NAMESPACE=atifah_test` |
-| `atifah_prod` | 生产 | `NACOS_NAMESPACE=atifah_prod`（`deploy/k8s/configmap.yaml` 已设） |
 
-默认命名空间 `public` 不放业务配置，保持为空。发布配置时 v3 API 带 `namespaceId` 参数，
-控制台先在顶部切换到目标命名空间。
+默认命名空间 `public` 不放业务配置，保持为空。其他环境如需隔离，可自建 namespace 并通过
+`NACOS_NAMESPACE` 注入。发布配置时 v3 API 带 `namespaceId` 参数，控制台先在顶部切换到目标命名空间。
 
 ## Group 划分
 
@@ -29,9 +27,8 @@
 
 各服务从 `spring.cloud.nacos.{discovery,config}.username/password` 读取客户端凭据，值来自环境变量
 `NACOS_USERNAME` / `NACOS_PASSWORD`（本地默认空）。本地 compose 已关闭鉴权，留空即可；
-开启鉴权的环境（生产）必须注入，缺失时服务注册与配置拉取会被 403 拒绝。生产建议创建专用
-应用账号（最小权限，不复用 `nacos` 管理员），由 `deploy/k8s/secret.yaml`（生产为
-SealedSecret / External Secrets）经 `envFrom.secretRef` 注入。
+如后续开启鉴权，必须通过环境变量注入专用账号（最小权限，不复用 `nacos` 管理员），
+缺失时服务注册与配置拉取会被 403 拒绝。
 
 ## 导入顺序与优先级
 
@@ -57,7 +54,7 @@ SealedSecret / External Secrets）经 `envFrom.secretRef` 注入。
 **方式一：Nacos 控制台**（本地 <http://localhost:8849/>，控制台在根路径，不是 `/nacos`）
 
 本地 compose 通过 `NACOS_AUTH_ADMIN_ENABLE=false` 关闭了运维 API 鉴权，可直接操作；
-生产环境该开关必须开启，需先用管理员账号 `nacos` 登录。
+开启运维 API 鉴权的环境需先用管理员账号 `nacos` 登录。
 
 控制台顶部命名空间切到 `atifah_dev`，依次新建配置：
 - Data ID：`common-application.yaml`

@@ -1,5 +1,0 @@
-# 应用命名空间（Ingress-Nginx 控制器单独安装，集群级；见 docs/architecture.md §8）
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: atifah-prod

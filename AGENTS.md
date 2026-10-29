@@ -145,6 +145,7 @@ mvn clean package -DskipTests                    # 全量构建
 mvn -o -q -DskipTests compile                    # 快速编译（改完代码先跑这个）
 mvn -pl atifah-admin-web/backend -am package -DskipTests   # 只构建 admin BFF 及其上游
 docker compose -f deploy/docker-compose/docker-compose.yml up -d   # 本地中间件
+docker compose -f deploy/docker-compose/docker-compose.app.yml up -d --build   # 后端容器（方案 B，需先 mvn package）
 java -jar atifah-gateway/target/atifah-gateway-1.0.0-SNAPSHOT.jar
 cd atifah-admin-web/frontend && npm run dev      # 管理后台前端 :5173
 ```

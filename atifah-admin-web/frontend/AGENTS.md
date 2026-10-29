@@ -107,7 +107,7 @@ export function listUsers(params: { keyword?: string; page: number; size: number
 
 - 本地覆盖建 `.env.local`（已 gitignore）；新增变量同步 `vite-env.d.ts`。
 - `index.html` 已设 `<meta name="robots" content="noindex, nofollow">`，勿移除。
-- 生产由 Nginx 托管 `dist/` 并反代 `/admin/api` 到网关（示例见 `../README.md`）。
+- 开发期由 Vite 代理 `/admin/api` 到网关；需要验证构建产物时用 `deploy/docker-compose` 的可选 nginx profile（见 `deploy/dev-deploy.md`）。
 
 ## 当前阶段
 

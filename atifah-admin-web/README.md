@@ -107,33 +107,20 @@ java -jar atifah-admin-web/backend/target/admin-service-1.0.0-SNAPSHOT.jar \
 - 职责：管理后台 BFF、RBAC、审核工作台、运营配置；后续通过 OpenFeign / MQ 聚合各业务服务，不直连业务库。
 - 已开启虚拟线程（`spring.threads.virtual.enabled=true`），请求处理使用虚拟线程。
 
-## 生产部署
+## 本地静态托管（可选）
 
-前端由 Nginx 托管静态资源，并将 `/admin/api` 反向代理到网关。Vue Router 使用 history
-模式，需要把未匹配的路径回退到 `index.html`：
+开发期前端使用 `npm run dev`（Vite 代理 `/admin/api`）。如需验证构建产物，可先构建，再用
+Docker Compose 的可选 nginx profile 托管 `dist/` 并反代到宿主机网关：
 
-```nginx
-server {
-    listen 80;
-    server_name admin.atifah.example.com;
-    root /usr/share/nginx/html/atifah-admin;
-    index index.html;
+在仓库根目录执行：
 
-    location / {
-        try_files $uri $uri/ /index.html;
-    }
-
-    location /admin/api/ {
-        proxy_pass http://atifah-gateway:8080;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-}
+```bash
+(cd atifah-admin-web/frontend && npm run build)
+docker compose -f deploy/docker-compose/docker-compose.yml up -d nginx
 ```
 
-后端 `admin-service` 作为独立服务部署，同样只暴露内网入口，并配置独立域名、IP 白名单与审计。
+配置见 `deploy/nginx/nginx.conf`，访问 <http://localhost>。该方式仅用于本地开发验证；
+生产部署不在当前仓库范围。
 
 ## 接口约定
 

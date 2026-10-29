@@ -152,7 +152,7 @@ services:
     networks:
       - atifah-net
 
-  # 本地验证管理后台生产静态托管（可选）：docker compose --profile nginx up -d nginx
+  # 本地静态托管验证（可选）：docker compose --profile nginx up -d nginx
   nginx:
     image: nginx:1.27-alpine
     profiles: [ "nginx" ]
@@ -172,5 +172,7 @@ volumes:
   rocketmq-store:
 
 networks:
+  # 固定网络名，供 docker-compose.app.yml（方案 B）以 external 方式接入
   atifah-net:
+    name: atifah-net
     driver: bridge
