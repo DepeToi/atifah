@@ -1,0 +1,45 @@
+# admin-service 独立部署。前置条件：
+#   1. 仓库根目录已执行 mvn clean package -DskipTests；
+#   2. 中间件已通过 deploy/docker-compose/docker-compose.yml 启动（网络 atifah-net）；
+#   3. Nacos 已发布 common-application.yaml。
+#
+# 构建并启动：docker compose -f atifah-admin-web/backend/docker-compose.yml up -d --build
+# 查看日志：  docker compose -f atifah-admin-web/backend/docker-compose.yml logs -f
+# 停止清理：  docker compose -f atifah-admin-web/backend/docker-compose.yml down
+#
+# 与 deploy/docker-compose/docker-compose.app.yml 复用同一份模块 Dockerfile；
+# 镜像 tag、容器名、端口与统一编排一致，同一个服务不能同时用两种方式运行。
+name: atifah-admin-service
+
+services:
+  admin-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        BASE_IMAGE: ${BASE_IMAGE:-eclipse-temurin:21-jre-jammy}
+    image: atifah/admin-service:local
+    container_name: atifah-admin
+    restart: unless-stopped
+    mem_limit: ${APP_MEM_LIMIT:-1g}
+    ports:
+      - "8090:8090"
+    environment:
+      TZ: Asia/Shanghai
+      NACOS_ADDR: ${NACOS_ADDR:-nacos:8848}
+      NACOS_NAMESPACE: ${NACOS_NAMESPACE:-atifah_dev}
+      MYSQL_HOST: ${MYSQL_HOST:-mysql}
+      MYSQL_PORT: ${MYSQL_PORT:-3306}
+      MYSQL_USER: ${MYSQL_USER:-root}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-root}
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+      ROCKETMQ_NAMESRV: ${ROCKETMQ_NAMESRV:-rocketmq-namesrv:9876}
+      SENTINEL_DASHBOARD: ${SENTINEL_DASHBOARD:-sentinel-dashboard:8858}
+    networks:
+      - atifah-net
+
+networks:
+  atifah-net:
+    external: true

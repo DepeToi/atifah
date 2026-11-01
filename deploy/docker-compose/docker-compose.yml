@@ -102,7 +102,10 @@ services:
     depends_on:
       - rocketmq-namesrv
     command: sh mqbroker -c /home/rocketmq/broker.conf
-    # 命名卷由 root 创建，镜像内 broker 以 uid 3000 运行无法写入 store（本地开发）
+
+    # 以 root 运行可绕过命名卷由 root 创建导致的写权限问题（本地开发）。
+    # 注意：root 的 user.home 为 /root，broker 的 storePathRootDir 默认落在
+    # /root/store，因此下方卷必须挂到 /root/store，挂到 /home/rocketmq/store 无效。
     user: "0:0"
     environment:
       JAVA_OPT_EXT: "-Xms512m -Xmx1g -Xmn256m"
@@ -112,13 +115,15 @@ services:
       - "10912:10912"
     volumes:
       - ./rocketmq/broker.conf:/home/rocketmq/broker.conf:ro
-      - rocketmq-store:/home/rocketmq/store
+      - rocketmq-store:/root/store
     networks:
       - atifah-net
 
+  # RocketMQ 管理界面（可选）：docker compose --profile ops up -d rocketmq-dashboard
   rocketmq-dashboard:
     image: apacherocketmq/rocketmq-dashboard:1.0.0
     container_name: atifah-rocketmq-dashboard
+    profiles: [ "ops" ]
     restart: unless-stopped
     depends_on:
       - rocketmq-namesrv
@@ -129,9 +134,11 @@ services:
     networks:
       - atifah-net
 
+  # Sentinel 控制台（可选）：docker compose --profile ops up -d sentinel-dashboard
   sentinel-dashboard:
     image: bladex/sentinel-dashboard:1.8.8
     container_name: atifah-sentinel-dashboard
+    profiles: [ "ops" ]
     restart: unless-stopped
     ports:
       - "8858:8858"

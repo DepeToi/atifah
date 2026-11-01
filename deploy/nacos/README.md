@@ -32,8 +32,18 @@
 
 ## 导入顺序与优先级
 
-各服务 `spring.config.import` 先导入公共配置、再导入私有配置：同一 `import` 列表中**后导入的优先级更高**，
-因此私有配置可覆盖公共配置的同名项；本地 `application.yml` 自身优先于所有导入项，用于本地差异化兜底。
+生效优先级（高 → 低）：
+
+```text
+环境变量  >  Nacos 导入（同一 import 列表内后导入者优先，故 私有 > 公共）  >  本地 application.yml
+```
+
+- **环境变量最高**：它不属于 `config data`，按 Spring 属性源顺序天然优先于所有配置文件，用于按部署环境覆盖。
+- **Nacos 导入高于本地 `application.yml`**：`config data` 的导入项优先于声明导入的文件本身。因此本地
+  `application.yml` 里的端口、数据源、生产者组等只是**默认值兜底**，Nacos 一旦发布同名 key 即被覆盖；
+  若要在本地绕过 Nacos 的值验证差异，改用环境变量，不要改本地文件（改了也不生效）。
+- **私有配置高于公共配置**：各服务 `spring.config.import` 先导入公共配置、再导入私有配置，后导入者优先，
+  故私有 group 可覆盖 `ATIFAH_PUBLIC_GROUP` 的同名项。
 
 其中 `common-application.yaml` 为**必选导入**（不带 `optional:`）：Nacos 不可达或未发布该配置时服务
 直接启动失败；各服务私有配置仍为可选（`optional:`），未发布时以本地默认值兜底。

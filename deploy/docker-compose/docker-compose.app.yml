@@ -1,5 +1,8 @@
 # 方案 B：把网关与后端服务跑在容器里（方案 A 为 JVM，见 deploy/dev-deploy.md）。
 #
+# 本文件只做批量编排：每个服务使用自己模块目录下的 Dockerfile（构建上下文为模块目录），
+# 单服务独立部署用各模块自己的 docker-compose.yml。
+#
 # 前置条件：
 #   1. 中间件已通过 docker-compose.yml 启动，且网络名为 atifah-net；
 #   2. Nacos 已发布 common-application.yaml（否则业务服务拒绝启动）；
@@ -35,12 +38,10 @@ services:
   gateway:
     <<: *app-common
     build:
-      context: ../..
-      dockerfile: deploy/docker-compose/Dockerfile
+      context: ../../atifah-gateway
+      dockerfile: Dockerfile
       args:
         BASE_IMAGE: ${BASE_IMAGE:-eclipse-temurin:21-jre-jammy}
-        APP_JAR: atifah-gateway/target/*.jar
-        APP_PORT: "8080"
     image: atifah/gateway:local
     container_name: atifah-gateway
     ports:
@@ -49,12 +50,10 @@ services:
   auth-service:
     <<: *app-common
     build:
-      context: ../..
-      dockerfile: deploy/docker-compose/Dockerfile
+      context: ../../atifah-services/auth-service
+      dockerfile: Dockerfile
       args:
         BASE_IMAGE: ${BASE_IMAGE:-eclipse-temurin:21-jre-jammy}
-        APP_JAR: atifah-services/auth-service/target/*.jar
-        APP_PORT: "8081"
     image: atifah/auth-service:local
     container_name: atifah-auth
     ports:
@@ -63,12 +62,10 @@ services:
   user-service:
     <<: *app-common
     build:
-      context: ../..
-      dockerfile: deploy/docker-compose/Dockerfile
+      context: ../../atifah-services/user-service
+      dockerfile: Dockerfile
       args:
         BASE_IMAGE: ${BASE_IMAGE:-eclipse-temurin:21-jre-jammy}
-        APP_JAR: atifah-services/user-service/target/*.jar
-        APP_PORT: "8082"
     image: atifah/user-service:local
     container_name: atifah-user
     ports:
@@ -77,12 +74,10 @@ services:
   mood-service:
     <<: *app-common
     build:
-      context: ../..
-      dockerfile: deploy/docker-compose/Dockerfile
+      context: ../../atifah-services/mood-service
+      dockerfile: Dockerfile
       args:
         BASE_IMAGE: ${BASE_IMAGE:-eclipse-temurin:21-jre-jammy}
-        APP_JAR: atifah-services/mood-service/target/*.jar
-        APP_PORT: "8083"
     image: atifah/mood-service:local
     container_name: atifah-mood
     ports:
@@ -91,12 +86,10 @@ services:
   analysis-service:
     <<: *app-common
     build:
-      context: ../..
-      dockerfile: deploy/docker-compose/Dockerfile
+      context: ../../atifah-services/analysis-service
+      dockerfile: Dockerfile
       args:
         BASE_IMAGE: ${BASE_IMAGE:-eclipse-temurin:21-jre-jammy}
-        APP_JAR: atifah-services/analysis-service/target/*.jar
-        APP_PORT: "8084"
     image: atifah/analysis-service:local
     container_name: atifah-analysis
     ports:
@@ -105,12 +98,10 @@ services:
   community-service:
     <<: *app-common
     build:
-      context: ../..
-      dockerfile: deploy/docker-compose/Dockerfile
+      context: ../../atifah-services/community-service
+      dockerfile: Dockerfile
       args:
         BASE_IMAGE: ${BASE_IMAGE:-eclipse-temurin:21-jre-jammy}
-        APP_JAR: atifah-services/community-service/target/*.jar
-        APP_PORT: "8085"
     image: atifah/community-service:local
     container_name: atifah-community
     ports:
@@ -119,12 +110,10 @@ services:
   content-service:
     <<: *app-common
     build:
-      context: ../..
-      dockerfile: deploy/docker-compose/Dockerfile
+      context: ../../atifah-services/content-service
+      dockerfile: Dockerfile
       args:
         BASE_IMAGE: ${BASE_IMAGE:-eclipse-temurin:21-jre-jammy}
-        APP_JAR: atifah-services/content-service/target/*.jar
-        APP_PORT: "8086"
     image: atifah/content-service:local
     container_name: atifah-content
     ports:
@@ -133,12 +122,10 @@ services:
   message-service:
     <<: *app-common
     build:
-      context: ../..
-      dockerfile: deploy/docker-compose/Dockerfile
+      context: ../../atifah-services/message-service
+      dockerfile: Dockerfile
       args:
         BASE_IMAGE: ${BASE_IMAGE:-eclipse-temurin:21-jre-jammy}
-        APP_JAR: atifah-services/message-service/target/*.jar
-        APP_PORT: "8087"
     image: atifah/message-service:local
     container_name: atifah-message
     ports:
@@ -147,12 +134,10 @@ services:
   growth-service:
     <<: *app-common
     build:
-      context: ../..
-      dockerfile: deploy/docker-compose/Dockerfile
+      context: ../../atifah-services/growth-service
+      dockerfile: Dockerfile
       args:
         BASE_IMAGE: ${BASE_IMAGE:-eclipse-temurin:21-jre-jammy}
-        APP_JAR: atifah-services/growth-service/target/*.jar
-        APP_PORT: "8088"
     image: atifah/growth-service:local
     container_name: atifah-growth
     ports:
@@ -161,12 +146,10 @@ services:
   stats-service:
     <<: *app-common
     build:
-      context: ../..
-      dockerfile: deploy/docker-compose/Dockerfile
+      context: ../../atifah-services/stats-service
+      dockerfile: Dockerfile
       args:
         BASE_IMAGE: ${BASE_IMAGE:-eclipse-temurin:21-jre-jammy}
-        APP_JAR: atifah-services/stats-service/target/*.jar
-        APP_PORT: "8089"
     image: atifah/stats-service:local
     container_name: atifah-stats
     ports:
@@ -175,12 +158,10 @@ services:
   admin-service:
     <<: *app-common
     build:
-      context: ../..
-      dockerfile: deploy/docker-compose/Dockerfile
+      context: ../../atifah-admin-web/backend
+      dockerfile: Dockerfile
       args:
         BASE_IMAGE: ${BASE_IMAGE:-eclipse-temurin:21-jre-jammy}
-        APP_JAR: atifah-admin-web/backend/target/*.jar
-        APP_PORT: "8090"
     image: atifah/admin-service:local
     container_name: atifah-admin
     ports:

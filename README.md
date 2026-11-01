@@ -106,7 +106,14 @@ java -jar atifah-admin-web/backend/target/admin-service-1.0.0-SNAPSHOT.jar
 docker compose -f deploy/docker-compose/docker-compose.app.yml up -d --build
 ```
 
-两套方案端口一致，二选一；镜像构建、按需启动与排障见 [`deploy/dev-deploy.md`](deploy/dev-deploy.md) §6.2。
+每个后端模块目录下还有独立的 `Dockerfile` 与 `docker-compose.yml`，可只构建/启动单个服务：
+
+```bash
+docker compose -f atifah-services/user-service/docker-compose.yml up -d --build
+```
+
+两套方案端口一致，二选一；镜像构建、单服务与统一编排、按需启动与排障见
+[`deploy/dev-deploy.md`](deploy/dev-deploy.md) §6.2。
 
 ### 4. 启动管理后台前端
 

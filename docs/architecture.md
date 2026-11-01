@@ -260,7 +260,8 @@ App ──POST /api/v1/moods──▶ Nginx ──▶ Gateway
 - 启动中间件：`docker compose -f deploy/docker-compose/docker-compose.yml up -d`。
 - 方案 A：`mvn clean package -DskipTests` 后 IDE 运行或 `java -jar` 启动网关与业务服务。
 - 方案 B：同样先构建 jar，再 `docker compose -f deploy/docker-compose/docker-compose.app.yml up -d --build`；
-  镜像由 `deploy/docker-compose/Dockerfile` 从各模块 `target/*.jar` 构建，容器经 `atifah-net` 访问中间件。
+  镜像由各模块目录下的 `Dockerfile` 从本模块 `target/*.jar` 构建，容器经 `atifah-net` 访问中间件；
+  单服务独立部署用各模块自己的 `docker-compose.yml`，统一 compose 复用同一批 Dockerfile。
 - 启动前端：`cd atifah-admin-web/frontend && npm run dev`。
 - Nacos 共享配置发布到 `atifah_dev`；未发布时业务服务拒绝启动。
 - 完整步骤、端口与排障见 [`deploy/dev-deploy.md`](../deploy/dev-deploy.md)。

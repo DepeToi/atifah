@@ -170,10 +170,24 @@ docker compose -f deploy/docker-compose/docker-compose.app.yml up -d --build
 docker compose -f deploy/docker-compose/docker-compose.app.yml up -d --build gateway user-service
 ```
 
+单个服务也可以脱离统一编排独立构建/启停。每个后端模块目录（`atifah-gateway/`、
+`atifah-services/*/`、`atifah-admin-web/backend/`）下都有 `Dockerfile`、`.dockerignore` 与
+`docker-compose.yml`，构建上下文就是该模块目录：
+
+```bash
+docker compose -f atifah-services/user-service/docker-compose.yml up -d --build
+docker compose -f atifah-services/user-service/docker-compose.yml logs -f
+docker compose -f atifah-services/user-service/docker-compose.yml down
+```
+
+单服务 compose 与统一 compose 的镜像 tag、容器名、端口完全一致，**同一个服务不能同时用两种方式运行**；
+统一 compose 只是复用同一批模块 Dockerfile 做全量编排。
+
 说明：
 
-- 镜像由 `deploy/docker-compose/Dockerfile` 基于各模块 `target/*.jar` 构建，构建上下文是仓库根目录；
+- 镜像由各服务模块目录下的 `Dockerfile` 构建，构建上下文是模块目录，只打包该模块的 `target/*.jar`；
   改代码后先重新 `mvn package`，再 `up -d --build <服务名>`。
+- 网关与 `auth-service` 的 `docker-compose.yml` 以注释预留 `JWT_SECRET`；非开发环境必须为两者注入相同密钥。
 - 容器内通过 compose 服务名访问中间件（`mysql`、`redis`、`nacos`、`rocketmq-namesrv`），
   地址由 `docker-compose.app.yml` 注入，**不要**在容器内使用 `127.0.0.1`。
 - 单个容器默认内存上限 1g（`APP_MEM_LIMIT` 可改）；全部 11 个后端容器的内存上限合计约 11GB，
@@ -183,6 +197,8 @@ docker compose -f deploy/docker-compose/docker-compose.app.yml up -d --build gat
   BASE_IMAGE=docker.m.daocloud.io/library/eclipse-temurin:21-jre-jammy \
     docker compose -f deploy/docker-compose/docker-compose.app.yml up -d --build
   ```
+- 单服务 compose 不读取 `deploy/docker-compose/.env`；覆盖 `BASE_IMAGE` / `APP_MEM_LIMIT` 等变量时用
+  shell 环境变量，或在对应模块目录放 `.env`（已被 `.gitignore` 忽略）。
 
 查看状态与日志：
 
