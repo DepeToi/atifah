@@ -13,7 +13,8 @@ import static org.assertj.core.api.Assertions.catchThrowable;
  */
 class ConfigCipherTest {
 
-    private static final String MASTER_KEY = "unit-test-master-key";
+    private static final String MASTER_KEY = ConfigCipher.generateMasterKey();
+    private static final String WRONG_KEY = ConfigCipher.generateMasterKey();
 
     @Test
     void encryptAndDecryptRoundTrip() {
@@ -36,7 +37,7 @@ class ConfigCipherTest {
     void decryptWithWrongKeyFailsWithoutLeakingCipherText() {
         String cipherText = ConfigCipher.encrypt("secret-value", MASTER_KEY);
 
-        Throwable thrown = catchThrowable(() -> ConfigCipher.decrypt(cipherText, "another-key"));
+        Throwable thrown = catchThrowable(() -> ConfigCipher.decrypt(cipherText, WRONG_KEY));
 
         assertThat(thrown).isInstanceOf(IllegalStateException.class);
         assertThat(thrown.getMessage())
@@ -55,6 +56,25 @@ class ConfigCipherTest {
 
         assertThatThrownBy(() -> ConfigCipher.decrypt(tampered, MASTER_KEY))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void rejectsMalformedMasterKey() {
+        Throwable thrown = catchThrowable(() -> ConfigCipher.encrypt("x", "password"));
+
+        assertThat(thrown).isInstanceOf(IllegalStateException.class);
+        assertThat(thrown.getMessage())
+                .contains(ConfigCipher.KEY_ENV)
+                .doesNotContain("password");
+    }
+
+    @Test
+    void rejectsWrongLengthMasterKey() {
+        String shortKey = Base64.getUrlEncoder().withoutPadding().encodeToString(new byte[16]);
+
+        assertThatThrownBy(() -> ConfigCipher.encrypt("x", shortKey))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining(ConfigCipher.KEY_ENV);
     }
 
     @Test

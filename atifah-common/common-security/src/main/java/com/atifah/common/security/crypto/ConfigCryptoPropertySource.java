@@ -21,6 +21,8 @@ import org.springframework.core.env.PropertySourcesPropertyResolver;
  * </ul>
  * 后者需要先解析占位符才能判断是否密文，故解析复用原始属性源（不含本层）避免回环；
  * 解析结果不是密文时返回原值，交回 Spring 正常解析，不改变非密文配置的既有行为。
+ *
+ * <p>解密成功的值会转义 ${ 前缀，确保明文中的占位符语法按字面量使用，不被 Spring 二次解析。
  */
 final class ConfigCryptoPropertySource extends PropertySource<Object> {
 
@@ -69,15 +71,22 @@ final class ConfigCryptoPropertySource extends PropertySource<Object> {
             return value;
         }
         if (ConfigCipher.isEncrypted(text)) {
-            return ConfigCipher.decrypt(text, masterKey);
+            return escapePlaceholders(ConfigCipher.decrypt(text, masterKey));
         }
         if (text.contains("${")) {
             String resolved = placeholderResolver().resolvePlaceholders(text);
             if (ConfigCipher.isEncrypted(resolved)) {
-                return ConfigCipher.decrypt(resolved, masterKey);
+                return escapePlaceholders(ConfigCipher.decrypt(resolved, masterKey));
             }
         }
         return value;
+    }
+
+    /**
+     * 解密结果按字面量使用：转义 ${ 前缀，避免 Spring 对明文中的占位符语法做第二次解析。
+     */
+    private String escapePlaceholders(String plainText) {
+        return plainText.contains("${") ? plainText.replace("${", "\\${") : plainText;
     }
 
     /**

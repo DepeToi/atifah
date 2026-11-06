@@ -2,8 +2,6 @@ package com.atifah.common.security.crypto;
 
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Base64;
 
@@ -16,12 +14,12 @@ import javax.crypto.spec.SecretKeySpec;
  *
  * <p>配置文件中的敏感值写成 {@code ENC(base64(iv||ciphertext+tag))}，由
  * {@link ConfigCryptoEnvironmentPostProcessor} 在启动时解密；主密钥只允许通过环境变量
- * {@value #KEY_ENV} 注入（本地调试可用同名 JVM system property），禁止写进仓库。
+ * {@value #KEY_ENV} 注入，禁止写进仓库。
  *
  * <p>设计约束：
  * <ul>
  *   <li>每次加密使用 12 字节随机 IV，同一明文多次加密结果不同，防止比对；</li>
- *   <li>密钥由主密钥口令经 SHA-256 派生为 32 字节，口令长度不限；</li>
+ *   <li>主密钥必须是 {@link #generateMasterKey()} 生成的 base64url 字符串，解码后严格为 32 字节；</li>
  *   <li>异常信息不包含密文与密钥，避免日志二次泄露。</li>
  * </ul>
  */
@@ -30,13 +28,12 @@ public final class ConfigCipher {
     /** 密文包装前缀，完整形式 {@code ENC(...)}。 */
     public static final String PREFIX = "ENC(";
 
-    /** 主密钥环境变量名；也可用同名 JVM system property（仅本地调试）。 */
+    /** 主密钥环境变量名。 */
     public static final String KEY_ENV = "CONFIG_ENC_KEY";
 
     private static final String SUFFIX = ")";
     private static final String TRANSFORMATION = "AES/GCM/NoPadding";
     private static final String KEY_ALGORITHM = "AES";
-    private static final String DIGEST_ALGORITHM = "SHA-256";
     private static final int IV_LENGTH = 12;
     private static final int TAG_LENGTH_BITS = 128;
     private static final int KEY_LENGTH_BYTES = 32;
@@ -102,14 +99,18 @@ public final class ConfigCipher {
     }
 
     /**
-     * 读取主密钥：优先环境变量，其次同名 system property；未配置返回 {@code null}。
+     * 读取主密钥：只允许环境变量；未配置返回 {@code null}。
      */
     public static String resolveMasterKey() {
         String key = System.getenv(KEY_ENV);
-        if (key == null || key.isBlank()) {
-            key = System.getProperty(KEY_ENV);
-        }
         return (key == null || key.isBlank()) ? null : key;
+    }
+
+    /**
+     * 校验主密钥格式：base64url 且解码后为 32 字节；非法时 fail-fast。
+     */
+    static void validateMasterKey(String masterKey) {
+        toSecretKey(masterKey);
     }
 
     /**
@@ -125,12 +126,15 @@ public final class ConfigCipher {
         if (masterKey == null || masterKey.isBlank()) {
             throw new IllegalStateException("缺少配置项主密钥 " + KEY_ENV);
         }
+        byte[] keyBytes;
         try {
-            byte[] digest = MessageDigest.getInstance(DIGEST_ALGORITHM)
-                    .digest(masterKey.getBytes(StandardCharsets.UTF_8));
-            return new SecretKeySpec(digest, KEY_ALGORITHM);
-        } catch (NoSuchAlgorithmException e) {
-            throw new IllegalStateException("SHA-256 不可用，无法派生配置项主密钥", e);
+            keyBytes = Base64.getUrlDecoder().decode(masterKey);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalStateException("配置项主密钥 " + KEY_ENV + " 不是合法的 base64url；请使用 keygen 生成", e);
         }
+        if (keyBytes.length != KEY_LENGTH_BYTES) {
+            throw new IllegalStateException("配置项主密钥 " + KEY_ENV + " 解码后必须为 32 字节；请使用 keygen 生成");
+        }
+        return new SecretKeySpec(keyBytes, KEY_ALGORITHM);
     }
 }

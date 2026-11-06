@@ -172,9 +172,9 @@
 
 **证据**
 
-- 能力已实现（2026-11-01，CodeBuddy）：`common-security` 的 `ConfigCipher` / `ConfigCryptoPropertySource` / `ConfigCryptoEnvironmentPostProcessor` / `ConfigEncryptTool`，已在 `META-INF/spring.factories` 注册；`mvn -o -pl atifah-common/common-security -am test` 12 用例通过，全量 `compile` 通过。
+- 能力已实现（2026-11-01，CodeBuddy），本 PR 补齐 ADR/fail-fast：`common-security` 的 `ConfigCipher` / `ConfigCryptoPropertySource` / `ConfigCryptoEnvironmentPostProcessor` / `ConfigEncryptTool`，已在 `META-INF/spring.factories` 注册；`mvn -o -pl atifah-common/common-security -am test` 23 用例通过，全量 `compile` 通过。
 - 配置侧**未迁移**：`deploy/nacos/config/common-application.yaml:83`、`atifah-gateway/src/main/resources/application.yml:131` 的 `jwt.secret`，以及各服务的 `${MYSQL_PASSWORD:root}`、`${REDIS_PASSWORD:}` 仍是明文占位 + 环境变量。
-- 未写规则：`docs/rules/security.md` SEC-02 尚未约定「敏感值入库必须 `ENC(...)`」；主密钥载体（`CONFIG_ENC_KEY`）在 `deploy/docker-compose/.env.example` 无说明。
+- 规则已补（本 PR）：SEC-02 约定敏感值入库必须 `ENC(...)`；主密钥载体 `CONFIG_ENC_KEY` 的环境变量说明见 ADR 0005 与 `deploy/nacos/README.md`；`.env.example` 随 T-012 更新。
 - 详细清单与逐条迁移写法见 [TODO-config-crypto.md](TODO-config-crypto.md)。
 
 **影响**
@@ -183,18 +183,18 @@ P0-2 只解决了「凭据不硬编码」，没有解决「真实凭据一旦要
 
 **动作**
 
-- [ ] 决策 D-1 迁移范围（仅 JWT / JWT+DB+Redis / 只立规范），见 `TODO-config-crypto.md` §1。
-- [ ] 决策 D-2 主密钥托管位置，并更新 `deploy/docker-compose/.env.example`（只放占位与生成命令）。
-- [ ] 新增 ADR 0005：自研 AES-256-GCM vs Jasypt、SHA-256 密钥派生、fail-fast 策略、`/actuator/env` 明文暴露面。
-- [ ] 补 `docs/rules/security.md` SEC-02「配置密文」条款（架构角色执行）。
+- [x] 决策 D-1：先立规范、按需迁移（ADR 0005 §4）。
+- [x] 决策 D-2：主密钥走 `CONFIG_ENC_KEY` 环境变量（ADR 0005 §5）；`.env.example` 更新随 T-012。
+- [x] 新增 ADR 0005：自研 AES-256-GCM vs Jasypt、主密钥 32 字节 base64url、fail-fast 策略、`/actuator/env` 明文暴露面。
+- [x] 补 `docs/rules/security.md` SEC-02「配置密文」条款（本 PR）。
 - [ ] 视决策结果创建 T-012（配置迁移），在任务包中明确允许路径：`deploy/nacos/config/**`、`atifah-gateway/src/main/resources/**`、各服务 `application.yml`。
-- [ ] 明确 `spring.cloud.nacos.*.password` 与 `NACOS_AUTH_TOKEN` 不纳入迁移（装载期早于解密，只能走环境变量）。
+- [x] 明确 `spring.cloud.nacos.*.password` 与 `NACOS_AUTH_TOKEN` 不纳入迁移（ADR 0005 §4）。
 
 **验收**
 
 - [ ] ADR 0005 与 SEC-02 条款合并，`arch-baseline` 标签递增。
 - [ ] 迁移项（若有）执行后，配置文件中不再出现真实口令/密钥明文（`git grep` 抽查）；本地开发兜底值仍可为假值。
-- [ ] 无密钥 + 无密文时服务仍可启动；有密文无密钥时 fail-fast 提示 `CONFIG_ENC_KEY`。
+- [x] 无密钥 + 无密文时服务仍可启动；有密文无密钥、错误密钥、篡改/截断时 fail-fast（23 用例覆盖）。
 
 ---
 
