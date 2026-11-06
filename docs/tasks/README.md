@@ -67,7 +67,7 @@
 - [ ] 后端 `mvn -B -ntp verify` 通过；前端 `npm ci && npm run build` 通过。
 - [ ] CI 全绿，`workflow-check` 通过；Codex 在独立工作区按 A/B 级要求复跑自测试通过。
 - [ ] Codex 评审无 `Blocker` / `Major`，或已有维护者明确豁免记录。
-- [ ] Codex 报告已作为 PR 最后一个 docs-only 提交归档，任务包 §11 已写入报告路径、Verdict 与 Reviewed SHA；报告不记录归档提交自身 SHA。
+- [ ] Codex 报告已按 `docs/review/standards.md` §6.1 归档，任务包 §11 已写入报告路径、Verdict 与 Reviewed SHA。
 - [ ] 维护者已添加 `review:approved` 标签；推送新代码后已移除并重新评审。
 - [ ] 相关文档、契约引用、常量登记已同步。
 - [ ] PR 描述包含验证证据与风险/回滚说明。
@@ -91,8 +91,8 @@ gh pr create --base main --title "feat(auth): T-001 登录与 Token 签发" \
 
 - 创建 PR 的同一个提交里把任务状态改为 `in-review`，并在 §12 记录 PR 链接。
 - Codex 在独立 worktree / 干净检出中按 A/B/C 级执行自测试；A 级跑 `mvn -B -ntp verify` 与前端 `npm ci && npm run build`，不能只信 CI。
-- 报告命名为 `docs/review/reports/T-xxx-rN-<reviewed-sha>.md`；APPROVE 后 CodeBuddy 原样复制为 PR 最后一个 docs-only 提交，并更新 §11。该提交免语义复审，由 `workflow-check` 解析 Reviewed SHA 并校验 `Reviewed SHA..HEAD` 只改了报告与任务包 §11/§12。
-- PR 创建前本地预检：`node .github/scripts/workflow-check.mjs --base origin/main --head HEAD --branch "$(git branch --show-current)" --local-precheck`；该模式允许 `ready`，跳过标签与归档报告校验。PR 门禁只接受 `in-review`。
+- 报告命名、归档顺序、免复审规则与 `Reviewed SHA..HEAD` 校验以 `docs/review/standards.md` §6.1 为唯一来源；CodeBuddy 按该流程原样归档并更新 §11。
+- PR 创建前本地预检：`node .github/scripts/workflow-check.mjs --base origin/main --head HEAD --branch "$(git branch --show-current)" --local-precheck`；该模式允许 `ready`，跳过 `review:approved` 与归档报告校验。PR 门禁只接受 `in-review`。
 - 维护者加 `review:approved` 标签后，`workflow-check` 重跑通过再合并（Feature 必需；推送新代码后移除并复审）；合并后由维护者每周批量置 `done`。
 
 - `Blocker` / `Major` 或自测试失败 → CodeBuddy 修复，重新跑 CI，Codex 复审；同一 PR 最多 2 轮，仍阻塞则升级到维护者 + Claude 重新界定范围。

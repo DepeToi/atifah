@@ -14,16 +14,12 @@
 ## 写入权限
 
 - **Codex**：可写本目录，仅限评审报告；不得修改代码、契约、规则、任务实现或测试；不得提交。
-- **CodeBuddy**：在 APPROVE 后将 Codex 报告**原样复制**为 PR 最后一个 docs-only 提交，并更新任务包 §11；不得修改报告正文。
+- **CodeBuddy**：在 APPROVE 后按 [`../standards.md`](../standards.md) §6.1 归档 Codex 报告并更新任务包 §11；不得修改报告正文。
 - **人类维护者**：只读；合并前确认报告、§11 与 `review:approved` 标签齐全。
 
-## 归档顺序
+## 归档规则
 
-1. Codex 在 PR 评论给出 Verdict + Self-test 摘要，并产出完整报告。
-2. CodeBuddy 将报告原样复制到 `docs/review/reports/`（Feature：`T-xxx-rN-<reviewed-sha>.md`；非 Feature：`PR-<n>-<reviewed-sha>.md`）；Feature 同一提交更新任务包 §11，非 Feature 填写报告归档记录。该提交只允许改报告与任务包 §11/§12。
-3. `workflow-check` 解析报告中的 Reviewed SHA，要求至少一份当前轮次报告的 `Reviewed SHA..HEAD` 只含报告与任务包 §11/§12、HEAD 最后提交为 docs-only；历史轮次报告可同时归档，但旧报告不能单独作为审批依据。该提交免语义复审。报告不记录归档提交自身的 SHA。
-4. 维护者加 `review:approved` 标签，CI 全绿后合并。
-5. 合并后维护者每周批量把任务置为 `done`。
+归档步骤、免复审规则与 `Reviewed SHA..HEAD` 校验以 [`../standards.md`](../standards.md) §6.1 为唯一来源；本文件只定义命名、写入权限与保留策略。
 
 ## 保留
 
@@ -32,4 +28,4 @@
 
 ## 合并门禁
 
-未归档报告、任务包 §11 未记录报告路径/Verdict、Feature/Arch/Ops 缺少 `review:approved`，或 CI / `workflow-check` 未通过 → 不得合并（DOC-03，细则见 `../standards.md` §6.1）。推送新代码后必须移除标签并复审。
+未归档报告、任务包 §11 未记录，或 Feature/Arch/Ops 缺少 `review:approved` → 不得合并；细则见 [`../standards.md`](../standards.md) §6.1。

@@ -41,7 +41,7 @@
 ## 3. 评审流程
 
 1. **分类与产物**：确认 PR 属于 Feature / Arch / Ops / Docs；Feature 有任务包，Arch 有 ADR（涉及契约时附契约 diff），Ops/Docs 有变更说明与验证命令。混合变更按最高风险类型处理。
-2. **范围与状态**：Feature 的 diff 是否只在任务包允许路径内；Arch/Ops/Docs 是否遵守各自边界；是否夹带契约/规则/其他服务修改；任务状态是否由授权角色设置、是否与 PR/合并/报告证据一致（四状态：`draft` / `ready` / `in-review` / `done`）。
+2. **范围与状态**：先看 `workflow-check` 结果；§5.0 中 CI 全覆盖的编号不逐项复核，CI + 语义的编号只复核语义部分。确认变更分类与 PR 边界；任务状态是否由授权角色设置、是否与 PR/合并/报告证据一致（四状态：`draft` / `ready` / `in-review` / `done`）。
 3. **契约一致性**：接口路径、字段、错误码、DDL、事件 payload 是否与冻结契约一致。
 4. **架构与数据**：服务边界、跨库访问、同步/异步方式、公共模块依赖。
 5. **安全**：敏感字段、日志、密钥、鉴权、幂等。
@@ -92,6 +92,18 @@ cd atifah-admin-web/frontend && npm ci && npm run build
 - 自测试通过但 CI 未跑 → 不能代替 CI；提醒维护者等 CI 全绿。
 
 ## 5. 规则目录
+
+### 5.0 机械门禁覆盖范围
+
+`workflow-check` 已在 PR 上机械校验以下编号。CI 全绿时，Codex 不逐项复核；仅在门禁失败、规则被绕过或发现门禁盲区时报告。
+
+| 覆盖方式 | 编号 | 说明 |
+| --- | --- | --- |
+| CI 全覆盖 | SCOPE-00、SCOPE-01、DOC-01、DOC-03 | 变更分类、允许路径、契约/ADR 配套、报告归档与 §11 路径、Reviewed SHA 范围（Verdict 内容由报告自身保证） |
+| CI + 语义 | SCOPE-02、SCOPE-03、DOC-04、GIT-02、GIT-03 | 规模、路径、当前状态由 CI 校验；Codex 只复核“一个 PR 只做一件事”、授权/越权语义、PR 模板与关注点 |
+
+- DOC-03 的归档发生在 APPROVE 之后，评审阶段无法检查归档结果；Codex 只需保证报告内容完整、命名正确。
+- CI 失败时仍按 §2 给 `REQUEST_CHANGES`，不得以“已由 CI 覆盖”为由忽略失败。
 
 ### 5.1 范围与架构
 
@@ -169,11 +181,11 @@ cd atifah-admin-web/frontend && npm ci && npm run build
 | DOC-03 | 评审报告未按 §6.1 归档，或任务包 §11 未记录报告路径/Verdict | Blocker（流程检查） |
 | DOC-04 | 任务状态被未授权角色修改、跳过必经状态，或与 PR/合并/报告证据不符 | Blocker（流程检查） |
 | OPS-01 | 配置分层正确；共享配置只改 `common-application.yaml` 并提醒导入 Nacos | Major |
-| OPS-02 | 修改受保护部署文件、端口映射、已执行 SQL、`.gitattributes` | Blocker |
+| OPS-02 | 修改受保护部署文件、端口映射、已执行 SQL、`.gitattributes` 但未在 PR/报告中说明理由与影响（与 GIT-04 合并报告） | Blocker |
 | GIT-01 | AI 未经用户要求自动 `commit` / `push` | Blocker（流程检查） |
 | GIT-02 | 分支命名、PR 模板、单任务/单关注点、规模阈值 | Major（流程检查） |
 | GIT-03 | 变更边界：只改允许路径，不顺手重构（与 SCOPE-01 合并报告） | Major |
-| GIT-04 | 修改受保护文件（与 OPS-02 合并报告） | Blocker |
+| GIT-04 | 修改受保护文件未说明理由或未获维护者确认（与 OPS-02 合并报告） | Blocker |
 | GIT-05 | 接口/路由/端口/配置变更未同步文档与常量（与 DOC-02 合并报告） | Major |
 | GIT-06 | 提交前自检未执行或未通过却声称完成 | Major |
 | GIT-07 | 多个工具并发修改同一批文件；Codex 修改任务状态 | Blocker（流程检查） |
@@ -230,7 +242,7 @@ Verdict: REQUEST_CHANGES
 5. 未归档报告、Feature 的 §11 缺失，或 Feature/Arch/Ops 缺少 `review:approved` → 不得合并（DOC-03）。合并后由维护者每周批量把任务置为 `done`。
 6. 推送新代码后必须移除 `review:approved`，Codex 复审后再加回；标签不是永久批准。报告不记录归档提交自身的 SHA（SHA 无法自引用）；归档提交由 CI 按 `Reviewed SHA..HEAD` 范围识别。
 
-本地预检使用 `node .github/scripts/workflow-check.mjs --base origin/main --head HEAD --branch "$(git branch --show-current)" --local-precheck`：允许 `ready`/`in-review`，跳过标签与归档报告校验；该模式不能替代 PR 门禁。
+本地预检使用 `node .github/scripts/workflow-check.mjs --base origin/main --head HEAD --branch "$(git branch --show-current)" --local-precheck`：允许 `ready`/`in-review`，跳过 `review:approved` 与归档报告校验；该模式不能替代 PR 门禁。
 
 报告必须包含：变更类型、Reviewed SHA、Verdict、Blocker/Major/Minor/Question 计数、发现详情、Self-test 块、未覆盖范围。报告中的手机号、token、密钥等敏感信息必须脱敏。
 

@@ -183,7 +183,7 @@ curl http://localhost:8090/actuator/health   # admin-service（管理后台 BFF�
 | Codex（评审） | 只读评审 + 独立自测试 + 报告 | `AGENTS.md` §0、[`docs/review/standards.md`](docs/review/standards.md) |
 | 人类（维护者） | 确认架构、合并、打基线、批量收口 `done` | `AGENTS.md` §0 |
 
-变更分 **Feature / Arch / Ops / Docs** 四类，只有 Feature 需要任务包；完整分类与交接见 [`AGENTS.md`](AGENTS.md) §0 与 [ADR 0004](docs/adr/0004-workflow-v2.md)。
+变更分 **Feature / Arch / Ops / Docs** 四类，只有 Feature 需要任务包；完整分类与交接见 [`AGENTS.md`](AGENTS.md) §0 与 [ADR 0004](docs/adr/0004-workflow-v2.md) / [0006](docs/adr/0006-workflow-v2.1.md)。
 
 标准交接顺序：
 
@@ -191,7 +191,7 @@ curl http://localhost:8090/actuator/health   # admin-service（管理后台 BFF�
 2. **Arch / Ops / Docs**：Claude 或负责人直接开对应分支 PR，按类型提供 ADR、验证命令或 PR 描述。
 3. CodeBuddy 从 `main` 拉 `feat/T-xxx-<slug>`，只改任务包允许路径，自检后开 PR 并置为 `in-review`。
 4. CI 构建/测试/密钥扫描通过后，Codex 在独立工作区复跑自测试，PR 评论给 Verdict，报告写入 `docs/review/reports/`。
-5. APPROVE 后 CodeBuddy 将报告原样复制为最后一个 docs-only 提交并更新 §11；维护者加 `review:approved`（Feature/Arch/Ops 必需），`workflow-check` 重跑通过后合并，合并即完成。
+5. APPROVE 后按 [`docs/review/standards.md`](docs/review/standards.md) §6.1 归档报告并更新 §11；维护者加 `review:approved`（Feature/Arch/Ops 必需），`workflow-check` 重跑通过后合并，合并即完成。
 
 分支、提交、PR 与任务状态机的完整规则见 [`docs/rules/git-workflow.md`](docs/rules/git-workflow.md)、[`docs/tasks/README.md`](docs/tasks/README.md)；命令与自检见 `AGENTS.md` §9。
 

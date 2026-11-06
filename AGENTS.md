@@ -40,7 +40,7 @@
 4. **Feature 实现**：CodeBuddy 从 `main` 拉 `feat/T-xxx-<slug>`，只改任务包允许路径；创建 PR 后将任务置为 `in-review`。
 5. **CI**：构建/测试/密钥扫描必须通过；`workflow-check` 的评审门禁在 APPROVE、报告归档并加 `review:approved` 后必须通过。
 6. **评审**：Codex 按 `docs/review/standards.md` 评审，并在独立工作区执行自测试；PR 评论给出 Verdict，报告写入 `docs/review/reports/`。
-7. **归档与合并**：APPROVE 后 CodeBuddy 将报告原样复制为 PR 最后一个 docs-only 提交；Feature 更新任务 §11，非 Feature 填写报告归档记录。该提交免语义复审、只做机械校验。维护者加 `review:approved` 标签（Feature/Arch/Ops 必需，Docs 不需要）后合并；推送新代码后必须移除标签并复审。`Blocker` / `Major` 最多 2 轮，架构/契约问题回 Claude。
+7. **归档与合并**：报告按 `docs/review/standards.md` §6.1 归档并校验；维护者加 `review:approved` 标签（Feature/Arch/Ops 必需，Docs 不需要）后合并；推送新代码后必须移除标签并复审。`Blocker` / `Major` 最多 2 轮，架构/契约问题回 Claude。
 8. **收口**：合并即完成；维护者每周批量把已合并任务置为 `done`。AI 不得自动 `git commit` / `git push`，除非用户明确要求。
 
 **状态权限**：Claude 只设 `draft` / `ready`；CodeBuddy 只设 `in-review`；人类维护者设 `done` 与强制回退；`blocked` 由当前负责人设置与解除；Codex 不得改状态。`ready` 以维护者批准任务包/契约为准；`done` 以合并与报告归档为准（DOC-04）。
