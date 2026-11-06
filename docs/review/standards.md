@@ -1,18 +1,26 @@
 # 代码评审规则（Codex）
 
-> 本文件是 **Codex 只读评审 + 独立自测试**的流程、分级与规则编号判据；具体规则正文与阈值以 `docs/rules/*`、`docs/contracts/*` 为准，本表只保留检查点与默认级别。规则编号同时被 `AGENTS.md`、`docs/rules/*` 与任务包引用。
+> 本文件是 **Codex 只读评审 + 独立自测试 + 报告归档**的流程、分级与规则编号判据；具体规则正文与阈值以 `docs/rules/*`、`docs/contracts/*` 为准，本表只保留检查点与默认级别。规则编号同时被 `AGENTS.md`、`docs/rules/*` 与任务包引用。
 > 目标：让评审结果稳定、可追踪、可自动化；不把风格偏好伪装成缺陷。
 
-## 1. 评审输入（缺一不可）
+## 1. 评审输入（按变更类型）
 
-1. 任务包：`docs/tasks/T-xxx-<slug>.md`（目标、允许修改路径、验收标准）。
-2. 契约：`docs/contracts/` 中与任务相关的 OpenAPI / DDL / 事件文件。
-3. diff：`git diff <base>...<head>`，只评审本次变更及直接受影响的调用方。
-4. CI 结果：`.github/workflows/ci.yml` 必须通过。
-5. 规则：本文件 + `docs/rules/*.md` + 目标模块 `AGENTS.md`。
-6. 自测试环境：独立 worktree / 干净检出，JDK 21 + Maven 3.9+，Node 22（前端）。
+| 变更类型 | 必需输入 |
+| --- | --- |
+| **Feature** | 任务包 `docs/tasks/T-xxx-<slug>.md`（目标、允许修改路径、验收标准） |
+| **Arch** | ADR（`docs/adr/NNNN-*.md`）+ 契约 diff（`docs/contracts/**`，涉及契约时） |
+| **Ops** | PR 描述中的变更说明、影响面、验证命令与回滚方式 |
+| **Docs** | PR 描述与链接/格式检查结果 |
 
-缺少任务包或契约时，直接 `REQUEST_CHANGES`（SCOPE-01 / DOC-01），不要开始逐行评审。
+所有类型还必须提供：
+
+1. 相关契约：`docs/contracts/` 中与变更相关的 OpenAPI / DDL / 事件文件。
+2. diff：`git diff <base>...<head>`，只评审本次变更及直接受影响的调用方。
+3. CI 结果：`.github/workflows/ci.yml`（含 `workflow-check`）必须通过。
+4. 规则：本文件 + `docs/rules/*.md` + 目标模块 `AGENTS.md`。
+5. 自测试环境：独立 worktree / 干净检出，JDK 21 + Maven 3.9+，Node 22（前端）。
+
+缺少该变更类型的必需产物，或变更类型与实际 diff 不符时，直接 `REQUEST_CHANGES`（SCOPE-00 / DOC-01），不要开始逐行评审。
 
 ## 2. 结论与分级
 
@@ -27,32 +35,44 @@
 
 - 任一 `Blocker` 或 `Major` → `REQUEST_CHANGES`。
 - 零 `Blocker` / `Major` → `APPROVE`，可附带 `Minor` / `Question`。
-- CI 失败、Codex 自测试未执行或失败、任务包/契约缺失 → 一律 `REQUEST_CHANGES`。
+- CI 或 `workflow-check` 失败、Codex 自测试未执行或失败、必需产物缺失、报告缺失 → 一律 `REQUEST_CHANGES`；合并前报告未归档由维护者与 CI 拦截（DOC-03）。
 - 未检查到的文件必须在报告中写明“未覆盖”，不得默认认为没问题。
 
 ## 3. 评审流程
 
-1. **范围与状态**：diff 是否只在任务包允许路径内；是否夹带契约/规则/其他服务修改；任务状态是否由授权角色设置、是否与 PR/合并/报告证据一致。
-2. **契约一致性**：接口路径、字段、错误码、DDL、事件 payload 是否与冻结契约一致。
-3. **架构与数据**：服务边界、跨库访问、同步/异步方式、公共模块依赖。
-4. **安全**：敏感字段、日志、密钥、鉴权、幂等。
-5. **正确性**：空值/边界/并发/事务/MQ 重复消费；错误处理是否吞异常。
-6. **测试质量**：是否有真实断言；是否覆盖成功、失败、幂等/重复消费等关键路径。
-7. **自测试**：在独立工作区按 §4 执行构建与测试，记录命令、退出码、关键输出，并与 CI 结果交叉核对。
-8. **输出**：每条问题带规则编号、文件行号、证据与修复建议；给出最终结论与自测试结果。
+1. **分类与产物**：确认 PR 属于 Feature / Arch / Ops / Docs；Feature 有任务包，Arch 有 ADR（涉及契约时附契约 diff），Ops/Docs 有变更说明与验证命令。混合变更按最高风险类型处理。
+2. **范围与状态**：Feature 的 diff 是否只在任务包允许路径内；Arch/Ops/Docs 是否遵守各自边界；是否夹带契约/规则/其他服务修改；任务状态是否由授权角色设置、是否与 PR/合并/报告证据一致（四状态：`draft` / `ready` / `in-review` / `done`）。
+3. **契约一致性**：接口路径、字段、错误码、DDL、事件 payload 是否与冻结契约一致。
+4. **架构与数据**：服务边界、跨库访问、同步/异步方式、公共模块依赖。
+5. **安全**：敏感字段、日志、密钥、鉴权、幂等。
+6. **正确性**：空值/边界/并发/事务/MQ 重复消费；错误处理是否吞异常。
+7. **测试质量**：是否有真实断言；是否覆盖成功、失败、幂等/重复消费等关键路径。
+8. **自测试**：按 §4 的 A/B/C 级执行，记录命令、退出码、关键输出，并与 CI 结果交叉核对。
+9. **输出**：每条问题带规则编号、文件行号、证据与修复建议；给出最终结论、自测试结果与报告归档路径。
 
 评审只看 diff 和直接受影响的代码，**不要通读整个仓库**；生成文件、`node_modules/`、`target/` 不评审。
 
 ## 4. 自测试要求
 
-> Codex 不能只读 diff、只看 CI；必须在**独立工作区**自行执行构建与测试，用真实结果支撑结论。
+> Codex 不能只读 diff、只看 CI；必须按变更风险分级执行自测试，用真实结果支撑结论。
 
-### 4.1 执行环境
+### 4.1 分级
+
+| 级别 | 适用范围 | 必跑 |
+| --- | --- | --- |
+| **A** | 业务服务、`common`、`gateway`、契约、安全相关 | 独立 worktree；`mvn -B -ntp verify`；涉及前端时 `npm ci && npm run build` |
+| **B** | `deploy`、配置、依赖升级、构建脚本 | 受影响模块 `verify` + `docker compose config -q` / YAML 解析（如适用）；独立干净检出 |
+| **C** | 纯文档/规则（不含契约） | 链接/格式检查；可免构建，报告中说明理由 |
+
+- A 级不得只跑单模块；跨模块编译/测试必须覆盖。测试耗时过长时，至少执行受影响模块 `verify` + 全量 `mvn -B -ntp -DskipTests package`，并写清未跑的测试。
+- B 级无法起 Docker/中间件时，在报告中写“未覆盖”，不得默认通过。
+- C 级不得跳过链接/格式检查；涉及契约的文档变更按 Arch 的 A 级处理。
+
+### 4.2 执行环境
 
 - 使用独立 worktree / 干净检出，指向 PR 的 head commit；不要复用 CodeBuddy 的脏工作区。
 - 后端：JDK 21 + Maven 3.9+；前端：Node 22 + npm（与 CI 一致）。
 - 不修改代码、测试、配置来“让测试通过”；不提交 `target/`、`dist/`、`node_modules/`。
-- 需要 MySQL/Redis 的集成测试：本地有 Docker 时用 `deploy/docker-compose` 启动；没有时在报告中明确写“未覆盖”，不得默认通过。
 
 示例（Git Bash）：
 
@@ -64,21 +84,9 @@ mvn -B -ntp verify
 cd atifah-admin-web/frontend && npm ci && npm run build
 ```
 
-### 4.2 必跑项
-
-| 范围 | 命令 | 要求 |
-| --- | --- | --- |
-| 后端全量 | `mvn -B -ntp verify` | 必须执行；不能只跑单模块，避免跨模块编译/测试被漏掉 |
-| 前端 | `npm ci && npm run build` | 涉及前端或共享类型时必须执行 |
-| 契约/DDL | 对照 `docs/contracts/` 人工核对 | 静态检查，不能替代构建 |
-| 集成测试 | 有中间件时执行；否则说明未覆盖 | Redis/MySQL/MQ 相关 |
-
-- 如果 PR 只改文档/规则，可只跑链接/格式检查，并在报告中说明免跑理由。
-- 如果测试耗时过长，至少执行受影响模块的 `verify` + 全量 `mvn -B -ntp -DskipTests package`，并写清未跑的测试。
-
 ### 4.3 记录与判定
 
-- 报告必须包含：commit SHA、执行环境、每条命令、退出码、关键输出、失败用例。
+- 报告必须包含：变更类型、自测试级别、commit SHA、执行环境、每条命令、退出码、关键输出、失败用例。
 - 自测试失败 → `REQUEST_CHANGES`；若确认是环境问题（如缺少 MySQL），标 `[Question]` 并说明未覆盖范围，不得直接 `APPROVE`。
 - 自测试通过但 CI 失败 → 以 CI 为准，`REQUEST_CHANGES`；分析差异并记录。
 - 自测试通过但 CI 未跑 → 不能代替 CI；提醒维护者等 CI 全绿。
@@ -89,8 +97,9 @@ cd atifah-admin-web/frontend && npm ci && npm run build
 
 | 编号 | 检查点 | 默认级别 |
 | --- | --- | --- |
-| SCOPE-01 | 只修改任务包“允许修改”的路径 | Blocker |
-| SCOPE-02 | 一个 PR 只对应一个任务，diff ≤400 行 | Major |
+| SCOPE-00 | 按 Feature/Arch/Ops/Docs 正确分类；混合变更按最高风险处理 | Major |
+| SCOPE-01 | Feature 只修改任务包“允许修改”的路径；Arch/Ops/Docs 不越出各自边界 | Blocker |
+| SCOPE-02 | 一个 PR 只做一件事；Feature ≤600 行非测试代码（总计 ≤1000），Arch/Ops ≤500 行非文档代码 | Major |
 | SCOPE-03 | 未授权修改契约/规则/父 pom/受保护文件 | Blocker |
 | ARCH-01 | 一服务一库；禁止跨库 JOIN、访问其他服务表 | Blocker |
 | ARCH-02 | 跨服务同步走 OpenFeign、异步走 RocketMQ；禁止共享库绕过 | Blocker |
@@ -149,30 +158,35 @@ cd atifah-admin-web/frontend && npm ci && npm run build
 | TEST-01 | 核心链路有测试，且断言行为而非只编译 | Major |
 | TEST-02 | 测试可重复，不依赖真实外部中间件（或明确标记集成测试） | Major |
 | TEST-03 | Codex 未执行自测试，或自测试失败仍给出 `APPROVE` | Blocker（流程检查） |
+| TEST-04 | 未按 A/B/C 级执行自测试或未记录未覆盖范围 | Major（流程检查） |
 
 ### 5.6 流程与文档
 
 | 编号 | 检查点 | 默认级别 |
 | --- | --- | --- |
-| DOC-01 | 契约变更先有 ADR，并单独开 PR | Blocker |
+| DOC-01 | 契约变更先有 ADR，并单独开 `arch/<topic>` PR；未夹带业务代码 | Blocker |
 | DOC-02 | 接口/路由/端口/配置变更同步文档与常量登记 | Major |
-| DOC-03 | Codex 评审报告未落盘到 `docs/review/reports/`，或任务包 §11 未归档 | Blocker（流程检查） |
+| DOC-03 | 评审报告未按 §6.1 归档，或任务包 §11 未记录报告路径/Verdict | Blocker（流程检查） |
 | DOC-04 | 任务状态被未授权角色修改、跳过必经状态，或与 PR/合并/报告证据不符 | Blocker（流程检查） |
 | OPS-01 | 配置分层正确；共享配置只改 `common-application.yaml` 并提醒导入 Nacos | Major |
 | OPS-02 | 修改受保护部署文件、端口映射、已执行 SQL、`.gitattributes` | Blocker |
 | GIT-01 | AI 未经用户要求自动 `commit` / `push` | Blocker（流程检查） |
-| GIT-02 | 分支命名、PR 模板、单任务单 PR | Major（流程检查） |
-| GIT-03 | 变更边界：只改任务包允许路径，不顺手重构（与 SCOPE-01 合并报告） | Major |
+| GIT-02 | 分支命名、PR 模板、单任务/单关注点、规模阈值 | Major（流程检查） |
+| GIT-03 | 变更边界：只改允许路径，不顺手重构（与 SCOPE-01 合并报告） | Major |
 | GIT-04 | 修改受保护文件（与 OPS-02 合并报告） | Blocker |
 | GIT-05 | 接口/路由/端口/配置变更未同步文档与常量（与 DOC-02 合并报告） | Major |
 | GIT-06 | 提交前自检未执行或未通过却声称完成 | Major |
-| GIT-07 | 多个工具并发修改同一批文件 | Blocker（流程检查） |
+| GIT-07 | 多个工具并发修改同一批文件；Codex 修改任务状态 | Blocker（流程检查） |
 
 ## 6. 输出格式（必须固定）
 
 在 PR 评论中按以下格式输出，一条问题一个条目：
 
 ```text
+Class: feature | arch | ops | docs
+Reviewed SHA: <被评审的代码提交>
+Report: docs/review/reports/T-xxx-r1-<reviewed-sha>.md
+
 [Blocker] path/to/File.java:42 — SEC-01 — 日志打印了日记正文
   证据：log.info("content={}", diary.getContent());
   影响：敏感个人信息泄露，违反数据分级要求。
@@ -187,7 +201,8 @@ cd atifah-admin-web/frontend && npm ci && npm run build
   说明：前端旧版本是否会读取该字段？
 
 Self-test:
-  commit: <head-sha>
+  tier: A | B | C
+  commit: <reviewed-sha>
   mvn -B -ntp verify: PASS
   npm ci && npm run build: PASS
   notes: 未运行 MySQL/Redis 集成测试
@@ -201,39 +216,44 @@ Verdict: REQUEST_CHANGES
 - 同一根因只报一次，选最具体的规则编号，不重复计数。
 - 不要写“建议重构”“可以考虑优化”这类无法执行的结论。
 - `Minor` 可以合并为一条列表，但仍需带规则编号与位置。
-- 必须附 `Self-test` 块：commit、命令、结果、未覆盖范围；没有自测试结果不得给出 `APPROVE`。
-- 必须附报告落盘路径：`docs/review/reports/T-xxx-<head-short-sha>.md`。
+- 必须附 `Class`、`Reviewed SHA`、`Self-test` 块与报告路径；没有自测试结果不得给出 `APPROVE`。
+- 报告路径按 §6.1 命名：Feature 用 `T-xxx-rN-<reviewed-sha>.md`，非 Feature 用 `PR-<n>-<reviewed-sha>.md`。
 
 ### 6.1 评审记录归档（强制）
 
-> 报告命名、写入权限与保留策略见 [`reports/README.md`](reports/README.md)；本节只定义必须归档的内容。
+> 报告命名、写入权限与保留策略见 [`reports/README.md`](reports/README.md)；本节只定义必须归档的内容与顺序。
 
-- Codex 必须把完整评审报告写入 `docs/review/reports/T-xxx-<head-short-sha>.md`，使用 [`report-template.md`](report-template.md)；PR 评论只放摘要与报告链接。
-- Codex 的写入范围仅限 `docs/review/reports/**`；不得修改代码、契约、规则、任务实现或测试。
-- 报告必须包含：commit SHA、Verdict、Blocker/Major/Minor/Question 计数、发现详情、Self-test 块、未覆盖范围。
-- CodeBuddy 在开 PR 或合并前，把报告路径与 Verdict 写入 `docs/tasks/T-xxx.md` §11；不得修改报告正文。
-- 未落盘报告或 §11 未归档 → 不得合并（DOC-03）。
-- 如果 Codex 所在环境不能写文件：在 PR 评论输出完整报告，由 CodeBuddy/维护者原样保存到上述路径后再合并。
+1. Codex 评审后在 PR 评论输出完整 Verdict + Self-test 摘要，并把完整报告写入 `docs/review/reports/`：Feature 用 `T-xxx-rN-<reviewed-sha>.md`，非 Feature 用 `PR-<n>-<reviewed-sha>.md`（工作区或 PR 评论；Codex 不提交）。
+2. APPROVE 后，CodeBuddy 将报告**原样复制**为 PR 最后一个 docs-only 提交；Feature 同时在任务包 §11 写入报告路径、Verdict 与 Reviewed SHA，非 Feature 在报告归档记录中填写。
+3. 该 docs-only 提交只允许改 `docs/review/reports/**` 与任务包 §11/§12；`workflow-check` 校验至少一份当前轮次报告的 `Reviewed SHA..HEAD` 范围、HEAD 最后提交与任务包章节，**免语义复审**。历史轮次报告可同时归档，但旧报告不能单独作为审批依据。
+4. 维护者加 `review:approved` 标签（Feature/Arch/Ops 必需，Docs 不需要）；CI 全绿、报告文件存在、Feature 的 §11 已记录 → 可合并。
+5. 未归档报告、Feature 的 §11 缺失，或 Feature/Arch/Ops 缺少 `review:approved` → 不得合并（DOC-03）。合并后由维护者每周批量把任务置为 `done`。
+6. 推送新代码后必须移除 `review:approved`，Codex 复审后再加回；标签不是永久批准。报告不记录归档提交自身的 SHA（SHA 无法自引用）；归档提交由 CI 按 `Reviewed SHA..HEAD` 范围识别。
+
+本地预检使用 `node .github/scripts/workflow-check.mjs --base origin/main --head HEAD --branch "$(git branch --show-current)" --local-precheck`：允许 `ready`/`in-review`，跳过标签与归档报告校验；该模式不能替代 PR 门禁。
+
+报告必须包含：变更类型、Reviewed SHA、Verdict、Blocker/Major/Minor/Question 计数、发现详情、Self-test 块、未覆盖范围。报告中的手机号、token、密钥等敏感信息必须脱敏。
 
 ## 7. 分流与升级
 
 - `[Arch]`：架构/契约/跨服务边界问题 → 回到 Claude，先改 ADR 与契约。
 - `[Impl]`：实现问题 → 回到 CodeBuddy 修复，Codex 复审。
 - `[Question]`：信息不足或产品决策 → 由人类维护者确认。
+- **轮次上限**：同一 PR 的 `REQUEST_CHANGES` 最多 2 轮；第 2 轮仍有 `Blocker` / `Major`，升级到维护者 + Claude 重新界定范围，不再继续打补丁。
 - 同一规则连续两轮被同一类问题触发 → 建议 Claude 更新规则或增加自动化检查（ArchUnit / CI），而不是反复口头提醒。
 
 ## 8. Codex 禁止事项
 
-- 不直接修改代码、不提交修复；评审是只读的，但可以在独立工作区运行构建与测试，并写 `docs/review/reports/**` 评审报告。
+- 不直接修改代码、不提交修复；评审是只读的，但可以在独立工作区运行构建与测试，并把报告写入 `docs/review/reports/**`（不提交）。
 - 不评审任务范围外的文件，不提出大规模重构。
-- 不发明需求或验收标准；以任务包和契约为准。
+- 不发明需求或验收标准；以任务包、ADR、契约和 PR 描述为准。
 - 不因个人风格偏好判 `Blocker` / `Major`；无规则依据的只算 `Minor` 或不报。
-- 不得只依赖 CI 结果；必须按 §4 独立执行自测试。
+- 不得只依赖 CI 结果；必须按 §4 的 A/B/C 级执行自测试。
 - 不得修改代码/测试/配置让自测试通过，不得提交构建产物。
-- 不得只把评审结论留在 PR 评论/聊天而不落盘；必须写入 `docs/review/reports/`。
+- 不得只把评审结论留在 PR 评论/聊天而不产出报告；报告由 CodeBuddy 原样归档。
 - 不得修改任务包状态或 §12 状态记录；状态由授权角色维护。
-- 不在 CI 失败、自测试未执行或失败、报告未落盘、任务状态与证据不符、契约缺失时给出 `APPROVE`。
+- 不在 CI 失败、自测试未执行或失败、报告未产出、任务状态与证据不符、必需产物缺失时给出 `APPROVE`。
 
 ## 9. 报告模板
 
-见 [`report-template.md`](report-template.md)。报告必须落盘到 `docs/review/reports/T-xxx-<head-short-sha>.md`；PR 评论只放摘要与链接。
+见 [`report-template.md`](report-template.md)。报告必须使用 §6.1 的命名；PR 评论放 Verdict + Self-test 摘要与报告路径。

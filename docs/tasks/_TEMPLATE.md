@@ -1,6 +1,7 @@
 ---
 id: T-000
-title: <服务> <功能> 
+title: <服务> <功能>
+change_class: feature
 status: draft
 owner: codebuddy
 created: YYYY-MM-DD
@@ -11,6 +12,8 @@ related_adr: []
 ---
 
 # T-000 <服务> <功能>
+
+> 本模板只用于 **Feature** 变更。Arch 用 ADR + 契约 diff，Ops 用变更说明 + 验证命令，Docs 用 PR 描述；见 `AGENTS.md` §0。
 
 ## 1. 目标与背景
 
@@ -43,9 +46,11 @@ related_adr: []
 ```text
 atifah-services/<service>/**
 atifah-services/<service>/src/test/**
+docs/tasks/T-000-<slug>.md            # 仅 front matter / §11 / §12
+docs/review/reports/T-000-r*-*.md     # 仅原样归档评审报告
 ```
 
-> 只列实际需要的路径；不要写整个仓库。
+> 只列实际需要的路径；不要写整个仓库。报告归档路径只允许原样复制，不得修改报告正文。
 
 ### 禁止修改
 
@@ -55,6 +60,9 @@ docs/rules/**
 docs/adr/**
 根 pom.xml
 atifah-common/**
+atifah-gateway/**
+deploy/**
+.github/**
 其他服务/**
 ```
 
@@ -75,9 +83,12 @@ atifah-common/**
 - [ ] 幂等：
 - [ ] 性能 / 分页：
 - [ ] 日志不含敏感明文。
+- [ ] 分支 `feat/T-000-<slug>`；单服务；≤600 行非测试代码、总计 ≤1000 行。
+- [ ] 未修改契约、规则、ADR、父 pom、公共模块、网关、deploy 或其他服务。
 
 ## 7. 测试要求
 
+- [ ] 测试层级：A / B（按 `docs/review/standards.md` §4 选择）。
 - [ ] 单元测试覆盖：<类/方法>
 - [ ] 成功 / 失败 / 边界用例：
 - [ ] 如涉及 MQ：重复消费、乱序、重试用例。
@@ -98,6 +109,7 @@ atifah-common/**
 mvn -pl atifah-services/<service> -am verify
 # 或全量
 mvn -B -ntp verify
+node .github/scripts/workflow-check.mjs --base origin/main --head HEAD --branch "$(git branch --show-current)" --local-precheck
 ```
 
 ## 10. 风险与回滚
@@ -108,7 +120,10 @@ mvn -B -ntp verify
 
 ## 11. 评审与自测试记录
 
-- 评审报告：`docs/review/reports/T-xxx-<head-short-sha>.md`
+- 评审报告：`docs/review/reports/T-000-rN-<reviewed-sha>.md`
+- Reviewed SHA：<被评审的最后一个代码提交>
+- Verdict：`APPROVE` / `REQUEST_CHANGES`
+- 自测试层级：A / B
 
 | 轮次 | 评审人 | 自测试命令/结果 | 结论 | Blocker/Major | 处理 |
 | --- | --- | --- | --- | --- | --- |
@@ -120,4 +135,6 @@ mvn -B -ntp verify
 
 | 日期 | 从 | 到 | 操作人 | 依据/证据 |
 | --- | --- | --- | --- | --- |
-| YYYY-MM-DD | draft | ready | Claude | 契约冻结 + 维护者确认 |
+| YYYY-MM-DD | draft | ready | Claude | 维护者批准 + 契约冻结（arch-baseline-vX.Y） |
+| YYYY-MM-DD | ready | in-review | CodeBuddy | 分支已推送 + PR 已创建 |
+| YYYY-MM-DD | in-review | done | 维护者 | PR 已合并 + 报告已归档（批量收口） |

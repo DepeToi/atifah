@@ -24,5 +24,7 @@
 
 | 编号 | 决策 | 状态 | 日期 |
 | --- | --- | --- | --- |
-| [0001](0001-three-tool-collaboration.md) | 三工具协作与仓库契约工作流 | 已采纳 | 2026-10-19 |
+| [0001](0001-three-tool-collaboration.md) | 三工具协作与仓库契约工作流 | 已采纳（部分被 0004 取代） | 2026-10-19 |
 | [0002](0002-auth-login-token.md) | auth-service 注册、登录与令牌设计 | 已采纳 | 2026-10-19 |
+| [0003](0003-gateway-starter-webflux-migration.md) | 网关 starter 迁移至 spring-cloud-gateway-server-webflux | 已采纳 | 2026-10-29 |
+| [0004](0004-workflow-v2.md) | 工作流 v2：变更分类、四状态与机械门禁 | 已采纳 | 2026-11-06 |

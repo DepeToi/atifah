@@ -1,0 +1,29 @@
+# CODEOWNERS — 代码所有权与评审路由
+#
+# 语法：路径模式 所有者...
+# 所有者必须是拥有仓库 Write 权限的 GitHub 用户或团队（团队写法 @org/team）。
+# 启用 “Require review from Code Owners” 后，所有者不能批准自己的 PR；
+# 单人维护仓库请勿开启该选项，或先增加第二位维护者。
+
+# 默认所有者
+* @DepeToi
+
+# 架构、契约、规则、任务与评审规范
+/AGENTS.md @DepeToi
+/CLAUDE.md @DepeToi
+/docs/adr/ @DepeToi
+/docs/contracts/ @DepeToi
+/docs/rules/ @DepeToi
+/docs/tasks/ @DepeToi
+/docs/review/ @DepeToi
+
+# 公共能力、网关、部署与 CI
+/atifah-common/ @DepeToi
+/atifah-gateway/ @DepeToi
+/deploy/ @DepeToi
+/.github/ @DepeToi
+
+# 业务服务与管理端
+/atifah-services/ @DepeToi
+/atifah-admin-web/ @DepeToi
+/atifah-app/ @DepeToi

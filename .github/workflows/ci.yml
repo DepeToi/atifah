@@ -2,6 +2,7 @@ name: CI
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review, labeled, unlabeled]
   push:
     branches: [main]
   workflow_dispatch:
@@ -15,6 +16,37 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  workflow-check:
+    name: Workflow / process gates
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch tags
+        run: git fetch --tags --force origin
+
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Test workflow check
+        run: node --test .github/scripts/workflow-check.test.mjs
+
+      - name: Run workflow check
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_LABELS: ${{ toJSON(github.event.pull_request.labels.*.name) }}
+        run: node .github/scripts/workflow-check.mjs
+
   backend:
     name: Backend / JDK 21
     runs-on: ubuntu-latest
