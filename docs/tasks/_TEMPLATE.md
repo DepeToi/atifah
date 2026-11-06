@@ -46,7 +46,7 @@ related_adr: []
 ```text
 atifah-services/<service>/**
 atifah-services/<service>/src/test/**
-docs/tasks/T-000-<slug>.md            # 仅 front matter / §11 / §12
+docs/tasks/T-000-<slug>.md            # 状态变更改 front matter + §11/§12；归档提交只改 §11/§12
 docs/review/reports/T-000-r*-*.md     # 仅原样归档评审报告
 ```
 
@@ -83,7 +83,7 @@ deploy/**
 - [ ] 幂等：
 - [ ] 性能 / 分页：
 - [ ] 日志不含敏感明文。
-- [ ] 分支 `feat/T-000-<slug>`；单服务；≤600 行非测试代码、总计 ≤1000 行。
+- [ ] 分支 `feat/T-000-<slug>`；单服务；≤600 行非测试代码、含测试总计 ≤1000 行。
 - [ ] 未修改契约、规则、ADR、父 pom、公共模块、网关、deploy 或其他服务。
 
 ## 7. 测试要求
@@ -109,7 +109,7 @@ deploy/**
 mvn -pl atifah-services/<service> -am verify
 # 或全量
 mvn -B -ntp verify
-node .github/scripts/workflow-check.mjs --base origin/main --head HEAD --branch "$(git branch --show-current)" --local-precheck
+node .github/scripts/workflow-check.mjs --base origin/main --head HEAD --branch "$(git branch --show-current)" --local-precheck   # 默认 structure 模式
 ```
 
 ## 10. 风险与回滚
@@ -122,7 +122,7 @@ node .github/scripts/workflow-check.mjs --base origin/main --head HEAD --branch 
 
 - 评审报告：`docs/review/reports/T-000-rN-<reviewed-sha>.md`
 - Reviewed SHA：<被评审的最后一个代码提交>
-- Verdict：`APPROVE` / `REQUEST_CHANGES`
+- Verdict：`APPROVE` / `REQUEST_CHANGES`（必须替换为单一值，`approval-gate` 会解析）
 - 自测试层级：A / B
 
 | 轮次 | 评审人 | 自测试命令/结果 | 结论 | Blocker/Major | 处理 |

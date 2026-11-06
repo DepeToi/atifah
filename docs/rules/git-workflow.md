@@ -20,10 +20,13 @@
   - 架构/契约：`arch/<topic>`（Claude）
   - 部署/配置/CI：`ops/<topic>` 或 `chore/<topic>`（Claude 或负责人）
   - 文档：`docs/<topic>`（Claude；规则/ADR 走 `arch/<topic>`）
-- 一个 PR 只做一件事：Feature 单服务、≤600 行非测试代码（总计 ≤1000）；Arch/Ops ≤500 行非文档代码；超出请拆分或由维护者加 `size-exception`。
+- 一个 PR 只做一件事：Feature 单服务、≤600 行非测试代码（含测试总计 ≤1000）；Arch/Ops ≤500 行非文档代码；测试路径（`src/test/**`、`*.test.*`、`*.spec.*`、`__tests__/**`）不计入 600/500 非测试上限，但计入 Feature 1000 行总计；超出请拆分或由维护者加 `size-exception`。
+- 工作流类变更同时涉及规则与脚本/CI 时，拆成“Arch（ADR + 规则）→ Ops（门禁脚本 + CI）”两个 PR，不把两者混在一个大 PR。
 - 只有 Feature 需要任务包；Arch 用 ADR + 契约 diff，Ops 用变更说明 + 验证命令，Docs 用 PR 描述。
 - PR 必须使用 `.github/pull_request_template.md`，写清变更类型、改了什么、为什么、影响面、如何验证。
 - 契约变更必须单独开 `arch/<topic>` PR，不得混在功能 PR 里。
+- 合并策略固定为 **merge commit**，禁止 squash/rebase，保证评审报告中的 Reviewed SHA 始终是 `main` 的祖先。
+- `done` 批量收口通过 docs-only PR 完成，不直接推送 `main`；合并即完成，不要求每个 PR 后立即改状态。
 
 ## GIT-03 变更边界
 
@@ -71,7 +74,7 @@ git status              # 确认没有无关文件
 
 - 同一工作区同一时刻只允许一个角色写文件；并行任务用独立分支或 `git worktree`。
 - Codex 只读评审，可在独立 worktree / 干净检出中按 A/B/C 级执行构建与测试，并写 `docs/review/reports/**` 评审报告；不得修改代码/契约/任务实现，不得提交修复、报告或构建产物；修复必须回到 CodeBuddy。
-- Feature/Arch/Ops 合并前必须有 `review:approved` 标签；Docs 不需要。推送新代码后必须移除标签，Codex 复审后再加回。
+- Feature/Arch/Ops 合并前必须有 `review:approved` 标签；Docs 不需要。推送新代码后 CI 自动摘除标签（`.github/workflows/revoke-approval.yml`），Codex 复审后再加回。
 - 任务状态按 `docs/tasks/README.md` §2 的四状态机修改：Claude `draft`/`ready`、CodeBuddy `in-review`、维护者 `done` 与强制回退；Codex 不得改状态。每次变更更新 front matter 的 `status` / `updated` / `status_reason`，并在任务包 §12 追加记录（DOC-04）。
 - CodeBuddy 不得修改契约、规则、父 pom、网关、common、deploy 或其他服务；需要变更时回到 Claude 走 Arch/ADR 轨道。
 - Claude 的架构变更与 CodeBuddy 的功能实现不得混在同一个 PR。

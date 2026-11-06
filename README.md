@@ -190,8 +190,8 @@ curl http://localhost:8090/actuator/health   # admin-service（管理后台 BFF�
 1. **Feature**：Claude 产出 ADR（如有取舍）+ 契约 + 任务包；维护者批准后为 `ready`，契约有变更时打 `arch-baseline-vX.Y`。
 2. **Arch / Ops / Docs**：Claude 或负责人直接开对应分支 PR，按类型提供 ADR、验证命令或 PR 描述。
 3. CodeBuddy 从 `main` 拉 `feat/T-xxx-<slug>`，只改任务包允许路径，自检后开 PR 并置为 `in-review`。
-4. CI 构建/测试/密钥扫描通过后，Codex 在独立工作区复跑自测试，PR 评论给 Verdict，报告写入 `docs/review/reports/`。
-5. APPROVE 后按 [`docs/review/standards.md`](docs/review/standards.md) §6.1 归档报告并更新 §11；维护者加 `review:approved`（Feature/Arch/Ops 必需），`workflow-check` 重跑通过后合并，合并即完成。
+4. CI 构建/测试/密钥扫描与 `workflow-check`（structure）通过后，Codex 在独立工作区复跑自测试，PR 评论给 Verdict，报告写入 `docs/review/reports/`。
+5. APPROVE 后按 [`docs/review/standards.md`](docs/review/standards.md) §6.1 归档报告并更新 §11；维护者加 `review:approved`（Feature/Arch/Ops 必需），`approval-gate` 通过后合并，合并即完成；推送新代码后标签由 CI 自动摘除。
 
 分支、提交、PR 与任务状态机的完整规则见 [`docs/rules/git-workflow.md`](docs/rules/git-workflow.md)、[`docs/tasks/README.md`](docs/tasks/README.md)；命令与自检见 `AGENTS.md` §9。
 

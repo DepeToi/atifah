@@ -46,9 +46,9 @@
 
 - 任务包由 Claude 编写，必须引用**已冻结的契约路径**，不能写“接口待定”。
 - 必须列出“允许修改路径”和“禁止修改路径”；CodeBuddy 只能改允许路径。
-- “允许修改”必须包含任务包自身（仅 front matter / §11 / §12）与报告归档路径 `docs/review/reports/**`；其他路径一律禁止。
+- “允许修改”必须包含任务包自身与报告归档路径 `docs/review/reports/**`；其他路径一律禁止。任务包自身：状态变更提交可改 front matter + §11/§12，归档提交只改 §11/§12。
 - 验收标准必须可验证（命令、断言、接口行为），不能写“体验良好”。
-- 单任务单服务：≤600 行非测试代码，总计 ≤1000 行；测试不计入。超限拆任务，或由维护者加 `size-exception` 标签。
+- 单任务单服务：≤600 行非测试代码，含测试总计 ≤1000 行；`src/test/**`、`*.test.*`、`*.spec.*`、`__tests__/**` 不计入 600 行上限，但计入 1000 行总计。超限拆任务，或由维护者加 `size-exception` 标签。
 - 任务包不复制契约内容，只引用路径与锚点，避免双写漂移；已完成的历史任务包不回改。
 
 ## 4. Definition of Ready（进入开发前）
@@ -65,10 +65,10 @@
 - [ ] 实现符合任务包与契约，未越界修改。
 - [ ] 新增/修改代码有对应测试；核心链路覆盖成功与失败路径。
 - [ ] 后端 `mvn -B -ntp verify` 通过；前端 `npm ci && npm run build` 通过。
-- [ ] CI 全绿，`workflow-check` 通过；Codex 在独立工作区按 A/B 级要求复跑自测试通过。
+- [ ] CI 构建/测试/密钥扫描通过，`workflow-check`（structure）通过；Codex 在独立工作区按 A/B 级要求复跑自测试通过。
 - [ ] Codex 评审无 `Blocker` / `Major`，或已有维护者明确豁免记录。
-- [ ] Codex 报告已按 `docs/review/standards.md` §6.1 归档，任务包 §11 已写入报告路径、Verdict 与 Reviewed SHA。
-- [ ] 维护者已添加 `review:approved` 标签；推送新代码后已移除并重新评审。
+- [ ] Codex 报告已按 `docs/review/standards.md` §6.1 归档，任务包 §11 已写入报告路径、Verdict 与 Reviewed SHA；报告结论字段可被 `approval-gate` 解析。
+- [ ] 维护者已添加 `review:approved` 标签，`approval-gate` 通过；推送新代码后标签由 CI 自动摘除，复审后再加回。
 - [ ] 相关文档、契约引用、常量登记已同步。
 - [ ] PR 描述包含验证证据与风险/回滚说明。
 
@@ -92,8 +92,8 @@ gh pr create --base main --title "feat(auth): T-001 登录与 Token 签发" \
 - 创建 PR 的同一个提交里把任务状态改为 `in-review`，并在 §12 记录 PR 链接。
 - Codex 在独立 worktree / 干净检出中按 A/B/C 级执行自测试；A 级跑 `mvn -B -ntp verify` 与前端 `npm ci && npm run build`，不能只信 CI。
 - 报告命名、归档顺序、免复审规则与 `Reviewed SHA..HEAD` 校验以 `docs/review/standards.md` §6.1 为唯一来源；CodeBuddy 按该流程原样归档并更新 §11。
-- PR 创建前本地预检：`node .github/scripts/workflow-check.mjs --base origin/main --head HEAD --branch "$(git branch --show-current)" --local-precheck`；该模式允许 `ready`，跳过 `review:approved` 与归档报告校验。PR 门禁只接受 `in-review`。
-- 维护者加 `review:approved` 标签后，`workflow-check` 重跑通过再合并（Feature 必需；推送新代码后移除并复审）；合并后由维护者每周批量置 `done`。
+- PR 创建前本地预检：`node .github/scripts/workflow-check.mjs --base origin/main --head HEAD --branch "$(git branch --show-current)" --local-precheck`（默认 structure 模式）；该模式允许 `ready`，跳过 `review:approved` 与归档报告校验。PR 门禁只接受 `in-review`。
+- 维护者加 `review:approved` 标签后，`approval-gate` 通过再合并（Feature 必需；推送新代码后标签由 CI 自动摘除并复审）；合并后由维护者每周通过 docs-only PR 批量置 `done`，不直接推送 `main`。
 
 - `Blocker` / `Major` 或自测试失败 → CodeBuddy 修复，重新跑 CI，Codex 复审；同一 PR 最多 2 轮，仍阻塞则升级到维护者 + Claude 重新界定范围。
 - 架构 / 契约问题 → 标记 `[Arch]`，回到 Claude，先更新 ADR 与契约，再让 CodeBuddy 跟进。

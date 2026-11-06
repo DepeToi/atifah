@@ -12,7 +12,7 @@
 
 ## 结论
 
-`APPROVE` / `REQUEST_CHANGES`
+Verdict：`APPROVE` / `REQUEST_CHANGES`
 
 - Blocker：0
 - Major：0
@@ -20,6 +20,8 @@
 - Question：0
 - 自测试：PASS / FAIL / 未涉及
 - 自测试级别：A / B / C
+
+> `Verdict`、`Blocker`、`Major` 与 `自测试` 字段会被 `approval-gate` 解析；填写实际值，不要保留模板占位符。
 
 ## 范围检查
 

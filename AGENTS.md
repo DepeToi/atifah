@@ -38,10 +38,10 @@
 2. **Arch**：Claude 产出 ADR + 契约 diff（如涉及），单独开 `arch/<topic>` PR；维护者批准、合并，契约变更时打基线标签。
 3. **Ops/Docs**：负责人直接开 `ops/<topic>` / `docs/<topic>` PR，写清验证命令；受保护文件需维护者显式批准。
 4. **Feature 实现**：CodeBuddy 从 `main` 拉 `feat/T-xxx-<slug>`，只改任务包允许路径；创建 PR 后将任务置为 `in-review`。
-5. **CI**：构建/测试/密钥扫描必须通过；`workflow-check` 的评审门禁在 APPROVE、报告归档并加 `review:approved` 后必须通过。
+5. **CI**：构建/测试/密钥扫描必须通过；`workflow-check`（structure）在 PR 创建后即应通过；`approval-gate` 在 APPROVE、报告归档并加 `review:approved` 后通过，审批前失败属预期（ADR 0007）。
 6. **评审**：Codex 按 `docs/review/standards.md` 评审，并在独立工作区执行自测试；PR 评论给出 Verdict，报告写入 `docs/review/reports/`。
-7. **归档与合并**：报告按 `docs/review/standards.md` §6.1 归档并校验；维护者加 `review:approved` 标签（Feature/Arch/Ops 必需，Docs 不需要）后合并；推送新代码后必须移除标签并复审。`Blocker` / `Major` 最多 2 轮，架构/契约问题回 Claude。
-8. **收口**：合并即完成；维护者每周批量把已合并任务置为 `done`。AI 不得自动 `git commit` / `git push`，除非用户明确要求。
+7. **归档与合并**：报告按 `docs/review/standards.md` §6.1 归档并校验；维护者加 `review:approved` 标签（Feature/Arch/Ops 必需，Docs 不需要）后合并；推送新代码后由 CI 自动摘除标签，复审后再加回。`Blocker` / `Major` 最多 2 轮，架构/契约问题回 Claude。
+8. **收口**：合并即完成；维护者每周通过 docs-only PR 批量把已合并任务置为 `done`，不直接推送 `main`。AI 不得自动 `git commit` / `git push`，除非用户明确要求。
 
 **状态权限**：Claude 只设 `draft` / `ready`；CodeBuddy 只设 `in-review`；人类维护者设 `done` 与强制回退；`blocked` 由当前负责人设置与解除；Codex 不得改状态。`ready` 以维护者批准任务包/契约为准；`done` 以合并与报告归档为准（DOC-04）。
 
@@ -99,7 +99,7 @@ pom.xml (parent: spring-boot-starter-parent)
 - **消息 MQ**：Topic / 消费组先登记 `MqTopics` / `MqConsumerGroups`；只用 `MessagePublisher`；消费端必须幂等并配重试/死信（见 `docs/rules/database.md`）。
 - **编码 CODE**：构造注入、禁止字段 `@Autowired`；统一异常；`@Valid` 校验；日志用 `@Slf4j` 占位符（见 `docs/rules/code-style.md`）。
 - **依赖 DEPS**：版本只在根 `pom.xml` 管理；新增依赖先确认；禁止第二套 JSON / 日志 / HTTP 客户端。
-- **变更边界 SCOPE**：按 Feature/Arch/Ops/Docs 分类，只改允许路径；一个 PR 只做一件事。Feature 单服务、≤600 行非测试代码（总计 ≤1000）；Arch/Ops ≤500 行非文档代码。超限拆分或由维护者加 `size-exception`。
+- **变更边界 SCOPE**：按 Feature/Arch/Ops/Docs 分类，只改允许路径；一个 PR 只做一件事。Feature 单服务、≤600 行非测试代码（含测试总计 ≤1000）；Arch/Ops ≤500 行非文档代码；测试路径不计入 600/500 但计入 Feature 1000 总计（口径见 `docs/review/standards.md`）。超限拆分或由维护者加 `size-exception`。
 
 ## 5. 契约、任务包与评审
 
@@ -107,7 +107,7 @@ pom.xml (parent: spring-boot-starter-parent)
 - **先改契约再改代码**：任何接口/DDL/事件变更必须先由 Claude 出 ADR，并单独提交 `arch/<topic>` 契约 PR；CodeBuddy 与 Codex 不得修改 `docs/contracts/**`。
 - **任务包**：只有 Feature 变更必须有 `docs/tasks/T-xxx-<slug>.md`；Arch 用 ADR + 契约 diff，Ops/Docs 用变更说明 + 验证命令。
 - **评审**：Codex 只读评审并独立执行自测试，判据、分级与输出格式见 `docs/review/standards.md`；报告归档流程见该文件 §6.1。
-- **PR 上限**：Feature 单服务、单任务、≤600 行非测试代码（总计 ≤1000）；Arch/Ops ≤500 行非文档代码；超出请拆任务，不要提交大杂烩。
+- **PR 上限**：Feature 单服务、单任务、≤600 行非测试代码（含测试总计 ≤1000）；Arch/Ops ≤500 行非文档代码；超出请拆任务，不要提交大杂烩。
 
 ## 6. 禁止事项（违反即打回）
 

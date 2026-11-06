@@ -16,7 +16,7 @@
 
 1. 相关契约：`docs/contracts/` 中与变更相关的 OpenAPI / DDL / 事件文件。
 2. diff：`git diff <base>...<head>`，只评审本次变更及直接受影响的调用方。
-3. CI 结果：`.github/workflows/ci.yml`（含 `workflow-check`）必须通过。
+3. CI 结果：`.github/workflows/ci.yml` 的构建/测试/密钥扫描与 `workflow-check`（structure）必须通过；`approval-gate` 在加标签前失败属预期。
 4. 规则：本文件 + `docs/rules/*.md` + 目标模块 `AGENTS.md`。
 5. 自测试环境：独立 worktree / 干净检出，JDK 21 + Maven 3.9+，Node 22（前端）。
 
@@ -35,13 +35,14 @@
 
 - 任一 `Blocker` 或 `Major` → `REQUEST_CHANGES`。
 - 零 `Blocker` / `Major` → `APPROVE`，可附带 `Minor` / `Question`。
-- CI 或 `workflow-check` 失败、Codex 自测试未执行或失败、必需产物缺失、报告缺失 → 一律 `REQUEST_CHANGES`；合并前报告未归档由维护者与 CI 拦截（DOC-03）。
+- `workflow-check`（structure）失败、构建/测试/密钥扫描失败、Codex 自测试未执行或失败、必需产物缺失、报告缺失 → 一律 `REQUEST_CHANGES`。
+- `approval-gate` 在添加 `review:approved` 之前的失败是**预期状态**，不作为 `REQUEST_CHANGES` 依据；加标签后仍失败（报告结论、归档范围、Reviewed SHA、任务 §11）→ 不得合并，按 `REQUEST_CHANGES` 处理（DOC-03）。
 - 未检查到的文件必须在报告中写明“未覆盖”，不得默认认为没问题。
 
 ## 3. 评审流程
 
 1. **分类与产物**：确认 PR 属于 Feature / Arch / Ops / Docs；Feature 有任务包，Arch 有 ADR（涉及契约时附契约 diff），Ops/Docs 有变更说明与验证命令。混合变更按最高风险类型处理。
-2. **范围与状态**：先看 `workflow-check` 结果；§5.0 中 CI 全覆盖的编号不逐项复核，CI + 语义的编号只复核语义部分。确认变更分类与 PR 边界；任务状态是否由授权角色设置、是否与 PR/合并/报告证据一致（四状态：`draft` / `ready` / `in-review` / `done`）。
+2. **范围与状态**：先看 `workflow-check`（structure）结果；`approval-gate` 在加标签前失败属预期，不作为阻断项。§5.0 中 CI 全覆盖的编号不逐项复核，CI + 语义的编号只复核语义部分。确认变更分类与 PR 边界；任务状态是否由授权角色设置、是否与 PR/合并/报告证据一致（四状态：`draft` / `ready` / `in-review` / `done`）。
 3. **契约一致性**：接口路径、字段、错误码、DDL、事件 payload 是否与冻结契约一致。
 4. **架构与数据**：服务边界、跨库访问、同步/异步方式、公共模块依赖。
 5. **安全**：敏感字段、日志、密钥、鉴权、幂等。
@@ -95,15 +96,15 @@ cd atifah-admin-web/frontend && npm ci && npm run build
 
 ### 5.0 机械门禁覆盖范围
 
-`workflow-check` 已在 PR 上机械校验以下编号。CI 全绿时，Codex 不逐项复核；仅在门禁失败、规则被绕过或发现门禁盲区时报告。
+`workflow-check`（structure）与 `approval-gate` 已在 PR 上机械校验以下编号。门禁通过时，Codex 不逐项复核；仅在门禁失败、规则被绕过或发现门禁盲区时报告。
 
 | 覆盖方式 | 编号 | 说明 |
 | --- | --- | --- |
-| CI 全覆盖 | SCOPE-00、SCOPE-01、DOC-01、DOC-03 | 变更分类、允许路径、契约/ADR 配套、报告归档与 §11 路径、Reviewed SHA 范围（Verdict 内容由报告自身保证） |
+| CI 全覆盖 | SCOPE-00、SCOPE-01、DOC-01、DOC-03 | 变更分类、允许路径、契约/ADR 配套、报告归档与 §11 路径、Reviewed SHA 范围、报告 `Verdict` / `Blocker` / `Major` / 自测试结论 |
 | CI + 语义 | SCOPE-02、SCOPE-03、DOC-04、GIT-02、GIT-03 | 规模、路径、当前状态由 CI 校验；Codex 只复核“一个 PR 只做一件事”、授权/越权语义、PR 模板与关注点 |
 
-- DOC-03 的归档发生在 APPROVE 之后，评审阶段无法检查归档结果；Codex 只需保证报告内容完整、命名正确。
-- CI 失败时仍按 §2 给 `REQUEST_CHANGES`，不得以“已由 CI 覆盖”为由忽略失败。
+- DOC-03 的归档与报告结论校验由 `approval-gate` 在加标签后执行；structure 阶段不要求标签，Codex 只需保证报告内容完整、命名正确、结论字段可解析。
+- `approval-gate` 在加标签前的失败是预期状态；structure 或构建/测试/密钥扫描失败时仍按 §2 给 `REQUEST_CHANGES`，不得以“已由 CI 覆盖”为由忽略失败。
 
 ### 5.1 范围与架构
 
@@ -111,7 +112,7 @@ cd atifah-admin-web/frontend && npm ci && npm run build
 | --- | --- | --- |
 | SCOPE-00 | 按 Feature/Arch/Ops/Docs 正确分类；混合变更按最高风险处理 | Major |
 | SCOPE-01 | Feature 只修改任务包“允许修改”的路径；Arch/Ops/Docs 不越出各自边界 | Blocker |
-| SCOPE-02 | 一个 PR 只做一件事；Feature ≤600 行非测试代码（总计 ≤1000），Arch/Ops ≤500 行非文档代码 | Major |
+| SCOPE-02 | 一个 PR 只做一件事；Feature ≤600 行非测试代码（含测试总计 ≤1000），Arch/Ops ≤500 行非文档代码；测试路径不计入 600/500，但计入 Feature 1000 总计 | Major |
 | SCOPE-03 | 未授权修改契约/规则/父 pom/受保护文件 | Blocker |
 | ARCH-01 | 一服务一库；禁止跨库 JOIN、访问其他服务表 | Blocker |
 | ARCH-02 | 跨服务同步走 OpenFeign、异步走 RocketMQ；禁止共享库绕过 | Blocker |
@@ -229,6 +230,7 @@ Verdict: REQUEST_CHANGES
 - 不要写“建议重构”“可以考虑优化”这类无法执行的结论。
 - `Minor` 可以合并为一条列表，但仍需带规则编号与位置。
 - 必须附 `Class`、`Reviewed SHA`、`Self-test` 块与报告路径；没有自测试结果不得给出 `APPROVE`。
+- 报告的结论字段必须可被 `approval-gate` 解析：`Verdict: APPROVE`、`Blocker：0`、`Major：0`、`自测试：PASS`（中英文冒号均可，大小写不敏感）。
 - 报告路径按 §6.1 命名：Feature 用 `T-xxx-rN-<reviewed-sha>.md`，非 Feature 用 `PR-<n>-<reviewed-sha>.md`。
 
 ### 6.1 评审记录归档（强制）
@@ -237,12 +239,12 @@ Verdict: REQUEST_CHANGES
 
 1. Codex 评审后在 PR 评论输出完整 Verdict + Self-test 摘要，并把完整报告写入 `docs/review/reports/`：Feature 用 `T-xxx-rN-<reviewed-sha>.md`，非 Feature 用 `PR-<n>-<reviewed-sha>.md`（工作区或 PR 评论；Codex 不提交）。
 2. APPROVE 后，CodeBuddy 将报告**原样复制**为 PR 最后一个 docs-only 提交；Feature 同时在任务包 §11 写入报告路径、Verdict 与 Reviewed SHA，非 Feature 在报告归档记录中填写。
-3. 该 docs-only 提交只允许改 `docs/review/reports/**` 与任务包 §11/§12；`workflow-check` 校验至少一份当前轮次报告的 `Reviewed SHA..HEAD` 范围、HEAD 最后提交与任务包章节，**免语义复审**。历史轮次报告可同时归档，但旧报告不能单独作为审批依据。
-4. 维护者加 `review:approved` 标签（Feature/Arch/Ops 必需，Docs 不需要）；CI 全绿、报告文件存在、Feature 的 §11 已记录 → 可合并。
-5. 未归档报告、Feature 的 §11 缺失，或 Feature/Arch/Ops 缺少 `review:approved` → 不得合并（DOC-03）。合并后由维护者每周批量把任务置为 `done`。
-6. 推送新代码后必须移除 `review:approved`，Codex 复审后再加回；标签不是永久批准。报告不记录归档提交自身的 SHA（SHA 无法自引用）；归档提交由 CI 按 `Reviewed SHA..HEAD` 范围识别。
+3. 该 docs-only 提交只允许改 `docs/review/reports/**` 与任务包 §11/§12；front matter 只在状态变更提交中修改，不得混入归档提交。`approval-gate` 校验至少一份当前轮次报告的 `Reviewed SHA..HEAD` 范围、HEAD 最后提交、报告结论字段与任务包章节，**免语义复审**。历史轮次报告可同时归档（包括 `REQUEST_CHANGES`），但旧报告不能单独作为审批依据；`approval-gate` 只校验最新一份当前报告。
+4. 维护者加 `review:approved` 标签（Feature/Arch/Ops 必需，Docs 不需要）；`workflow-check`（structure）通过、`approval-gate` 通过、Feature 的 §11 已记录 → 可合并。
+5. 未归档报告、报告结论不是 `APPROVE`、Feature 的 §11 缺失，或 Feature/Arch/Ops 缺少 `review:approved` → 不得合并（DOC-03）。合并后由维护者每周通过 docs-only PR 批量置 `done`，不直接推送 `main`。
+6. 推送新代码后 CI 自动摘除 `review:approved`，Codex 复审后再加回；标签不是永久批准。报告不记录归档提交自身的 SHA（SHA 无法自引用）；归档提交由 CI 按 `Reviewed SHA..HEAD` 范围识别。
 
-本地预检使用 `node .github/scripts/workflow-check.mjs --base origin/main --head HEAD --branch "$(git branch --show-current)" --local-precheck`：允许 `ready`/`in-review`，跳过 `review:approved` 与归档报告校验；该模式不能替代 PR 门禁。
+本地预检使用 `node .github/scripts/workflow-check.mjs --base origin/main --head HEAD --branch "$(git branch --show-current)" --local-precheck`（默认 structure 模式）：允许 `ready`/`in-review`，跳过 `review:approved` 与归档报告校验；该模式不能替代 PR 门禁。
 
 报告必须包含：变更类型、Reviewed SHA、Verdict、Blocker/Major/Minor/Question 计数、发现详情、Self-test 块、未覆盖范围。报告中的手机号、token、密钥等敏感信息必须脱敏。
 
@@ -264,7 +266,7 @@ Verdict: REQUEST_CHANGES
 - 不得修改代码/测试/配置让自测试通过，不得提交构建产物。
 - 不得只把评审结论留在 PR 评论/聊天而不产出报告；报告由 CodeBuddy 原样归档。
 - 不得修改任务包状态或 §12 状态记录；状态由授权角色维护。
-- 不在 CI 失败、自测试未执行或失败、报告未产出、任务状态与证据不符、必需产物缺失时给出 `APPROVE`。
+- 不在 structure 门禁失败、构建/测试/密钥扫描失败、自测试未执行或失败、报告未产出、任务状态与证据不符、必需产物缺失时给出 `APPROVE`；`approval-gate` 在加标签前的失败不在此列。
 
 ## 9. 报告模板
 

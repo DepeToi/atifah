@@ -34,7 +34,8 @@ cd atifah-admin-web/frontend && npm run build
 node .github/scripts/workflow-check.mjs --base origin/main --head HEAD --branch "$(git branch --show-current)" --local-precheck
 ```
 
-- [ ] CI 构建/测试/密钥扫描通过；`workflow-check` 在评审归档并加 `review:approved` 后通过
+- [ ] CI 构建/测试/密钥扫描通过；`workflow-check`（structure）在 PR 创建后通过
+- [ ] `approval-gate` 在评审归档并加 `review:approved` 后通过（审批前失败属预期）
 - [ ] 自测试级别：A / B / C；新增/修改测试已运行，失败路径有覆盖
 - [ ] 手动验证路径（如适用）：
 
@@ -45,7 +46,7 @@ node .github/scripts/workflow-check.mjs --base origin/main --head HEAD --branch 
 > 细则见 `AGENTS.md` §0/§4 与 `docs/rules/*`；此处只保留提交前确认项。
 
 - [ ] 变更类型与 diff 一致，只修改允许路径
-- [ ] 规模符合阈值：Feature ≤600 行非测试代码（总计 ≤1000）；Arch/Ops ≤500 行非文档代码
+- [ ] 规模符合阈值：Feature ≤600 行非测试代码（含测试总计 ≤1000）；Arch/Ops ≤500 行非文档代码；`src/test/**`、`*.test.*`、`*.spec.*`、`__tests__/**` 不计入 600/500，但计入 Feature 1000 总计
 - [ ] 未修改 `docs/contracts/**`、`docs/rules/**`、根 `pom.xml`、受保护部署文件（除非属于对应类型且已获批准）
 - [ ] 接口符合 `Result<T>` / `PageResult<T>` 与 `ErrorCode`
 - [ ] 写接口支持 `Idempotency-Key`
@@ -65,14 +66,14 @@ node .github/scripts/workflow-check.mjs --base origin/main --head HEAD --branch 
 
 ## 7. Codex 评审记录
 
-> 完整格式、自测试分级与归档要求见 `docs/review/standards.md` §6.1；此处只记录摘要。
+> 完整格式、自测试分级与归档要求见 `docs/review/standards.md` §6.1；此处只记录摘要，由 CodeBuddy 在归档报告时填写。Codex 只读，不修改 PR 描述。
 
 - 结论：`APPROVE` / `REQUEST_CHANGES`
 - Reviewed SHA：
 - 评审报告：`docs/review/reports/T-xxx-rN-<reviewed-sha>.md`（非 Feature：`PR-<n>-<reviewed-sha>.md`）
 - Blocker / Major：
 - 处理说明：
-- [ ] 维护者已添加 `review:approved` 标签（Feature/Arch/Ops 必需；推送新代码后需移除并复审）
+- [ ] 维护者已添加 `review:approved` 标签（Feature/Arch/Ops 必需；推送新代码后由 CI 自动摘除并复审）
 
 ## 8. 给评审者的提示
 
