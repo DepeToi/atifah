@@ -223,12 +223,14 @@ Verdict: REQUEST_CHANGES
 
 > 报告命名、写入权限与保留策略见 [`reports/README.md`](reports/README.md)；本节只定义必须归档的内容与顺序。
 
-1. Codex 评审后在 PR 评论输出完整 Verdict + Self-test 摘要，并把完整报告写入 `docs/review/reports/<unit>-rN-<reviewed-sha>.md`（工作区或 PR 评论；Codex 不提交）。
-2. APPROVE 后，CodeBuddy 将报告**原样复制**为 PR 最后一个 docs-only 提交；Feature 同时在任务包 §11 写入报告路径、Verdict、Reviewed SHA、归档 SHA，非 Feature 在报告归档记录中填写。
-3. 该 docs-only 提交只允许改 `docs/review/reports/**` 与任务包 §11/§12；`workflow-check` 做机械校验，**免语义复审**。
+1. Codex 评审后在 PR 评论输出完整 Verdict + Self-test 摘要，并把完整报告写入 `docs/review/reports/`：Feature 用 `T-xxx-rN-<reviewed-sha>.md`，非 Feature 用 `PR-<n>-<reviewed-sha>.md`（工作区或 PR 评论；Codex 不提交）。
+2. APPROVE 后，CodeBuddy 将报告**原样复制**为 PR 最后一个 docs-only 提交；Feature 同时在任务包 §11 写入报告路径、Verdict 与 Reviewed SHA，非 Feature 在报告归档记录中填写。
+3. 该 docs-only 提交只允许改 `docs/review/reports/**` 与任务包 §11/§12；`workflow-check` 校验至少一份当前轮次报告的 `Reviewed SHA..HEAD` 范围、HEAD 最后提交与任务包章节，**免语义复审**。历史轮次报告可同时归档，但旧报告不能单独作为审批依据。
 4. 维护者加 `review:approved` 标签（Feature/Arch/Ops 必需，Docs 不需要）；CI 全绿、报告文件存在、Feature 的 §11 已记录 → 可合并。
 5. 未归档报告、Feature 的 §11 缺失，或 Feature/Arch/Ops 缺少 `review:approved` → 不得合并（DOC-03）。合并后由维护者每周批量把任务置为 `done`。
-6. 推送新代码后必须移除 `review:approved`，Codex 复审后再加回；标签不是永久批准。
+6. 推送新代码后必须移除 `review:approved`，Codex 复审后再加回；标签不是永久批准。报告不记录归档提交自身的 SHA（SHA 无法自引用）；归档提交由 CI 按 `Reviewed SHA..HEAD` 范围识别。
+
+本地预检使用 `node .github/scripts/workflow-check.mjs --base origin/main --head HEAD --branch "$(git branch --show-current)" --local-precheck`：允许 `ready`/`in-review`，跳过标签与归档报告校验；该模式不能替代 PR 门禁。
 
 报告必须包含：变更类型、Reviewed SHA、Verdict、Blocker/Major/Minor/Question 计数、发现详情、Self-test 块、未覆盖范围。报告中的手机号、token、密钥等敏感信息必须脱敏。
 

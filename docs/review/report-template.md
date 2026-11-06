@@ -1,13 +1,12 @@
 # 评审报告
 
 > 本文件只定义报告版式；必填内容、判定规则与归档要求见 [`standards.md`](standards.md) §6/§6.1，不在此重复。
-> 报告路径：`docs/review/reports/T-xxx-r<n>-<reviewed-sha>.md`（非 Feature 用 `PR-<n>-r<n>-<reviewed-sha>.md`，单轮可省略 `-r<n>`）
+> 报告路径：`docs/review/reports/T-xxx-rN-<reviewed-sha>.md`（非 Feature 用 `PR-<n>-<reviewed-sha>.md`，不使用 `-r<n>`）
 > 变更类型：Feature / Arch / Ops / Docs
 > 评审对象：<PR 链接 / 分支 / commit 范围>
 > 任务包 / ADR：<docs/tasks/T-xxx-xxx.md 或 docs/adr/NNNN-*.md>
 > 契约基线：<arch-baseline-vX.Y>
 > Reviewed SHA：<被评审的最后一个代码提交>
-> 归档 SHA：<CodeBuddy 复制报告后的 docs-only 提交；合并前填写>
 > 评审人：Codex
 > 日期：YYYY-MM-DD
 
@@ -91,6 +90,6 @@
 ## 归档记录
 
 - Reviewed SHA：
-- 归档 SHA：
 - 归档提交范围：`docs/review/reports/**` + 任务包 §11/§12（仅此范围）
+- 归档提交：由 `workflow-check` 按 `Reviewed SHA..HEAD` 识别，报告不记录归档提交自身 SHA
 - `review:approved` 标签：待维护者添加

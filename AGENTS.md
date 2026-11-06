@@ -159,5 +159,5 @@ docker compose -f deploy/docker-compose/docker-compose.yml up -d   # 本地中�
 docker compose -f deploy/docker-compose/docker-compose.app.yml up -d --build   # 后端容器（方案 B，需先 mvn package）
 java -jar atifah-gateway/target/atifah-gateway-1.0.0-SNAPSHOT.jar
 cd atifah-admin-web/frontend && npm run dev      # 管理后台前端 :5173
-node .github/scripts/workflow-check.mjs --base origin/main --head HEAD --branch "$(git branch --show-current)"
+node .github/scripts/workflow-check.mjs --base origin/main --head HEAD --branch "$(git branch --show-current)" --local-precheck
 ```

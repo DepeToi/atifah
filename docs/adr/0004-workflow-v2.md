@@ -29,7 +29,7 @@ ADR 0001 建立了“仓库为唯一交接面”的三角色工作流，方向�
 | Ops | `deploy/**`、`.github/**`、Dockerfile | 变更说明 + 验证命令 | Codex 轻评审 |
 | Docs | `docs/**`（非契约/ADR/rules）、README | PR 描述 | CI + 人工 |
 
-混合变更按最高风险类型处理；Feature PR 不得夹带 Arch/Ops 路径，契约变更必须单独 PR。
+混合变更按最高风险类型处理；Feature PR 不得夹带 Arch/Ops 路径，契约变更必须单独 PR。`docs/architecture.md`、`docs/domain.md`、`docs/db.md` 默认属于 Docs；只有同一 PR 还修改契约、ADR 或 `docs/rules/**` 时才按 Arch 处理。
 
 ### 2. 状态机收敛为四状态
 
@@ -47,13 +47,21 @@ Arch 用 ADR + 契约 diff；Ops 用变更说明 + 验证命令；Docs 用 PR �
 ### 4. 评审报告改为“结论在 PR、报告随 PR 归档”
 
 1. Codex 评审后在 PR 评论给出完整 `Verdict` 与自测试摘要；报告写入 `docs/review/reports/`（工作区或 PR 评论）。
-2. APPROVE 后，CodeBuddy 将报告**原样复制**为 PR 最后一个 docs-only 提交，同时更新任务包 §11；该提交只允许改报告与任务包，免语义复审，由 CI 机械校验。
-3. 报告中同时记录**被评审的代码 SHA** 与**归档提交 SHA**；人工以 `review:approved` 标签 + CI 全绿作为合并条件。
-4. 非 Feature 变更使用 `PR-<n>-<reviewed-sha>.md` 命名。
+2. APPROVE 后，CodeBuddy 将报告**原样复制**为 PR 最后一个 docs-only 提交，同时更新任务包 §11；该提交只允许改报告与任务包 §11/§12，免语义复审，由 CI 机械校验。
+3. 报告只记录**被评审的代码 SHA（Reviewed SHA）**，不要求记录归档提交自身的 SHA：提交 SHA 由提交内容决定，要求报告写入自身 SHA 会形成不可满足的固定点。归档提交由 `workflow-check` 通过 `Reviewed SHA..HEAD` 的差异范围机械识别，维护者以 `review:approved` 标签 + CI 全绿作为合并条件。
+4. Feature 使用 `T-xxx-rN-<reviewed-sha>.md` 命名；非 Feature 使用 `PR-<n>-<reviewed-sha>.md` 命名（不再使用可选的 `-rN`），历史报告不追溯改名。
 
 ### 5. 增加 CI 机械门禁
 
-新增 `workflow-check` job（Node 内置模块，无新依赖），检查：变更分类、任务包与状态、允许路径、diff 规模、分支命名、契约与 ADR 配套、受保护路径、`git diff --check`；在 `review:approved` 标签存在时检查归档报告与任务包 §11。
+新增 `workflow-check` job（Node 内置模块，无新依赖），检查：变更分类、任务包与状态、允许路径、diff 规模、分支命名、契约与 ADR 配套、受保护路径、`git diff --check`；在 `review:approved` 标签存在时额外校验：
+
+- 归档报告命名与报告内 `Reviewed SHA` 一致，且该提交存在并是 HEAD 的祖先；
+- 至少一份“当前轮次”报告的 `Reviewed SHA..HEAD` 只包含 `docs/review/reports/**` 与任务包 §11/§12，任务包其余章节不得变化；同一 PR 可同时归档历史轮次报告，但旧报告不能单独作为审批依据；
+- HEAD 最后一个提交为 docs-only；
+- Feature 的 diff 不得夹带任何非业务路径（`deploy/**`、`.github/**`、`docs/rules/**`、ADR、根/模块规则、`common`、`gateway`、根/父 pom），任务包“允许修改”不能覆盖该禁止；
+- PR 事件下任务状态只接受 `in-review`。
+
+本地预检使用 `--local-precheck`：允许任务状态为 `ready`/`in-review`，跳过 `review:approved`、`maintainer-approved` 与归档报告校验；CI 门禁不启用该参数。门禁脚本配套 `node:test` 回归测试（`.github/scripts/workflow-check.test.mjs`），CI 每次 PR 先跑测试再执行门禁。
 
 ### 6. 规模阈值按类型区分
 

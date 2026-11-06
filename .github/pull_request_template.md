@@ -31,14 +31,14 @@
 # 命令与真实结果，不要只写“已通过”
 mvn -B -ntp verify
 cd atifah-admin-web/frontend && npm run build
-node .github/scripts/workflow-check.mjs --base origin/main --head HEAD --branch "$(git branch --show-current)"
+node .github/scripts/workflow-check.mjs --base origin/main --head HEAD --branch "$(git branch --show-current)" --local-precheck
 ```
 
 - [ ] CI 构建/测试/密钥扫描通过；`workflow-check` 在评审归档并加 `review:approved` 后通过
 - [ ] 自测试级别：A / B / C；新增/修改测试已运行，失败路径有覆盖
 - [ ] 手动验证路径（如适用）：
 
-> 本地直接跑 `workflow-check` 会提示缺少 `review:approved`，这是预期的评审门禁；Codex APPROVE、报告归档并加标签后 CI 会重跑通过。
+> 本地预检加 `--local-precheck`：允许 `ready`/`in-review`，跳过 `review:approved` 与归档报告校验，仅用于 PR 创建前。PR 门禁只接受 `in-review`；缺少标签或归档报告会失败，这是预期行为。
 
 ## 5. 自检清单
 
@@ -69,8 +69,7 @@ node .github/scripts/workflow-check.mjs --base origin/main --head HEAD --branch 
 
 - 结论：`APPROVE` / `REQUEST_CHANGES`
 - Reviewed SHA：
-- 评审报告：`docs/review/reports/<unit>-r<n>-<reviewed-sha>.md`
-- 归档 SHA：
+- 评审报告：`docs/review/reports/T-xxx-rN-<reviewed-sha>.md`（非 Feature：`PR-<n>-<reviewed-sha>.md`）
 - Blocker / Major：
 - 处理说明：
 - [ ] 维护者已添加 `review:approved` 标签（Feature/Arch/Ops 必需；推送新代码后需移除并复审）

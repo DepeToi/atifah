@@ -30,6 +30,14 @@ jobs:
       - name: Fetch tags
         run: git fetch --tags --force origin
 
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Test workflow check
+        run: node --test .github/scripts/workflow-check.test.mjs
+
       - name: Run workflow check
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}

@@ -109,7 +109,7 @@ deploy/**
 mvn -pl atifah-services/<service> -am verify
 # 或全量
 mvn -B -ntp verify
-node .github/scripts/workflow-check.mjs --base origin/main --head HEAD --branch "$(git branch --show-current)"
+node .github/scripts/workflow-check.mjs --base origin/main --head HEAD --branch "$(git branch --show-current)" --local-precheck
 ```
 
 ## 10. 风险与回滚
@@ -120,9 +120,8 @@ node .github/scripts/workflow-check.mjs --base origin/main --head HEAD --branch 
 
 ## 11. 评审与自测试记录
 
-- 评审报告：`docs/review/reports/T-000-r<n>-<reviewed-sha>.md`
+- 评审报告：`docs/review/reports/T-000-rN-<reviewed-sha>.md`
 - Reviewed SHA：<被评审的最后一个代码提交>
-- 归档 SHA：<报告归档提交>
 - Verdict：`APPROVE` / `REQUEST_CHANGES`
 - 自测试层级：A / B
 
