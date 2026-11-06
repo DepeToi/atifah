@@ -23,6 +23,7 @@
 | P0 | P0-2 | 数据库/Nacos 凭据硬编码 | `[ ]` | T-007 |
 | P0 | P0-3 | 方案 B 容器内 RocketMQ 不可用 | `[ ]` | T-007 |
 | P0 | P0-4 | 工作区未收口 + 角色/流程缺口 | `[ ]` | ADR 0004/0005 + T-006/007/008 |
+| P0 | P0-5 | 配置密文（ENC）迁移范围待决策 | `[!]` | ADR 0006 + T-012（待定） |
 | P1 | P1-1 | 注册幂等写入事务边界 | `[ ]` | T-009 |
 | P1 | P1-2 | 登录时序枚举 + 状态判断 | `[ ]` | T-009 |
 | P1 | P1-3 | 登录失败计数 TTL 竞态 | `[ ]` | T-009 |
@@ -166,6 +167,34 @@
 - [ ] 每个 PR 有任务包/ADR、CI 通过、Codex 报告归档。
 - [ ] `main` 上不再有未收口改动。
 - [ ] 单个 PR diff ≤400 行，只做一件事。
+
+### P0-5 配置密文（ENC）迁移范围待决策
+
+**证据**
+
+- 能力已实现（2026-11-01，CodeBuddy）：`common-security` 的 `ConfigCipher` / `ConfigCryptoPropertySource` / `ConfigCryptoEnvironmentPostProcessor` / `ConfigEncryptTool`，已在 `META-INF/spring.factories` 注册；`mvn -o -pl atifah-common/common-security -am test` 11 用例通过，全量 `compile` 通过。
+- 配置侧**未迁移**：`deploy/nacos/config/common-application.yaml:83`、`atifah-gateway/src/main/resources/application.yml:131` 的 `jwt.secret`，以及各服务的 `${MYSQL_PASSWORD:root}`、`${REDIS_PASSWORD:}` 仍是明文占位 + 环境变量。
+- 未写规则：`docs/rules/security.md` SEC-02 尚未约定「敏感值入库必须 `ENC(...)`」；主密钥载体（`CONFIG_ENC_KEY`）在 `deploy/docker-compose/.env.example` 无说明。
+- 详细清单与逐条迁移写法见 [TODO-config-crypto.md](TODO-config-crypto.md)。
+
+**影响**
+
+P0-2 只解决了「凭据不硬编码」，没有解决「真实凭据一旦要写进 Nacos/配置文件就是明文」。若后续按 P0-2 把生产口令搬进配置中心，会直接违反 SEC-02，且解密能力已就绪却无人使用，等于死代码。
+
+**动作**
+
+- [ ] 决策 D-1 迁移范围（仅 JWT / JWT+DB+Redis / 只立规范），见 `TODO-config-crypto.md` §1。
+- [ ] 决策 D-2 主密钥托管位置，并更新 `deploy/docker-compose/.env.example`（只放占位与生成命令）。
+- [ ] 新增 ADR 0006：自研 AES-256-GCM vs Jasypt、SHA-256 密钥派生、fail-fast 策略、`/actuator/env` 明文暴露面。
+- [ ] 补 `docs/rules/security.md` SEC-02「配置密文」条款（架构角色执行）。
+- [ ] 视决策结果创建 T-012（配置迁移），在任务包中明确允许路径：`deploy/nacos/config/**`、`atifah-gateway/src/main/resources/**`、各服务 `application.yml`。
+- [ ] 明确 `spring.cloud.nacos.*.password` 与 `NACOS_AUTH_TOKEN` 不纳入迁移（装载期早于解密，只能走环境变量）。
+
+**验收**
+
+- [ ] ADR 0006 与 SEC-02 条款合并，`arch-baseline` 标签递增。
+- [ ] 迁移项（若有）执行后，配置文件中不再出现真实口令/密钥明文（`git grep` 抽查）；本地开发兜底值仍可为假值。
+- [ ] 无密钥 + 无密文时服务仍可启动；有密文无密钥时 fail-fast 提示 `CONFIG_ENC_KEY`。
 
 ---
 
@@ -482,6 +511,7 @@
 | T-008 | 文档/ADR 同步 + 仓库清理 | `docs/**`、`AGENTS.md`、`README.md`、模块 `AGENTS.md`、根 lockfile | 待创建（draft） |
 | T-009 | auth-service 安全加固 | `atifah-services/auth-service/**` | 待创建（draft） |
 | T-010 | CI/测试/公共能力加固 | `.github/**`、`atifah-common/**`、根 `pom.xml`（如需） | 待创建（draft） |
+| T-012 | 配置密文（ENC）迁移 | `deploy/nacos/config/**`、各服务 `application.yml`、`deploy/docker-compose/.env.example` | 待决策（见 P0-5 / `TODO-config-crypto.md`） |
 | T-002 | refresh + logout | 预留 | 见 ADR 0002 |
 | T-003 | 网关鉴权启用 + 白名单 + 管理端/WS | 预留 | 见 ADR 0002 |
 | T-004 | 用户资料创建 / user-registered | 预留 | 见 ADR 0002 |
@@ -514,3 +544,4 @@ grep -rn "root/root\|-proot" --include='*.md' --include='*.yml' --include='*.yam
 | 日期 | 变更 | 操作人 |
 | --- | --- | --- |
 | 2026-10-30 | 创建巡检 TODO，记录 P0/P1/P2 改进项 | Claude |
+| 2026-11-01 | 新增 P0-5 配置密文（ENC）迁移待决策，索引 `TODO-config-crypto.md`；新增建议任务包 T-012 | CodeBuddy |

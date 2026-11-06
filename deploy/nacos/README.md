@@ -30,6 +30,33 @@
 如后续开启鉴权，必须通过环境变量注入专用账号（最小权限，不复用 `nacos` 管理员），
 缺失时服务注册与配置拉取会被 403 拒绝。
 
+## 配置密文（ENC）
+
+敏感值（数据库口令、Redis 口令、JWT 密钥等）可写成 `ENC(...)` 密文后再发布，服务启动时由
+`common-security` 的 `ConfigCryptoEnvironmentPostProcessor` 解密（AES-256-GCM，纯 JDK 实现）。
+
+```yaml
+spring:
+  datasource:
+    password: "ENC(D0HtLP09gwfSx+/ydYvYTt/nfzmXAzZijN7Wg19FTueOr3PAOHujb2iuBQ==)"
+```
+
+主密钥只从环境变量 `CONFIG_ENC_KEY` 读取，**每个环境独立生成、不入仓库、不写进配置**。
+
+```bash
+mvn -q -DskipTests compile
+CP=atifah-common/common-security/target/classes
+java -cp $CP com.atifah.common.security.crypto.ConfigEncryptTool keygen          # 生成主密钥
+CONFIG_ENC_KEY=<主密钥> java -cp $CP com.atifah.common.security.crypto.ConfigEncryptTool encrypt '明文'
+CONFIG_ENC_KEY=<主密钥> java -cp $CP com.atifah.common.security.crypto.ConfigEncryptTool decrypt 'ENC(...)'
+```
+
+- 也支持「环境变量注入密文」：配置写 `${MYSQL_PASSWORD:}`，环境变量值给 `ENC(...)`，启动时同样解密。
+- 配置中存在 `ENC(...)` 但未设置 `CONFIG_ENC_KEY` 时服务直接启动失败，不会带着密文静默运行。
+- **Nacos 客户端凭据（`spring.cloud.nacos.*.password`）不能加密**：它在配置装载期即被使用，早于解密，
+  只能走环境变量 `NACOS_PASSWORD`。
+- 主密钥轮换需重新加密全部密文，并在同一批发布中切换；旧密钥解不开时启动即失败（fail-fast）。
+
 ## 导入顺序与优先级
 
 生效优先级（高 → 低）：
