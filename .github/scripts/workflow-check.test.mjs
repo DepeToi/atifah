@@ -387,6 +387,22 @@ test('Arch PR：review:approved 但缺少归档报告时失败', (t) => {
   assert.match(result.output, /没有符合命名的归档报告/);
 });
 
+test('Ops PR：受保护路径变更不再要求 maintainer-approved，仅输出警告', (t) => {
+  const dir = initRepo(t);
+  sh(dir, 'checkout', '-q', '-b', 'ops/fixture');
+  const codeSha = commit(
+    dir,
+    { 'deploy/nacos/config/common-application.yaml': 'app:\n  name: fixture\n' },
+    'ops: protected config',
+  );
+  const report = `docs/review/reports/PR-21-${codeSha.slice(0, 7)}.md`;
+  commit(dir, { [report]: reportText(codeSha) }, 'docs: archive review');
+  const result = check(dir, { branch: 'ops/fixture', args: [...APPROVED, '--pr', '21'] });
+  assert.equal(result.code, 0, result.output);
+  assert.match(result.output, /修改受保护路径/);
+  assert.match(result.output, /deploy\/nacos\/config/);
+});
+
 test('Docs PR：docs/architecture.md 不受评审门禁约束（SCOPE-00）', (t) => {
   const dir = initRepo(t);
   sh(dir, 'checkout', '-q', '-b', 'docs/arch-note');

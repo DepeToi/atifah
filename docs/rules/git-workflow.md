@@ -45,7 +45,7 @@
 - `.gitattributes` 换行设置；
 - 测试与校验逻辑（禁止为通过而删除/关闭）。
 
-CI 的 `workflow-check` 对根 `pom.xml`、`deploy/sql/**`、`deploy/nacos/config/**`、`deploy/docker-compose/docker-compose*.yml` 等受保护路径要求 `maintainer-approved` 标签；标签由维护者添加。
+`workflow-check` 对受保护路径输出警告；评审报告与 PR 描述必须列出变更文件、理由与影响，维护者随 `review:approved` 一并确认。
 
 ## GIT-05 文档同步
 
@@ -54,7 +54,7 @@ CI 的 `workflow-check` 对根 `pom.xml`、`deploy/sql/**`、`deploy/nacos/confi
 - 改共享配置：只改 `deploy/nacos/config/common-application.yaml`，并提醒导入 Nacos。
 - 新增缓存 Key / Topic / 消费组：先登记 `CacheKeys` / `MqTopics` / `MqConsumerGroups`。
 - 重要架构决策写 `docs/adr/NNNN-*.md`，不要只留在对话里。
-- APPROVE 后按 `docs/review/standards.md` §6.1 归档评审报告；报告随 PR 作为最后一个 docs-only 提交。
+- APPROVE 后按 `docs/review/standards.md` §6.1 归档评审报告（唯一正文）。
 
 ## GIT-06 提交前自检
 

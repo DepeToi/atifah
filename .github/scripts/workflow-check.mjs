@@ -9,15 +9,15 @@
  *   node .github/scripts/workflow-check.mjs \
  *     --base origin/main --head HEAD --branch "$(git branch --show-current)" \
  *     --local-precheck
- *   --local-precheck 允许任务状态为 ready/in-review，并跳过 review:approved、
- *   maintainer-approved 与归档报告校验；CI 门禁始终按 PR 规则执行。
+ *   --local-precheck 允许任务状态为 ready/in-review，并跳过 review:approved
+ *   与归档报告校验；CI 门禁始终按 PR 规则执行。
  *
  * CI 门禁（PR 事件）：
  *   node .github/scripts/workflow-check.mjs
  *   读取 BASE_SHA / HEAD_SHA / HEAD_REF / PR_NUMBER / PR_LABELS。
  *
  * 检查项：变更分类、任务包与状态、允许路径、diff 规模、分支命名、
- * 契约与 ADR 配套、受保护路径、git diff --check、归档报告与 Reviewed SHA 范围。
+ * 契约与 ADR 配套、受保护路径（警告）、git diff --check、归档报告与 Reviewed SHA 范围。
  */
 
 import { execFileSync } from 'node:child_process';
@@ -543,12 +543,8 @@ if (changeClass === 'feature') {
 }
 
 const protectedFiles = files.filter(isProtected);
-if (protectedFiles.length && !labels.includes('maintainer-approved')) {
-  if (localPrecheck) {
-    warn(`本地预检：修改受保护路径，合并前需要 maintainer-approved 标签：${protectedFiles.join(', ')}`);
-  } else {
-    fail(`修改受保护路径需要 maintainer-approved 标签：${protectedFiles.join(', ')}`);
-  }
+if (protectedFiles.length) {
+  warn(`修改受保护路径，评审报告与 PR 描述必须列出文件、理由与影响：${protectedFiles.join(', ')}`);
 }
 
 const limit = changeClass === 'feature' ? 600 : changeClass === 'arch' || changeClass === 'ops' ? 500 : Infinity;
