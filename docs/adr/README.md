@@ -28,3 +28,4 @@
 | [0002](0002-auth-login-token.md) | auth-service 注册、登录与令牌设计 | 已采纳 | 2026-10-19 |
 | [0003](0003-gateway-starter-webflux-migration.md) | 网关 starter 迁移至 spring-cloud-gateway-server-webflux | 已采纳 | 2026-10-29 |
 | [0004](0004-workflow-v2.md) | 工作流 v2：变更分类、四状态与机械门禁 | 已采纳 | 2026-11-06 |
+| [0005](0005-config-encryption.md) | 配置项密文（ENC）与主密钥管理 | 已采纳 | 2026-11-06 |

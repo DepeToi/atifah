@@ -1,1 +1,1 @@
-org.springframework.boot.env.EnvironmentPostProcessor=com.atifah.common.security.nacos.NacosCommonConfigGuard
+org.springframework.boot.env.EnvironmentPostProcessor=com.atifah.common.security.nacos.NacosCommonConfigGuard,com.atifah.common.security.crypto.ConfigCryptoEnvironmentPostProcessor

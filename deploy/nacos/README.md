@@ -30,6 +30,43 @@
 如后续开启鉴权，必须通过环境变量注入专用账号（最小权限，不复用 `nacos` 管理员），
 缺失时服务注册与配置拉取会被 403 拒绝。
 
+## 配置密文（ENC）
+
+敏感值（数据库口令、Redis 口令、JWT 密钥等）可写成 `ENC(...)` 密文后再发布，服务启动时由
+`common-security` 的 `ConfigCryptoEnvironmentPostProcessor` 解密（AES-256-GCM，纯 JDK 实现）。
+决策与迁移边界见 [ADR 0005](../../docs/adr/0005-config-encryption.md)。
+
+```yaml
+spring:
+  datasource:
+    password: "ENC(<base64(iv||ciphertext+tag)>)"   # 由离线工具生成，不要手写
+```
+
+主密钥只从环境变量 `CONFIG_ENC_KEY` 读取，**每个环境独立生成、不入仓库、不写进配置**。
+
+```bash
+mvn -q -DskipTests compile
+CP=atifah-common/common-security/target/classes
+java -cp $CP com.atifah.common.security.crypto.ConfigEncryptTool keygen          # 生成 32 字节主密钥
+CONFIG_ENC_KEY=<主密钥> java -cp $CP com.atifah.common.security.crypto.ConfigEncryptTool encrypt
+  # 终端输入明文，不回显；或使用 stdin：
+CONFIG_ENC_KEY=<主密钥> java -cp $CP com.atifah.common.security.crypto.ConfigEncryptTool encrypt < /path/to/plaintext.txt
+CONFIG_ENC_KEY=<主密钥> java -cp $CP com.atifah.common.security.crypto.ConfigEncryptTool decrypt 'ENC(...)'
+```
+
+- 主密钥必须是 `keygen` 生成的 base64url 字符串，解码后严格为 32 字节；格式或长度非法时启动失败。
+- `keygen` 输出只写入部署平台的环境变量；不要粘贴到聊天、Issue、CI 日志或 shell 历史。
+- 明文只从终端（不回显）或 stdin 读取，禁止把明文作为命令行参数。
+- 也支持「环境变量注入密文」：配置写 `${MYSQL_PASSWORD:}`，环境变量值给 `ENC(...)`，启动时同样解密。
+- 配置中直接出现 `ENC(...)`、`${ENV:ENC(...)}` 默认值或环境变量值为 `ENC(...)`，但未设置 `CONFIG_ENC_KEY` 时服务直接启动失败，不会带着密文静默运行。
+- 启动期会验证所有密文；错误密钥、密文被篡改或截断时直接启动失败。
+- 只允许环境变量注入主密钥，不提供 JVM system property 回退。
+- 解密结果按字面量使用，明文中的 `${` 不会被二次解析。
+- **Nacos 客户端凭据（`spring.cloud.nacos.*.password`）不能加密**：它在配置装载期即被使用，早于解密，
+  只能走环境变量 `NACOS_PASSWORD`。
+- 主密钥轮换需重新加密全部密文，并在同一批发布中切换；旧密钥解不开时启动即失败（fail-fast）。
+- 解密后的值在内存中为明文；生产不得暴露 `/actuator/env` 等会回显配置值的端点，日志与异常不得打印配置值。
+
 ## 导入顺序与优先级
 
 生效优先级（高 → 低）：
