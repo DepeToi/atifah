@@ -22,8 +22,8 @@
 | P0 | P0-1 | 网关身份头可伪造 | `[ ]` | T-006 |
 | P0 | P0-2 | 数据库/Nacos 凭据硬编码 | `[ ]` | T-007 |
 | P0 | P0-3 | 方案 B 容器内 RocketMQ 不可用 | `[ ]` | T-007 |
-| P0 | P0-4 | 工作区未收口 + 角色/流程缺口 | `[ ]` | ADR 0004/0005 + T-006/007/008 |
-| P0 | P0-5 | 配置密文（ENC）迁移范围待决策 | `[!]` | ADR 0006 + T-012（待定） |
+| P0 | P0-4 | 工作区未收口 + 角色/流程缺口 | `[ ]` | ADR 0006/0007 + T-006/007/008 |
+| P0 | P0-5 | 配置密文（ENC）迁移范围待决策 | `[~]` | ADR 0005（本 PR）+ T-012（待定） |
 | P1 | P1-1 | 注册幂等写入事务边界 | `[ ]` | T-009 |
 | P1 | P1-2 | 登录时序枚举 + 状态判断 | `[ ]` | T-009 |
 | P1 | P1-3 | 登录失败计数 TTL 竞态 | `[ ]` | T-009 |
@@ -153,8 +153,8 @@
   - [ ] `arch/gateway-trust-boundary`（T-006）
   - [ ] `arch/deploy-runtime-credentials`（T-007）
   - [ ] `docs/architecture-sync`（T-008）
-- [ ] 新增 ADR 0004：网关身份头信任边界与鉴权启用顺序。
-- [ ] 新增 ADR 0005：当前仓库部署范围（仅开发环境？）与凭据管理；明确是否保留 `NacosNamespaceGuard`。
+- [ ] 新增 ADR 0006：网关身份头信任边界与鉴权启用顺序。
+- [ ] 新增 ADR 0007：当前仓库部署范围（仅开发环境？）与凭据管理；明确是否保留 `NacosNamespaceGuard`。
 - [ ] 决定 `NacosNamespaceGuard`：恢复生产 namespace 防呆，或在 ADR 中明确“生产部署不在本仓库范围”并从文档移除生产承诺。
 - [ ] 更新 `AGENTS.md` §0，明确 `atifah-gateway/**`、`deploy/**` 的可写角色与受保护子路径。
 - [ ] 创建任务包 T-006 / T-007 / T-008（Claude 只设 `draft`；`ready` 需人工确认）。
@@ -172,7 +172,7 @@
 
 **证据**
 
-- 能力已实现（2026-11-01，CodeBuddy）：`common-security` 的 `ConfigCipher` / `ConfigCryptoPropertySource` / `ConfigCryptoEnvironmentPostProcessor` / `ConfigEncryptTool`，已在 `META-INF/spring.factories` 注册；`mvn -o -pl atifah-common/common-security -am test` 11 用例通过，全量 `compile` 通过。
+- 能力已实现（2026-11-01，CodeBuddy）：`common-security` 的 `ConfigCipher` / `ConfigCryptoPropertySource` / `ConfigCryptoEnvironmentPostProcessor` / `ConfigEncryptTool`，已在 `META-INF/spring.factories` 注册；`mvn -o -pl atifah-common/common-security -am test` 12 用例通过，全量 `compile` 通过。
 - 配置侧**未迁移**：`deploy/nacos/config/common-application.yaml:83`、`atifah-gateway/src/main/resources/application.yml:131` 的 `jwt.secret`，以及各服务的 `${MYSQL_PASSWORD:root}`、`${REDIS_PASSWORD:}` 仍是明文占位 + 环境变量。
 - 未写规则：`docs/rules/security.md` SEC-02 尚未约定「敏感值入库必须 `ENC(...)`」；主密钥载体（`CONFIG_ENC_KEY`）在 `deploy/docker-compose/.env.example` 无说明。
 - 详细清单与逐条迁移写法见 [TODO-config-crypto.md](TODO-config-crypto.md)。
@@ -185,14 +185,14 @@ P0-2 只解决了「凭据不硬编码」，没有解决「真实凭据一旦要
 
 - [ ] 决策 D-1 迁移范围（仅 JWT / JWT+DB+Redis / 只立规范），见 `TODO-config-crypto.md` §1。
 - [ ] 决策 D-2 主密钥托管位置，并更新 `deploy/docker-compose/.env.example`（只放占位与生成命令）。
-- [ ] 新增 ADR 0006：自研 AES-256-GCM vs Jasypt、SHA-256 密钥派生、fail-fast 策略、`/actuator/env` 明文暴露面。
+- [ ] 新增 ADR 0005：自研 AES-256-GCM vs Jasypt、SHA-256 密钥派生、fail-fast 策略、`/actuator/env` 明文暴露面。
 - [ ] 补 `docs/rules/security.md` SEC-02「配置密文」条款（架构角色执行）。
 - [ ] 视决策结果创建 T-012（配置迁移），在任务包中明确允许路径：`deploy/nacos/config/**`、`atifah-gateway/src/main/resources/**`、各服务 `application.yml`。
 - [ ] 明确 `spring.cloud.nacos.*.password` 与 `NACOS_AUTH_TOKEN` 不纳入迁移（装载期早于解密，只能走环境变量）。
 
 **验收**
 
-- [ ] ADR 0006 与 SEC-02 条款合并，`arch-baseline` 标签递增。
+- [ ] ADR 0005 与 SEC-02 条款合并，`arch-baseline` 标签递增。
 - [ ] 迁移项（若有）执行后，配置文件中不再出现真实口令/密钥明文（`git grep` 抽查）；本地开发兜底值仍可为假值。
 - [ ] 无密钥 + 无密文时服务仍可启动；有密文无密钥时 fail-fast 提示 `CONFIG_ENC_KEY`。
 

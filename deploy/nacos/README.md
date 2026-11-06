@@ -34,11 +34,12 @@
 
 敏感值（数据库口令、Redis 口令、JWT 密钥等）可写成 `ENC(...)` 密文后再发布，服务启动时由
 `common-security` 的 `ConfigCryptoEnvironmentPostProcessor` 解密（AES-256-GCM，纯 JDK 实现）。
+决策与迁移边界见 [ADR 0005](../../docs/adr/0005-config-encryption.md)。
 
 ```yaml
 spring:
   datasource:
-    password: "ENC(D0HtLP09gwfSx+/ydYvYTt/nfzmXAzZijN7Wg19FTueOr3PAOHujb2iuBQ==)"
+    password: "ENC(<base64(iv||ciphertext+tag)>)"   # 由离线工具生成，不要手写
 ```
 
 主密钥只从环境变量 `CONFIG_ENC_KEY` 读取，**每个环境独立生成、不入仓库、不写进配置**。
@@ -51,11 +52,14 @@ CONFIG_ENC_KEY=<主密钥> java -cp $CP com.atifah.common.security.crypto.Config
 CONFIG_ENC_KEY=<主密钥> java -cp $CP com.atifah.common.security.crypto.ConfigEncryptTool decrypt 'ENC(...)'
 ```
 
+- `keygen` 输出只写入部署平台的环境变量；不要粘贴到聊天、Issue、CI 日志或 shell 历史。
 - 也支持「环境变量注入密文」：配置写 `${MYSQL_PASSWORD:}`，环境变量值给 `ENC(...)`，启动时同样解密。
-- 配置中存在 `ENC(...)` 但未设置 `CONFIG_ENC_KEY` 时服务直接启动失败，不会带着密文静默运行。
+- 配置中直接出现 `ENC(...)`、`${ENV:ENC(...)}` 默认值或环境变量值为 `ENC(...)`，但未设置 `CONFIG_ENC_KEY` 时服务直接启动失败，不会带着密文静默运行。
+- 本地调试可用同名 JVM system property（`-DCONFIG_ENC_KEY=...`）；生产只允许环境变量。
 - **Nacos 客户端凭据（`spring.cloud.nacos.*.password`）不能加密**：它在配置装载期即被使用，早于解密，
   只能走环境变量 `NACOS_PASSWORD`。
 - 主密钥轮换需重新加密全部密文，并在同一批发布中切换；旧密钥解不开时启动即失败（fail-fast）。
+- 解密后的值在内存中为明文；生产不得暴露 `/actuator/env` 等会回显配置值的端点，日志与异常不得打印配置值。
 
 ## 导入顺序与优先级
 

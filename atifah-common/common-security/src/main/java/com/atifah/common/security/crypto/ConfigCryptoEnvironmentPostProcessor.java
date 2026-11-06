@@ -47,11 +47,30 @@ public class ConfigCryptoEnvironmentPostProcessor implements EnvironmentPostProc
                 continue;
             }
             for (String name : enumerable.getPropertyNames()) {
-                if (source.getProperty(name) instanceof String value && ConfigCipher.isEncrypted(value)) {
+                if (source.getProperty(name) instanceof String value
+                        && isEncryptedOrResolvesToEncrypted(environment, name, value)) {
                     return true;
                 }
             }
         }
         return false;
+    }
+
+    /**
+     * 直接密文、占位符默认值或环境变量解析后为密文，都视为存在密文，确保缺密钥时 fail-fast。
+     */
+    private boolean isEncryptedOrResolvesToEncrypted(ConfigurableEnvironment environment, String name, String value) {
+        if (ConfigCipher.isEncrypted(value)) {
+            return true;
+        }
+        if (!value.contains("${")) {
+            return false;
+        }
+        try {
+            return ConfigCipher.isEncrypted(environment.getProperty(name));
+        } catch (RuntimeException e) {
+            // 占位符无法解析时交给 Spring 后续处理，不在本阶段扩大失败面
+            return false;
+        }
     }
 }

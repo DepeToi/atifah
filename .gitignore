@@ -46,3 +46,6 @@ data/
 
 # Personal AI preferences (layer 1 in the AI rules layout, not tracked)
 .claude/CLAUDE.md
+
+# Agent local settings
+.codebuddy/settings.local.json

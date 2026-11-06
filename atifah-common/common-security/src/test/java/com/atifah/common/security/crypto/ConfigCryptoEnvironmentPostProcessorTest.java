@@ -85,6 +85,18 @@ class ConfigCryptoEnvironmentPostProcessorTest {
     }
 
     @Test
+    void failsFastWhenCipherTextIsPlaceholderDefaultAndKeyMissing() {
+        Assumptions.assumeTrue(ConfigCipher.resolveMasterKey() == null, "本机已配置 CONFIG_ENC_KEY，跳过缺密钥场景");
+        String cipherText = ConfigCipher.encrypt("db-password", MASTER_KEY);
+        environment.getPropertySources().addLast(new MapPropertySource("test",
+                Map.of("spring.datasource.password", "${MISSING_ENV:" + cipherText + "}")));
+
+        assertThatThrownBy(() -> postProcessor.postProcessEnvironment(environment, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining(ConfigCipher.KEY_ENV);
+    }
+
+    @Test
     void startsWithoutKeyWhenNoCipherTextExists() {
         Assumptions.assumeTrue(ConfigCipher.resolveMasterKey() == null, "本机已配置 CONFIG_ENC_KEY，跳过缺密钥场景");
         environment.getPropertySources().addLast(new MapPropertySource("test",

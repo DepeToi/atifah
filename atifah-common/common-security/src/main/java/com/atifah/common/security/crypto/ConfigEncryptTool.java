@@ -11,7 +11,7 @@ package com.atifah.common.security.crypto;
  * java -cp $CLASSES com.atifah.common.security.crypto.ConfigEncryptTool keygen
  *
  * # 2) 加密配置值，把输出整段贴进 yml / Nacos
- * CONFIG_ENC_KEY=xxx java -cp $CLASSES com.atifah.common.security.crypto.ConfigEncryptTool encrypt 'MySql@Prod#2026'
+ * CONFIG_ENC_KEY=xxx java -cp $CLASSES com.atifah.common.security.crypto.ConfigEncryptTool encrypt '<明文口令>'
  *
  * # 3) 校验密文与密钥是否匹配
  * CONFIG_ENC_KEY=xxx java -cp $CLASSES com.atifah.common.security.crypto.ConfigEncryptTool decrypt 'ENC(...)'

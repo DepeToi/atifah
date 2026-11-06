@@ -13,7 +13,7 @@
 | 离线工具 `keygen` / `encrypt` / `decrypt` | `.../crypto/ConfigEncryptTool.java` |
 | 使用说明 | `deploy/nacos/README.md` § 配置密文（ENC） |
 
-验证：`mvn -o -pl atifah-common/common-security -am test` 11 用例通过；`mvn -o -q -DskipTests compile` 全量通过；工具 keygen→encrypt→decrypt 往返正确。
+验证：`mvn -o -pl atifah-common/common-security -am test` 12 用例通过；`mvn -o -q -DskipTests compile` 全量通过；工具 keygen→encrypt→decrypt 往返正确。
 
 支持两种写法：
 - 直写：`password: "ENC(...)"`
@@ -26,7 +26,7 @@
 | D-1 | 迁移范围 | A 仅 JWT secret / B JWT+DB+Redis / C 不迁移、只立规范 | **C+A**：现有值本就是 `${ENV:default}`，真实凭据不在仓库；先立规范（新增敏感配置必须 ENC 或环境变量），有真实值入库时再逐项加密 |
 | D-2 | 主密钥托管 | compose `.env` / K8s Secret / 启动参数 | 环境变量 `CONFIG_ENC_KEY`，每环境独立，不入仓库；`.env.example` 只写占位与生成方式 |
 | D-3 | 规则补充 | `docs/rules/security.md` SEC-02 是否新增「配置密文」条款 | 建议补：敏感值入库必须 `ENC(...)`；主密钥只走环境变量；轮换流程 |
-| D-4 | 是否要 ADR | 该机制仅用 JDK，不新增依赖 | 建议 ADR 0006 记录选型（自研 vs Jasypt）、密钥派生（SHA-256）、fail-fast 策略 |
+| D-4 | 是否要 ADR | 该机制仅用 JDK，不新增依赖 | 已由 ADR 0005 记录选型（自研 vs Jasypt）、密钥派生（SHA-256）、fail-fast 策略 |
 | D-5 | 是否要任务包 | `deploy/nacos/config/*` 属规则禁止擅改范围 | 若 D-1 选 A/B，需 `docs/tasks/T-xxx` 明确允许路径与验收 |
 
 ## 2. 迁移清单（D-1 选 A 或 B 时按此执行）
@@ -62,7 +62,7 @@ CONFIG_ENC_KEY=<主密钥> java -cp $CP com.atifah.common.security.crypto.Config
 
 - 无 `CONFIG_ENC_KEY`、配置中无密文时：服务正常启动（本地开发零成本）——已满足。
 - 配置中有密文、无主密钥时：启动失败并提示 `CONFIG_ENC_KEY`——已满足。
-- 迁移后：带主密钥启动，`SHOW`/日志/actuator `/env` 均不出现明文；`/actuator/env` 展示的是解密后的值属预期，需在 ADR 中说明暴露面。
+- 迁移后：带主密钥启动，日志不出现明文；`/actuator/env` 展示解密后的值属已知暴露面，生产必须关闭或限制（见 ADR 0005 §5）。
 - 配置中不再出现生产真实凭据明文（`git grep` 抽查）。
 - `mvn -B -ntp verify` 通过。
 
@@ -76,6 +76,6 @@ CONFIG_ENC_KEY=<主密钥> java -cp $CP com.atifah.common.security.crypto.Config
 
 ## 6. 建议拆分
 
-1. ADR 0006（选型 + 密钥管理 + fail-fast）+ SEC-02 规则补充 —— 架构，单独 PR。
+1. ADR 0005（选型 + 密钥管理 + fail-fast）+ SEC-02 规则补充 —— 架构，单独 PR。
 2. T-xxx 配置迁移（仅 D-1 定下范围时）—— 单 PR，diff 预计 < 40 行。
 3. T-yyy `.env.example` / README 补充 `CONFIG_ENC_KEY` 与本地兜底说明 —— 可并入 2。
