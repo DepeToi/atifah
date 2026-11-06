@@ -13,19 +13,22 @@
 ## GIT-02 分支与 PR
 
 - `main` 受保护，不直接提交；所有改动走 PR。
+- 变更分 **Feature / Arch / Ops / Docs** 四类，混合变更按最高风险处理（见 `AGENTS.md` §0）。
 - 分支命名：
-  - 架构：`arch/<topic>`（Claude）
   - 功能：`feat/T-xxx-<slug>`（CodeBuddy）
   - 修复：`fix/T-xxx-<slug>`（CodeBuddy）
-  - 文档/规则：`docs/<topic>`（Claude）
-- 一个 PR 只对应一个任务包，单服务、diff ≤400 行；超出请拆任务。
-- PR 必须使用 `.github/pull_request_template.md`，写清改了什么、为什么、影响面、如何验证。
-- 契约变更必须单独开 PR，不得混在功能 PR 里。
+  - 架构/契约：`arch/<topic>`（Claude）
+  - 部署/配置/CI：`ops/<topic>` 或 `chore/<topic>`（Claude 或负责人）
+  - 文档：`docs/<topic>`（Claude；规则/ADR 走 `arch/<topic>`）
+- 一个 PR 只做一件事：Feature 单服务、≤600 行非测试代码（总计 ≤1000）；Arch/Ops ≤500 行非文档代码；超出请拆分或由维护者加 `size-exception`。
+- 只有 Feature 需要任务包；Arch 用 ADR + 契约 diff，Ops 用变更说明 + 验证命令，Docs 用 PR 描述。
+- PR 必须使用 `.github/pull_request_template.md`，写清变更类型、改了什么、为什么、影响面、如何验证。
+- 契约变更必须单独开 `arch/<topic>` PR，不得混在功能 PR 里。
 
 ## GIT-03 变更边界
 
-- 只改任务包“允许修改”列出的路径；不顺手重构，不新增未要求的功能。
-- 动手前先读根 `AGENTS.md`、目标模块 `AGENTS.md`、相关 `docs/rules/*` 与契约。
+- Feature 只改任务包“允许修改”列出的路径；Arch/Ops/Docs 只改各自边界内的路径；不顺手重构，不新增未要求的功能。
+- 动手前先按变更类型读输入：Feature 读任务包 + 契约，Arch 读 ADR + 契约，Ops/Docs 读变更说明；再读根 `AGENTS.md`、目标模块 `AGENTS.md` 与相关 `docs/rules/*`。
 - 发现既有实现与文档冲突：以已冻结契约为准；契约本身有问题时先反馈给 Claude，不要自行改契约迁就代码。
 - 有设计分歧先给两个方案与取舍，等确认再写。
 - 计划模式下先给出改动清单（文件路径 + 改什么 + 影响面），确认后再动手。
@@ -34,7 +37,7 @@
 
 未经明确确认，禁止修改：
 
-- 根 `pom.xml` 的 parent 与 BOM 版本；
+- 根/父 `pom.xml` 的 parent 与 BOM 版本（含 `atifah-services/pom.xml` 的公共依赖）；
 - `docs/contracts/**`（契约变更除外，且必须由 Claude 执行）；
 - `deploy/nacos/config/*`（修改后必须提醒重新导入 Nacos）；
 - `deploy/docker-compose` 端口映射；
@@ -42,13 +45,16 @@
 - `.gitattributes` 换行设置；
 - 测试与校验逻辑（禁止为通过而删除/关闭）。
 
+CI 的 `workflow-check` 对根 `pom.xml`、`deploy/sql/**`、`deploy/nacos/config/**`、`deploy/docker-compose/docker-compose*.yml` 等受保护路径要求 `maintainer-approved` 标签；标签由维护者添加。
+
 ## GIT-05 文档同步
 
-- 改接口：先改 `docs/contracts/` 契约，再改 `common-core`、后端、前端 `src/api/types.ts`。
+- 改接口：先走 Arch 轨道改 `docs/contracts/` 契约并打基线标签，再改 `common-core`、后端、前端 `src/api/types.ts`。
 - 改路由/端口/服务名：同步 `README.md` 端口表与相关契约/文档。
 - 改共享配置：只改 `deploy/nacos/config/common-application.yaml`，并提醒导入 Nacos。
 - 新增缓存 Key / Topic / 消费组：先登记 `CacheKeys` / `MqTopics` / `MqConsumerGroups`。
 - 重要架构决策写 `docs/adr/NNNN-*.md`，不要只留在对话里。
+- APPROVE 后按 `docs/review/standards.md` §6.1 归档评审报告；报告随 PR 作为最后一个 docs-only 提交。
 
 ## GIT-06 提交前自检
 
@@ -64,7 +70,8 @@ git status              # 确认没有无关文件
 ## GIT-07 三角色交接约束
 
 - 同一工作区同一时刻只允许一个角色写文件；并行任务用独立分支或 `git worktree`。
-- Codex 只读评审，可在独立 worktree / 干净检出中执行构建与测试，并写 `docs/review/reports/**` 评审报告；不得修改代码/契约/任务实现，不得提交修复或构建产物；修复必须回到 CodeBuddy。
-- 任务状态只能由授权角色按 `docs/tasks/README.md` 状态机修改；Codex 不得改状态；每次变更必须更新 front matter 的 `status` / `updated` / `status_reason`，并在任务包 §12 追加记录（DOC-04）。
-- CodeBuddy 不得修改契约、规则、父 pom 或其他服务；需要变更时回到 Claude 走 ADR/契约 PR。
+- Codex 只读评审，可在独立 worktree / 干净检出中按 A/B/C 级执行构建与测试，并写 `docs/review/reports/**` 评审报告；不得修改代码/契约/任务实现，不得提交修复、报告或构建产物；修复必须回到 CodeBuddy。
+- Feature/Arch/Ops 合并前必须有 `review:approved` 标签；Docs 不需要。推送新代码后必须移除标签，Codex 复审后再加回。
+- 任务状态按 `docs/tasks/README.md` §2 的四状态机修改：Claude `draft`/`ready`、CodeBuddy `in-review`、维护者 `done` 与强制回退；Codex 不得改状态。每次变更更新 front matter 的 `status` / `updated` / `status_reason`，并在任务包 §12 追加记录（DOC-04）。
+- CodeBuddy 不得修改契约、规则、父 pom、网关、common、deploy 或其他服务；需要变更时回到 Claude 走 Arch/ADR 轨道。
 - Claude 的架构变更与 CodeBuddy 的功能实现不得混在同一个 PR。

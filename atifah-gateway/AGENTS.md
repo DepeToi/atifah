@@ -26,7 +26,7 @@
 
 - 路由前缀与 `docs/contracts/api-conventions.md` 保持一致：C 端 `/api/v1/**`、管理端 `/admin/api/**`、WebSocket `/ws/**`。
 - 网关只做鉴权、限流、TraceId、路由，不写业务逻辑；不在网关里做数据聚合。
-- 修改鉴权、CORS、白名单属于架构/安全变更，先更新 ADR 或规则，再由 Claude 执行。
+- 修改鉴权、CORS、白名单属于架构/安全变更，按 Arch 轨道先更新 ADR 或规则，再由 Claude 执行；不建任务包。
 
 ## 自检
 

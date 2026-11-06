@@ -27,16 +27,16 @@ docs/contracts/
 
 角色与可写范围以 `AGENTS.md` §0 为唯一来源。契约相关约束只有一条：`docs/contracts/**` 由 Claude 写入，CodeBuddy / Codex 只读（Codex 可运行自测试）。
 
-CodeBuddy **禁止**修改契约来迁就实现。发现契约缺失或矛盾时，在 PR 中标注 `[Contract-Question]` 并等待 Claude 更新。
+契约变更属于 **Arch 轨道**：必须单独开 `arch/<topic>` PR，提供 ADR，不得夹带业务代码；不新建任务包。CodeBuddy **禁止**修改契约来迁就实现。发现契约缺失或矛盾时，在 PR 中标注 `[Contract-Question]` 并等待 Claude 更新。
 
 ## 3. 冻结与版本
 
 - 架构阶段完成后，由人工确认，在 `main` 上打标签：`arch-baseline-vX.Y`（例如 `arch-baseline-v0.1`）。
-- 功能任务包必须声明所依赖的基线版本；CodeBuddy 从对应基线之后的最新 `main` 拉分支。
-- 冻结后的契约变更流程：
+- Feature 任务包必须声明所依赖的基线版本；CodeBuddy 从对应基线之后的最新 `main` 拉分支。
+- 冻结后的契约变更流程（Arch 轨道）：
   1. Claude 新增/更新 ADR，说明变更原因、影响范围与兼容性。
-  2. 单独开 `arch/<topic>` PR，只改契约与相关文档。
-  3. 人工评审通过后合并，必要时打新基线标签。
+  2. 单独开 `arch/<topic>` PR，只改契约与相关文档；不得同时改业务代码。
+  3. 人工评审通过后合并，并在 `main` 打新的 `arch-baseline-vX.Y` 标签。
   4. CodeBuddy 基于新契约更新实现；不得在同一 PR 中同时改契约和实现。
 - 兼容性规则：
   - 新增可选字段、新增接口 = 向后兼容，可留在原版本。
@@ -53,12 +53,13 @@ CodeBuddy **禁止**修改契约来迁就实现。发现契约缺失或矛盾时
 - [ ] 事件契约包含 Topic、生产者、消费者、key、幂等键、重试/死信策略。
 - [ ] 契约与 `docs/architecture.md`、`AGENTS.md` 无矛盾。
 - [ ] 变更已记录 ADR（新建或更新）。
+- [ ] PR 按 Arch 轨道单独提交，未夹带业务代码；合并后已打新基线标签。
 
 ## 5. 工具如何消费契约
 
-- **Claude**：写契约、维护模板与总纲；通过 ADR 记录取舍。
+- **Claude**：写契约、维护模板与总纲；通过 ADR 记录取舍；契约变更走 Arch 轨道并打基线标签。
 - **CodeBuddy**：任务包“必读文件”列出具体契约路径；实现以契约为准，不自行扩展字段。
-- **Codex**：评审时对照契约检查 diff；自测试与报告要求见 `docs/review/standards.md` §4/§6.1。
+- **Codex**：评审时对照契约检查 diff；自测试、分级与报告要求见 `docs/review/standards.md` §4/§6.1。
 
 ## 6. 相关文档
 

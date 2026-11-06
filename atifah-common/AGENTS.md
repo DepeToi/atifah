@@ -37,7 +37,7 @@
 - `Result` / `PageResult` / `ErrorCode` / `CommonConstants` / `CacheKeys` / `MqTopics` / `MqConsumerGroups` 是全服务契约；修改前先同步 `docs/contracts/api-conventions.md`、`docs/rules/*` 与前端 `src/api/types.ts`。
 - 新增缓存 Key / Topic 必须先登记再引用；删除或改名视为破坏性变更，需评估所有服务。
 - 密钥与凭据规则见 `docs/rules/security.md` SEC-02。
-- 修改公共能力属于架构工作，应由 Claude 执行或先经 Claude 评审；CodeBuddy 不得擅自改契约类。
+- 修改公共能力属于 Arch 工作，由 Claude 执行或先经 Claude 评审，按 Arch 轨道评审；不建任务包。CodeBuddy 不得擅自改契约类。
 
 ## 自检
 

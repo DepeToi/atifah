@@ -178,18 +178,20 @@ curl http://localhost:8090/actuator/health   # admin-service（管理后台 BFF�
 
 | 角色 | 负责 | 规则入口 |
 | --- | --- | --- |
-| Claude（架构） | ADR、契约、任务包、公共能力、CI | `AGENTS.md` §0、`docs/contracts/`、`docs/tasks/` |
-| CodeBuddy（开发） | 按任务包实现与测试 | `AGENTS.md` §0、目标模块 `AGENTS.md`、任务包 |
-| Codex（评审） | 只读评审 + 独立自测试 + 报告落盘 | `AGENTS.md` §0、[`docs/review/standards.md`](docs/review/standards.md) |
-| 人类（维护者） | 确认架构、合并、打基线、改 `done` | `AGENTS.md` §0 |
+| Claude（架构） | ADR、契约、任务包、公共能力、网关、部署、CI | `AGENTS.md` §0、`docs/contracts/`、`docs/tasks/` |
+| CodeBuddy（开发） | 按任务包实现 Feature 功能与测试 | `AGENTS.md` §0、目标模块 `AGENTS.md`、任务包 |
+| Codex（评审） | 只读评审 + 独立自测试 + 报告 | `AGENTS.md` §0、[`docs/review/standards.md`](docs/review/standards.md) |
+| 人类（维护者） | 确认架构、合并、打基线、批量收口 `done` | `AGENTS.md` §0 |
+
+变更分 **Feature / Arch / Ops / Docs** 四类，只有 Feature 需要任务包；完整分类与交接见 [`AGENTS.md`](AGENTS.md) §0 与 [ADR 0004](docs/adr/0004-workflow-v2.md)。
 
 标准交接顺序：
 
-1. Claude 产出 ADR + 契约 + `docs/tasks/T-xxx.md`；人工确认后在 `main` 打 `arch-baseline-vX.Y`。
-2. CodeBuddy 从 `main` 拉 `feat/T-xxx-<slug>`，只改任务包允许路径，自检后开 PR。
-3. CI 通过后，Codex 在独立 worktree 复跑自测试，报告落盘 `docs/review/reports/`。
-4. `Blocker` / `Major` 或自测试失败回 CodeBuddy；架构/契约问题回 Claude。
-5. 人类合并；任务包 §11 归档报告，维护者改 `status: done`。
+1. **Feature**：Claude 产出 ADR（如有取舍）+ 契约 + 任务包；维护者批准后为 `ready`，契约有变更时打 `arch-baseline-vX.Y`。
+2. **Arch / Ops / Docs**：Claude 或负责人直接开对应分支 PR，按类型提供 ADR、验证命令或 PR 描述。
+3. CodeBuddy 从 `main` 拉 `feat/T-xxx-<slug>`，只改任务包允许路径，自检后开 PR 并置为 `in-review`。
+4. CI 构建/测试/密钥扫描通过后，Codex 在独立工作区复跑自测试，PR 评论给 Verdict，报告写入 `docs/review/reports/`。
+5. APPROVE 后 CodeBuddy 将报告原样复制为最后一个 docs-only 提交并更新 §11；维护者加 `review:approved`（Feature/Arch/Ops 必需），`workflow-check` 重跑通过后合并，合并即完成。
 
 分支、提交、PR 与任务状态机的完整规则见 [`docs/rules/git-workflow.md`](docs/rules/git-workflow.md)、[`docs/tasks/README.md`](docs/tasks/README.md)；命令与自检见 `AGENTS.md` §9。
 
