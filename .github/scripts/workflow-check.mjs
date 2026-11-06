@@ -474,11 +474,18 @@ if (changeClass === 'feature') {
     if (!baseline) {
       fail(`任务包 ${task.path} 缺少 contract_baseline`);
     } else {
+      let baselineExists = false;
       try {
         git('rev-parse', '--verify', `refs/tags/${baseline}`);
-        git('merge-base', '--is-ancestor', baseline, 'HEAD');
+        baselineExists = true;
       } catch {
-        fail(`契约基线标签 ${baseline} 不存在或不是 HEAD 的祖先；请先打 tag 并 fetch`);
+        fail(`契约基线标签 ${baseline} 不存在；请先打 tag 并 fetch`);
+      }
+      if (baselineExists && !gitCheck('merge-base', '--is-ancestor', baseline, base).ok) {
+        fail(`契约基线标签 ${baseline} 不是 PR base（${base}）的祖先；基线必须在 main 上冻结，功能分支自建标签无效`);
+      }
+      if (baselineExists && !gitCheck('merge-base', '--is-ancestor', baseline, 'HEAD').ok) {
+        fail(`契约基线标签 ${baseline} 不是 HEAD 的祖先；请从基线之后的最新 main 拉分支`);
       }
     }
     const allowed = parseAllowedPaths(text);
@@ -502,8 +509,8 @@ if (changeClass === 'feature') {
   const contractFiles = files.filter(isContractFile);
   const adrFiles = files.filter(isAdrFile);
 
-  if (changeClass === 'arch' && adrFiles.length === 0 && files.some((file) => file === 'AGENTS.md' || file.startsWith('docs/rules/'))) {
-    warn('规则/入口文档变更未附 ADR；如属重要规则调整，请补充 ADR');
+  if (changeClass === 'arch' && adrFiles.length === 0) {
+    fail('Arch PR 缺少 ADR 变更：请在 docs/adr/ 新增或更新 ADR（README/_TEMPLATE 不计）');
   }
 
   if (contractFiles.length) {

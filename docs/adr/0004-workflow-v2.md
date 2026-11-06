@@ -59,6 +59,8 @@ Arch 用 ADR + 契约 diff；Ops 用变更说明 + 验证命令；Docs 用 PR �
 - 至少一份“当前轮次”报告的 `Reviewed SHA..HEAD` 只包含 `docs/review/reports/**` 与任务包 §11/§12，任务包其余章节不得变化；同一 PR 可同时归档历史轮次报告，但旧报告不能单独作为审批依据；
 - HEAD 最后一个提交为 docs-only；
 - Feature 的 diff 不得夹带任何非业务路径（`deploy/**`、`.github/**`、`docs/rules/**`、ADR、根/模块规则、`common`、`gateway`、根/父 pom），任务包“允许修改”不能覆盖该禁止；
+- Arch PR 必须在 diff 中包含 ADR 新增/更新（`docs/adr/README.md`、`_TEMPLATE.md` 不计）；
+- Feature 的 `contract_baseline` 标签必须是 PR base 的祖先，功能分支自建同名标签无效；
 - PR 事件下任务状态只接受 `in-review`。
 
 本地预检使用 `--local-precheck`：允许任务状态为 `ready`/`in-review`，跳过 `review:approved`、`maintainer-approved` 与归档报告校验；CI 门禁不启用该参数。门禁脚本配套 `node:test` 回归测试（`.github/scripts/workflow-check.test.mjs`），CI 每次 PR 先跑测试再执行门禁。

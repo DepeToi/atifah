@@ -139,8 +139,18 @@ function reportText(sha) {
  */
 function featureRepo(t, options = {}) {
   const dir = initRepo(t);
-  sh(dir, 'tag', 'arch-baseline-v0.1');
-  sh(dir, 'checkout', '-q', '-b', 'feat/T-001-demo');
+  if (options.tagOnFeatureBranch) {
+    sh(dir, 'checkout', '-q', '-b', 'feat/T-001-demo');
+    commit(
+      dir,
+      { 'atifah-services/auth-service/src/main/java/Baseline.java': 'class Baseline {}\n' },
+      'feat: baseline commit',
+    );
+    sh(dir, 'tag', 'arch-baseline-v0.1');
+  } else {
+    sh(dir, 'tag', 'arch-baseline-v0.1');
+    sh(dir, 'checkout', '-q', '-b', 'feat/T-001-demo');
+  }
 
   const allowed = options.allowed || ['atifah-services/auth-service/**'];
   const codeSha = commit(
@@ -179,11 +189,13 @@ function featureRepo(t, options = {}) {
 function archRepo(t, options = {}) {
   const dir = initRepo(t);
   sh(dir, 'checkout', '-q', '-b', 'arch/fixture');
-  const codeSha = commit(
-    dir,
-    { 'atifah-common/atifah-common-core/src/main/java/Fixture.java': 'class Fixture {}\n' },
-    'arch: fixture',
-  );
+  const files = {
+    'atifah-common/atifah-common-core/src/main/java/Fixture.java': 'class Fixture {}\n',
+  };
+  if (options.withAdr !== false) {
+    files['docs/adr/0005-fixture.md'] = '# 0005. Fixture\n\n- 状态：已采纳\n';
+  }
+  const codeSha = commit(dir, files, 'arch: fixture');
   if (options.archive !== false) {
     const report = `docs/review/reports/PR-12-${codeSha.slice(0, 7)}.md`;
     commit(dir, { [report]: reportText(codeSha) }, 'docs: archive review');
@@ -250,6 +262,13 @@ test('Feature PR：任务包仍为 ready 时失败（DOC-04）', (t) => {
   const result = check(dir, { branch: 'feat/T-001-demo', args: [...APPROVED, '--pr', '12'] });
   assert.equal(result.code, 1);
   assert.match(result.output, /in-review/);
+});
+
+test('Feature PR：仅在功能分支创建的 contract_baseline 标签失败（SCOPE-00）', (t) => {
+  const { dir } = featureRepo(t, { tagOnFeatureBranch: true });
+  const result = check(dir, { branch: 'feat/T-001-demo', args: [...APPROVED, '--pr', '12'] });
+  assert.equal(result.code, 1);
+  assert.match(result.output, /不是 PR base/);
 });
 
 test('Feature PR：任务包“允许修改”不能放行 deploy/.github/ADR/根规则（SCOPE-01）', (t) => {
@@ -334,6 +353,13 @@ test('Feature PR：归档提交未在 §11 引用报告时失败（DOC-03）', (
 // ---------------------------------------------------------------------------
 // Arch / Docs 分类与报告命名
 // ---------------------------------------------------------------------------
+
+test('Arch PR：缺少 ADR 变更时失败（SCOPE-00）', (t) => {
+  const { dir } = archRepo(t, { withAdr: false });
+  const result = check(dir, { branch: 'arch/fixture', args: [...APPROVED, '--pr', '12'] });
+  assert.equal(result.code, 1);
+  assert.match(result.output, /缺少 ADR 变更/);
+});
 
 test('Arch PR：缺少 review:approved 时失败', (t) => {
   const { dir } = archRepo(t, { archive: false });
