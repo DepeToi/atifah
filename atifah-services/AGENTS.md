@@ -35,7 +35,7 @@
 
 ## 契约与任务
 
-- 实现前必须有 `docs/tasks/T-xxx-<slug>.md`，并且只改任务包“允许修改”的路径。
+- Feature 实现前必须有 `docs/tasks/T-xxx-<slug>.md`，并且只改任务包“允许修改”的路径；Arch/Ops/Docs 按根 `AGENTS.md` §0 的分类执行。
 - 接口、DDL、事件以 `docs/contracts/` 为准；**禁止修改契约**，有疑问标 `[Contract-Question]` 回到 Claude。
 - 新接口或字段变更先改契约，再由 Claude 更新任务包；CodeBuddy 不自行扩展。
 

@@ -1,51 +1,44 @@
 ---
 id: T-000
-title: <服务> <功能> 
+title: <服务> <功能>
 status: draft
 owner: codebuddy
 created: YYYY-MM-DD
 updated: YYYY-MM-DD
 status_reason: <为什么处于当前状态>
-contract_baseline: arch-baseline-v0.1
+contract_baseline: arch-baseline-vX.Y
 related_adr: []
 ---
 
 # T-000 <服务> <功能>
 
-## 1. 目标与背景
+## 1. 目标与非目标
 
 - 一句话目标：
 - 业务背景：
 - 关联需求 / Issue：
 - 关联 ADR：
+- 明确不做：
 
-## 2. 非目标（明确不做）
+## 2. 上下文与必读（只列路径）
 
-- 
-- 
+- 规则：`AGENTS.md`、`docs/rules/*`、目标模块 `AGENTS.md`
+- 契约：`docs/contracts/openapi/<service>.yaml#<anchor>`、`docs/contracts/db/<service>.sql#<table>`、`docs/contracts/events/<event>.md`
+- 现有实现 / 测试：
+- 关联 ADR：
 
-## 3. 必读文件（按顺序）
-
-- [ ] `AGENTS.md`
-- [ ] `docs/rules/security.md`
-- [ ] `docs/rules/code-style.md`
-- [ ] `docs/rules/database.md`
-- [ ] 目标模块 `AGENTS.md`：
-- [ ] 契约：
-  - `docs/contracts/openapi/<service>.yaml#<path-anchor>`
-  - `docs/contracts/db/<service>.sql#<table>`
-  - `docs/contracts/events/<event>.md`
-
-## 4. 变更范围
+## 3. 变更范围
 
 ### 允许修改
 
 ```text
 atifah-services/<service>/**
 atifah-services/<service>/src/test/**
+docs/tasks/T-000-<slug>.md              # 仅 front matter / §8.1 / §8.2
+docs/review/reports/**                  # 仅归档 Codex 报告
 ```
 
-> 只列实际需要的路径；不要写整个仓库。
+> 只列实际需要的路径；不要写整个仓库。只允许改上述路径，其他一律禁止。
 
 ### 禁止修改
 
@@ -58,7 +51,7 @@ atifah-common/**
 其他服务/**
 ```
 
-## 5. 实现要点
+## 4. 实现要点
 
 - 入口 / 分层：
 - 关键流程：
@@ -66,7 +59,7 @@ atifah-common/**
 - 幂等 / 并发：
 - 缓存 / 消息（如涉及）：
 
-## 6. 验收标准（可验证）
+## 5. 验收标准（可验证）
 
 - [ ] 接口行为与 OpenAPI 契约一致（列出关键请求/响应）。
 - [ ] 正常路径：
@@ -76,23 +69,15 @@ atifah-common/**
 - [ ] 性能 / 分页：
 - [ ] 日志不含敏感明文。
 
-## 7. 测试要求
+## 6. 测试与自检
 
+- 自测试级别：A / B / C（定义见 `docs/review/standards.md` §4）
 - [ ] 单元测试覆盖：<类/方法>
 - [ ] 成功 / 失败 / 边界用例：
 - [ ] 如涉及 MQ：重复消费、乱序、重试用例。
 - [ ] 如涉及缓存：穿透 / 击穿 / 一致性用例。
 - [ ] 如涉及前端：`npm run type-check`、`npm run build`。
-
-## 8. 交付物
-
-- [ ] 代码实现
-- [ ] 测试
-- [ ] PR（关联本任务包）
-- [ ] 契约引用更新（仅引用，不修改契约）
-- [ ] 必要的 README / 注释
-
-## 9. 自检命令
+- 自检命令：
 
 ```bash
 mvn -pl atifah-services/<service> -am verify
@@ -100,21 +85,23 @@ mvn -pl atifah-services/<service> -am verify
 mvn -B -ntp verify
 ```
 
-## 10. 风险与回滚
+## 7. 风险与回滚
 
 - 风险：
 - 回滚方式：
 - 数据迁移影响：
 
-## 11. 评审与自测试记录
+## 8. 评审与状态记录
 
-- 评审报告：`docs/review/reports/T-xxx-<head-short-sha>.md`
+### 8.1 评审与自测试记录
 
-| 轮次 | 评审人 | 自测试命令/结果 | 结论 | Blocker/Major | 处理 |
-| --- | --- | --- | --- | --- | --- |
-| 1 | Codex |  |  |  |  |
+- 评审报告：`docs/review/reports/T-000-rN-<reviewed-sha>.md`
 
-## 12. 状态变更记录
+| 轮次 | 评审人 | Reviewed SHA | 自测试命令/结果 | 结论 | Blocker/Major | 处理 |
+| --- | --- | --- | --- | --- | --- | --- |
+| 1 | Codex |  |  |  |  |  |
+
+### 8.2 状态变更记录
 
 > 每次状态变更必须更新 front matter 的 `status` / `updated` / `status_reason`，并在此追加一行；没有记录的状态变更无效（DOC-04）。
 

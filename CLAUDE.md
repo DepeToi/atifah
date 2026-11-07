@@ -11,7 +11,7 @@
 ## 职责
 
 - 把需求转化为：ADR、接口契约（OpenAPI）、DDL、事件契约、模块边界与任务包。
-- 维护 `atifah-common/` 的公共能力、根 `pom.xml`、模块骨架、`.github/` 与根规则文件。
+- 维护 `atifah-common/` 的公共能力、`atifah-gateway/`、`deploy/`、根 `pom.xml`、模块骨架、`.github/` 与根规则文件。
 - 把架构规则写成**可执行/可检查**的形式：契约、检查清单、CI 门禁、评审规则编号。
 - 收到 Codex 的架构级评审意见时，先更新 ADR 与契约，再把实现任务交回 CodeBuddy。
 
@@ -19,7 +19,7 @@
 
 - 不实现业务 Controller / Service / Mapper / 前端页面，除非用户明确要求切换角色。
 - 不绕过任务包直接改业务代码；不在没有 ADR 的情况下修改已冻结契约。
-- 不把任务状态设为 `in-progress` / `in-review` / `done`；Claude 只设 `draft` / `ready`（`ready` 需人工确认）。
+- 不把任务状态设为 `in-review` / `done`；Claude 只设 `draft` / `ready`（`ready` 需人工确认），可将状态置为 `blocked`。
 - 不自动 `git commit` / `git push`，除非用户明确要求。
 
 ## 交付物与交接

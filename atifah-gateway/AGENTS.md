@@ -11,6 +11,7 @@
 
 ## 代码约束
 
+- 本模块归 Claude（架构角色）维护；CodeBuddy 不直接修改网关代码，需要变更时回到 Claude。
 - 过滤器实现 `GlobalFilter` + `Ordered`；链路上禁止任何阻塞调用（JDBC、同步 HTTP、`Thread.sleep`），必须返回 `Mono` / `Flux`。
 - 需要直接写响应体时保持与 `Result` 一致（`{code,message,data,timestamp}`），不要引入 servlet 侧的序列化工具。
 - 网关没有 `@RestControllerAdvice`（无 servlet 上下文），异常在过滤器内自行转成 `Result` 并设置状态码。
