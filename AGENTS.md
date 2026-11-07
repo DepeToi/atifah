@@ -109,7 +109,7 @@ pom.xml (parent: spring-boot-starter-parent)
 - **先改契约再改代码**：任何接口/DDL/事件变更必须先由 Claude 出 ADR 并单独提交契约 PR；CodeBuddy 与 Codex 不得修改 `docs/contracts/**`。
 - **任务包**：每个 Feature 变更必须有 `docs/tasks/T-xxx-<slug>.md`；Arch 用 ADR + 契约 diff，Ops 用 PR 描述，Docs 用 PR 描述。规范与状态机见 `docs/tasks/README.md`。
 - **评审**：Codex 只读评审并独立执行自测试，判据与输出格式见 `docs/review/standards.md`；报告命名与归档要求见该文件 §6.1。
-- **PR 上限**：单服务、单任务、diff ≤400 行；超出请拆任务，不要提交大杂烩。
+- **PR 上限**：单服务、单任务、语义 diff ≤400 行（docs-only 报告归档提交不计入，归档提交自身 ≤400 行）；口径以 `docs/review/standards.md` SCOPE-02 为准；超出请拆任务，不要提交大杂烩。
 
 ## 6. 禁止事项（违反即打回）
 
