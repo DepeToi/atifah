@@ -189,7 +189,7 @@ curl http://localhost:8090/actuator/health   # admin-service（管理后台 BFF�
 2. Feature：CodeBuddy 从 `main` 拉 `feat/T-xxx-<slug>`，只改任务包允许路径，自检后开 PR；Arch/Ops/Docs 由 Claude 在 `arch/`、`ops/`、`docs/` 分支实现。
 3. CI 通过后，Codex 按 A/B/C 级在独立 worktree 复跑自测试，报告以 Reviewed SHA 命名并写入 `docs/review/reports/`。
 4. `Blocker` / `Major` 或自测试失败回实现者；架构/契约问题回 Claude。
-5. 人类合并；报告按 `docs/review/standards.md` §6.1 归档，维护者批量把 Feature 任务改为 `status: done`。
+5. 人类合并；Feature 报告可在合并前或任务关闭前归档，Arch/Ops/Docs（若评审）须在合并前归档（见 `docs/review/standards.md` §6.1）；维护者批量把 Feature 任务改为 `status: done`。
 
 分支、提交、PR 与任务状态机的完整规则见 [`docs/rules/git-workflow.md`](docs/rules/git-workflow.md)、[`docs/tasks/README.md`](docs/tasks/README.md)；命令与自检见 `AGENTS.md` §9。
 
