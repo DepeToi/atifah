@@ -15,16 +15,17 @@
 - `main` 受保护，不直接提交；所有改动走 PR。
 - 分支命名：
   - 架构：`arch/<topic>`（Claude）
+  - 部署/CI：`ops/<topic>`（Claude）
   - 功能：`feat/T-xxx-<slug>`（CodeBuddy）
   - 修复：`fix/T-xxx-<slug>`（CodeBuddy）
   - 文档/规则：`docs/<topic>`（Claude）
-- 一个 PR 只对应一个任务包，单服务、diff ≤400 行；超出请拆任务。
+- Feature 一个 PR 对应一个任务包；Arch/Ops/Docs 一个 PR 对应一个变更。单服务、diff ≤400 行；超出请拆任务。
 - PR 必须使用 `.github/pull_request_template.md`，写清改了什么、为什么、影响面、如何验证。
 - 契约变更必须单独开 PR，不得混在功能 PR 里。
 
 ## GIT-03 变更边界
 
-- 只改任务包“允许修改”列出的路径；不顺手重构，不新增未要求的功能。
+- Feature 只改任务包“允许修改”列出的路径；Arch/Ops/Docs 只改 PR 描述列出的路径；不顺手重构，不新增未要求的功能。
 - 动手前先读根 `AGENTS.md`、目标模块 `AGENTS.md`、相关 `docs/rules/*` 与契约。
 - 发现既有实现与文档冲突：以已冻结契约为准；契约本身有问题时先反馈给 Claude，不要自行改契约迁就代码。
 - 有设计分歧先给两个方案与取舍，等确认再写。
@@ -64,7 +65,7 @@ git status              # 确认没有无关文件
 ## GIT-07 三角色交接约束
 
 - 同一工作区同一时刻只允许一个角色写文件；并行任务用独立分支或 `git worktree`。
-- Codex 只读评审，可在独立 worktree / 干净检出中执行构建与测试，并写 `docs/review/reports/**` 评审报告；不得修改代码/契约/任务实现，不得提交修复或构建产物；修复必须回到 CodeBuddy。
-- 任务状态只能由授权角色按 `docs/tasks/README.md` 状态机修改；Codex 不得改状态；每次变更必须更新 front matter 的 `status` / `updated` / `status_reason`，并在任务包 §12 追加记录（DOC-04）。
+- Codex 只读评审，可在独立 worktree / 干净检出中执行构建与测试，并写 `docs/review/reports/**` 评审报告；不得修改代码/契约/任务实现，不得提交修复或构建产物；修复必须回到实现者。
+- 任务状态只对 Feature 任务包生效；四状态 `draft → ready → in-review → done`（`blocked` 横向）。授权角色见 `docs/tasks/README.md` §2；Codex 不得改状态；每次变更更新 front matter 与任务包 §8.2（DOC-04）。
 - CodeBuddy 不得修改契约、规则、父 pom 或其他服务；需要变更时回到 Claude 走 ADR/契约 PR。
-- Claude 的架构变更与 CodeBuddy 的功能实现不得混在同一个 PR。
+- Feature 由 CodeBuddy 实现；Arch/Ops/Docs 由 Claude 实现；两者不得混在同一个 PR。

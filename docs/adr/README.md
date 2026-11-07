@@ -24,5 +24,9 @@
 
 | 编号 | 决策 | 状态 | 日期 |
 | --- | --- | --- | --- |
-| [0001](0001-three-tool-collaboration.md) | 三工具协作与仓库契约工作流 | 已采纳 | 2026-10-19 |
+| [0001](0001-three-tool-collaboration.md) | 三工具协作与仓库契约工作流 | 已采纳（部分由 0007 修订） | 2026-10-19 |
 | [0002](0002-auth-login-token.md) | auth-service 注册、登录与令牌设计 | 已采纳 | 2026-10-19 |
+| [0003](0003-gateway-starter-webflux-migration.md) | 网关 starter 迁移至 spring-cloud-gateway-server-webflux | 已采纳 | 2026-10-29 |
+| [0007](0007-workflow-v1.1.md) | 工作流 v1.1：变更分类、四状态与报告归档解耦 | 已采纳 | 2026-11-07 |
+
+> 0004–0006 曾用于已回滚的 workflow v2/v2.1 与 config-crypto（备份见 tag `backup/pre-rollback-5356b41`），当前 `main` 不复用这些编号；新 ADR 从 0008 起编号。

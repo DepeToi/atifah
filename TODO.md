@@ -22,7 +22,7 @@
 | P0 | P0-1 | 网关身份头可伪造 | `[ ]` | T-006 |
 | P0 | P0-2 | 数据库/Nacos 凭据硬编码 | `[ ]` | T-007 |
 | P0 | P0-3 | 方案 B 容器内 RocketMQ 不可用 | `[ ]` | T-007 |
-| P0 | P0-4 | 工作区未收口 + 角色/流程缺口 | `[ ]` | ADR 0004/0005 + T-006/007/008 |
+| P0 | P0-4 | 工作区未收口 + 角色/流程缺口 | `[~]` | ADR 0007 + T-006/007/008 |
 | P1 | P1-1 | 注册幂等写入事务边界 | `[ ]` | T-009 |
 | P1 | P1-2 | 登录时序枚举 + 状态判断 | `[ ]` | T-009 |
 | P1 | P1-3 | 登录失败计数 TTL 竞态 | `[ ]` | T-009 |
@@ -152,10 +152,10 @@
   - [ ] `arch/gateway-trust-boundary`（T-006）
   - [ ] `arch/deploy-runtime-credentials`（T-007）
   - [ ] `docs/architecture-sync`（T-008）
-- [ ] 新增 ADR 0004：网关身份头信任边界与鉴权启用顺序。
-- [ ] 新增 ADR 0005：当前仓库部署范围（仅开发环境？）与凭据管理；明确是否保留 `NacosNamespaceGuard`。
+- [ ] 新增 ADR：网关身份头信任边界与鉴权启用顺序。
+- [ ] 新增 ADR：当前仓库部署范围（仅开发环境？）与凭据管理；明确是否保留 `NacosNamespaceGuard`。
 - [ ] 决定 `NacosNamespaceGuard`：恢复生产 namespace 防呆，或在 ADR 中明确“生产部署不在本仓库范围”并从文档移除生产承诺。
-- [ ] 更新 `AGENTS.md` §0，明确 `atifah-gateway/**`、`deploy/**` 的可写角色与受保护子路径。
+- [~] 更新 `AGENTS.md` §0，明确 `atifah-gateway/**`、`deploy/**` 的可写角色与受保护子路径（ADR-0007 已起草，待合并）。
 - [ ] 创建任务包 T-006 / T-007 / T-008（Claude 只设 `draft`；`ready` 需人工确认）。
 - [ ] 补做 PR #10 的 Sentinel QPS=1 实测，回填 ADR 0003。
 - [ ] 修复 PR #11 的凭据 Blocker（与 P0-2 合并处理）。
@@ -514,3 +514,4 @@ grep -rn "root/root\|-proot" --include='*.md' --include='*.yml' --include='*.yam
 | 日期 | 变更 | 操作人 |
 | --- | --- | --- |
 | 2026-10-30 | 创建巡检 TODO，记录 P0/P1/P2 改进项 | Claude |
+| 2026-11-07 | P0-4 工作流部分由 ADR-0007 处理（变更分类 / 四状态 / 报告归档 / 角色归属） | Claude |
