@@ -26,13 +26,14 @@ ADR 0001 建立的“仓库为唯一交接面”方向正确，但运行一个�
 | 类型 | 范围 | 必需产物 | 评审 |
 | --- | --- | --- | --- |
 | Feature | 业务服务、管理端业务代码 | 任务包 + 契约引用 | Codex 语义评审 + A 级自测 |
-| Arch | `atifah-common/**`、`atifah-gateway/**`、根/父 `pom.xml`、`docs/contracts/**`、`docs/rules/**`、`docs/adr/**`、根/模块 `AGENTS.md`、`docs/tasks/README.md`、`docs/tasks/_TEMPLATE.md`、`docs/review/standards.md`、`docs/review/report-template.md`、`docs/review/reports/README.md` | ADR（涉及契约时附契约 diff） | Codex 语义评审 + A 级自测 |
+| Arch | `atifah-common/**`、`atifah-gateway/**`、根/父 `pom.xml`、`docs/contracts/**`、`docs/rules/**`、`docs/adr/**`、根/模块 `AGENTS.md`、`CLAUDE.md`、`docs/tasks/README.md`、`docs/tasks/_TEMPLATE.md`、`docs/review/standards.md`、`docs/review/report-template.md`、`docs/review/reports/README.md` | ADR（涉及契约时附契约 diff） | Codex 语义评审 + A 级自测 |
 | Ops | `deploy/**`、`.github/**`、Dockerfile、构建/部署脚本 | PR 描述中的变更说明、影响面、验证命令与回滚方式 | Codex 轻评审（安全/配置）+ B 级自测 |
-| Docs | `docs/**`（非契约/ADR/rules/治理入口）、`README.md`、单个任务包 `docs/tasks/T-*.md`、已归档报告 `docs/review/reports/*.md` | PR 描述 | CI + 人工；Codex 可免 |
+| Docs | `docs/**`（非契约/ADR/rules/治理入口）、`README.md`、`TODO.md`、单个任务包 `docs/tasks/T-*.md`、已归档报告 `docs/review/reports/*.md` | PR 描述 | CI + 人工；Codex 可免 |
 
 - 混合变更按最高风险类型处理；Feature 不得夹带 Arch/Ops 路径；契约变更必须单独 PR。
 - `docs/architecture.md`、`docs/domain.md`、`docs/db.md` 默认属于 Docs；同一 PR 同时修改契约、ADR 或 `docs/rules/**` 时按 Arch 处理。
-- 治理入口文件（根/模块 `AGENTS.md`、`docs/tasks/README.md`、`docs/tasks/_TEMPLATE.md`、`docs/review/standards.md`、`docs/review/report-template.md`、`docs/review/reports/README.md`）一律归 Arch，避免被 Docs 兜底跳过语义评审。
+- 治理入口文件（根/模块 `AGENTS.md`、`CLAUDE.md`、`docs/tasks/README.md`、`docs/tasks/_TEMPLATE.md`、`docs/review/standards.md`、`docs/review/report-template.md`、`docs/review/reports/README.md`）一律归 Arch，避免被 Docs 兜底跳过语义评审。
+- 分类表覆盖所有可提交路径；未列出的根级文件默认按 Ops 处理，新增根级文件必须同步更新本表。
 - 提交标题：Feature 用 `type(scope): T-xxx 摘要`；Arch/Ops/Docs 用 `type(scope): 摘要`，不得伪造任务编号。
 - 受保护文件（根/父 pom 的 parent 与版本、`deploy/nacos/config/*`、`deploy/docker-compose` 端口映射、`deploy/sql` 已执行脚本、`.gitattributes`）仍需维护者显式确认，不因分类而豁免。
 
@@ -58,7 +59,7 @@ ADR 0001 建立的“仓库为唯一交接面”方向正确，但运行一个�
 2. APPROVE 后，由实现者把报告原文作为 **docs-only 提交** 归档：
    - Feature：CodeBuddy 归档，并更新任务包 §8.1；可在合并前归档，也可在任务关闭前补归档。
    - Arch/Ops/Docs（若 Codex 评审）：Claude 归档；**必须在合并前完成**，因为非 Feature 没有任务关闭动作。
-   该提交只允许改 `docs/review/reports/**` 与 Feature 任务包 front matter / §8.1 / §8.2，不触发语义复审。
+   该提交只允许改 `docs/review/reports/**` 与 Feature 任务包 front matter / §8.1 / §8.2，不触发语义复审；不计入 SCOPE-02 的 400 行语义 diff，但归档提交自身 ≤400 行。
 3. 如果 Codex 无法写文件或访问 GitHub：在 PR 评论输出完整报告，由实现者/维护者原样保存；Feature 归档前不得置 `done`，非 Feature 不得合并。
 4. DOC-03 校验点：Feature 在任务关闭时；Arch/Ops/Docs 在合并时。Feature 不再把“合并前落盘”作为合并门禁。
 5. Codex 的写入范围仍仅限 `docs/review/reports/**`；不得修改代码、契约、规则、任务实现或测试。
