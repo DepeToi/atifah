@@ -6,7 +6,7 @@
 ## GIT-01 提交权限
 
 - **禁止 AI 自动 `git commit` / `git push`**；必须等用户明确要求。
-- 提交信息用 `type(scope): T-xxx 描述`：`feat` / `fix` / `docs` / `refactor` / `chore` / `test`。
+- 提交信息用 `type(scope): T-xxx 描述`（Feature）或 `type(scope): 摘要`（Arch/Ops/Docs）：`feat` / `fix` / `docs` / `refactor` / `chore` / `test`。非 Feature 不得伪造 `T-xxx`。
 - 一个提交只做一件事；不把格式化、重命名、功能修改混在一起。
 - 不提交构建产物、`target/`、`node_modules/`、`.env`、本地配置、IDE 文件。
 

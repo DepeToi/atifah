@@ -1,6 +1,6 @@
 <!--
-标题格式：type(scope): T-xxx 摘要
-例：feat(auth): T-001 登录与 Token 签发
+标题格式：Feature 用 type(scope): T-xxx 摘要；Arch/Ops/Docs 用 type(scope): 摘要
+例：feat(auth): T-001 登录与 Token 签发 / docs(workflow): 工作流 v1.1
 一个 PR 只对应一个变更；Feature 一个 PR 对应一个任务包；契约变更必须单独开 PR。
 -->
 

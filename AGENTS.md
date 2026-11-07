@@ -26,9 +26,12 @@
 | 类型 | 范围 | 必需产物 | 评审 |
 | --- | --- | --- | --- |
 | Feature | 业务服务、管理端业务代码 | 任务包 `docs/tasks/T-xxx-*.md` | Codex 语义评审 + A 级自测 |
-| Arch | `atifah-common/**`、`atifah-gateway/**`、根/父 `pom.xml`、`docs/contracts/**`、`docs/rules/**`、`docs/adr/**` | ADR（涉及契约时附契约 diff） | Codex 语义评审 + A 级自测 |
+| Arch | `atifah-common/**`、`atifah-gateway/**`、根/父 `pom.xml`、`docs/contracts/**`、`docs/rules/**`、`docs/adr/**`、根/模块 `AGENTS.md`、`docs/tasks/README.md`、`docs/tasks/_TEMPLATE.md`、`docs/review/standards.md`、`docs/review/report-template.md`、`docs/review/reports/README.md` | ADR（涉及契约时附契约 diff） | Codex 语义评审 + A 级自测 |
 | Ops | `deploy/**`、`.github/**`、Dockerfile、构建/部署脚本 | PR 描述中的变更说明、影响面、验证命令与回滚方式 | Codex 轻评审（安全/配置）+ B 级自测 |
-| Docs | `docs/**`（非契约/ADR/rules）、`README.md` | PR 描述 | CI + 人工；Codex 可免 |
+| Docs | `docs/**`（非契约/ADR/rules/治理入口）、`README.md`、单个任务包 `docs/tasks/T-*.md`、已归档报告 `docs/review/reports/*.md` | PR 描述 | CI + 人工；Codex 可免 |
+
+- 治理入口文件（根/模块 `AGENTS.md`、`docs/tasks/README.md`、`docs/tasks/_TEMPLATE.md`、`docs/review/standards.md`、`docs/review/report-template.md`、`docs/review/reports/README.md`）一律归 Arch，避免被 Docs 兜底跳过语义评审。
+- 提交标题：Feature 用 `type(scope): T-xxx 摘要`；Arch/Ops/Docs 用 `type(scope): 摘要`，不得伪造任务编号。
 
 **交接只通过仓库完成**，不依赖对话记忆：
 
@@ -37,7 +40,7 @@
 3. CI（`.github/workflows/ci.yml`）必须通过。
 4. Codex 按 `docs/review/standards.md` 只读评审 PR，并按 A/B/C 级在独立工作区执行自测试；报告以 **Reviewed SHA**（实际测试的代码提交）命名，写入 `docs/review/reports/`，PR 评论放摘要与链接。
 5. `Blocker` / `Major` 或自测试失败由对应实现者修复；架构或契约问题回到 Claude，先改 ADR/契约再改代码。
-6. 人类合并；报告按 `docs/review/standards.md` §6.1 在合并前或任务关闭前归档；维护者批量把 Feature 任务状态改为 `done`。AI 不得自动 `git commit` / `git push`，除非用户明确要求。
+6. 人类合并；Feature 报告可在合并前或任务关闭前归档，Arch/Ops/Docs（若评审）必须在合并前归档（见 `docs/review/standards.md` §6.1）；维护者批量把 Feature 任务状态改为 `done`。AI 不得自动 `git commit` / `git push`，除非用户明确要求。
 
 **并发约束**：同一工作区同一时刻只允许一个角色写文件。并行任务用独立分支或 `git worktree`，禁止两个工具同时改同一批文件。
 
