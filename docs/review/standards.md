@@ -115,7 +115,7 @@ cd atifah-admin-web/frontend && npm ci && npm run build
 | 编号 | 检查点 | 默认级别 |
 | --- | --- | --- |
 | SCOPE-01 | 变更类型与 diff 范围一致；具备该类型必需产物；Feature 只改任务包允许路径，Arch/Ops/Docs 只改 PR 描述列出的路径 | Blocker |
-| SCOPE-02 | 一个 PR 只对应一个任务/变更，diff ≤400 行 | Major |
+| SCOPE-02 | 一个 PR 只对应一个任务/变更；语义 diff ≤400 行（docs-only 报告归档提交不计入），归档提交自身 ≤400 行 | Major |
 | SCOPE-03 | 未授权修改契约/规则/父 pom/受保护文件 | Blocker |
 | ARCH-01 | 一服务一库；禁止跨库 JOIN、访问其他服务表 | Blocker |
 | ARCH-02 | 跨服务同步走 OpenFeign、异步走 RocketMQ；禁止共享库绕过 | Blocker |
@@ -240,7 +240,7 @@ Verdict: REQUEST_CHANGES
 2. APPROVE 后，由实现者把报告原文作为 **docs-only 提交** 归档：
    - Feature：CodeBuddy 归档，并更新任务包 §8.1；可在合并前归档，也可在任务关闭前补归档。
    - Arch/Ops/Docs（若 Codex 评审）：Claude 归档；**必须在合并前完成**，因为非 Feature 没有任务关闭动作。
-   该提交只允许改 `docs/review/reports/**` 与 Feature 任务包 front matter / §8.1 / §8.2；不触发语义复审。维护者合并前确认该提交范围，超出范围则按普通变更复审。
+   该提交只允许改 `docs/review/reports/**` 与 Feature 任务包 front matter / §8.1 / §8.2；不触发语义复审；不计入 SCOPE-02 的 400 行语义 diff，但归档提交自身 ≤400 行。维护者合并前确认该提交范围，超出范围则按普通变更复审。
 3. 如果 Codex 无法写文件或访问 GitHub：在 PR 评论输出完整报告，由实现者/维护者原样保存到上述路径；Feature 归档前不得置 `done`，非 Feature 不得合并。
 4. DOC-03 校验点：Feature 在任务关闭时；Arch/Ops/Docs 在合并时。Feature 不再把“合并前落盘”作为合并门禁。
 5. Codex 的写入范围仅限 `docs/review/reports/**`；不得修改代码、契约、规则、任务实现或测试。
