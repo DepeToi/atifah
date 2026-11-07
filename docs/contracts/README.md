@@ -57,8 +57,8 @@ CodeBuddy **禁止**修改契约来迁就实现。发现契约缺失或矛盾时
 ## 5. 工具如何消费契约
 
 - **Claude**：写契约、维护模板与总纲；通过 ADR 记录取舍。
-- **CodeBuddy**：任务包“必读文件”列出具体契约路径；实现以契约为准，不自行扩展字段。
-- **Codex**：评审时对照契约检查 diff；自测试与报告要求见 `docs/review/standards.md` §4/§6.1。
+- **CodeBuddy**：Feature 任务包“上下文与必读”列出具体契约路径；实现以契约为准，不自行扩展字段。
+- **Codex**：评审时对照契约检查 diff；Arch 变更检查 ADR 与契约 diff；自测试与报告要求见 `docs/review/standards.md` §4/§6.1。
 
 ## 6. 相关文档
 
