@@ -28,7 +28,7 @@
 - [ ] 单任务/单变更、单服务、diff ≤400 行
 - [ ] CI 通过
 - [ ] 已在独立 worktree / 干净检出执行自测试并记录
-- [ ] 报告已写入 `docs/review/reports/`（或已按 §6.1 在 PR 评论输出完整内容）
+- [ ] 报告已写入 `docs/review/reports/`（或已按 §6.1 在 PR 评论输出完整内容；Feature 可合并后补归档，非 Feature 须合并前归档）
 - [ ] 任务状态与证据一致（仅 Feature；`in-review` 有 PR，`done` 已合并且报告已归档；§8.2 有记录）
 
 ## 自测试记录

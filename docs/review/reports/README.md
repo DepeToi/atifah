@@ -13,8 +13,8 @@
 ## 写入权限
 
 - **Codex**：可写本目录，仅限评审报告；不得修改代码、契约、规则、任务实现或测试；不得提交。
-- **实现者**（Feature：CodeBuddy；Arch/Ops：Claude）：APPROVE 后把报告原文作为 docs-only 提交归档，并更新任务包 §8.1；不得修改报告正文。
-- **人类维护者**：只读；合并或任务关闭前确认报告与 §8.1 齐全。
+- **实现者**（Feature：CodeBuddy；Arch/Ops/Docs：Claude）：APPROVE 后把报告原文作为 docs-only 提交归档；Feature 同时更新任务包 §8.1。不得修改报告正文。
+- **人类维护者**：只读；Feature 在任务关闭前确认报告与 §8.1 齐全，Arch/Ops/Docs 在合并前确认报告已归档。
 
 ## 归档规则
 
@@ -27,5 +27,5 @@
 
 ## 合并与关闭门禁
 
-- 合并前：至少有 Codex 的 `APPROVE` 评论或已归档报告。
-- 任务关闭前：报告已归档，且任务包 §8.1 记录 Reviewed SHA、报告路径与 Verdict；否则不得置为 `done`（DOC-03）。
+- Feature：合并前至少有 Codex 的 `APPROVE` 评论或已归档报告；任务关闭前必须已归档并在 §8.1 记录 Reviewed SHA、报告路径与 Verdict，否则不得置为 `done`（DOC-03）。
+- Arch/Ops/Docs（若 Codex 评审）：合并前报告必须已归档；非 Feature 没有任务关闭动作，不得以 APPROVE 评论替代归档。

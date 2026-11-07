@@ -38,7 +38,7 @@ Docs 类默认由 CI + 人工完成，Codex 评审可选；维护者要求复审
 - 任一 `Blocker` 或 `Major` → `REQUEST_CHANGES`。
 - 零 `Blocker` / `Major` → `APPROVE`，可附带 `Minor` / `Question`。
 - CI 失败、Codex 自测试未执行或失败、该类型必需产物缺失、任务状态与证据不符 → `REQUEST_CHANGES`。
-- 报告归档发生在 APPROVE 之后：Codex 只需保证报告内容完整、命名正确；归档结果在任务关闭时由 DOC-03 校验，不作为 Codex 的 APPROVE 前置条件。
+- 报告归档发生在 APPROVE 之后：Codex 只需保证报告内容完整、命名正确；归档结果由 DOC-03 校验（Feature 在任务关闭时，Arch/Ops/Docs 在合并时），不作为 Codex 的 APPROVE 前置条件。
 - 未检查到的文件必须在报告中写明“未覆盖”，不得默认认为没问题。
 
 ## 3. 评审流程
@@ -181,7 +181,7 @@ cd atifah-admin-web/frontend && npm ci && npm run build
 | --- | --- | --- |
 | DOC-01 | 契约变更先有 ADR，并单独开 PR | Blocker |
 | DOC-02 | 接口/路由/端口/配置变更同步文档与常量登记 | Major |
-| DOC-03 | 任务关闭前评审报告未归档到 `docs/review/reports/`，或任务包 §8.1 未归档 | Blocker（流程检查，合并时只要求 APPROVE 评论或已归档报告） |
+| DOC-03 | Feature 任务关闭前报告未归档或 §8.1 未归档；Arch/Ops/Docs（若评审）合并前报告未归档 | Blocker（流程检查） |
 | DOC-04 | Feature 任务状态被未授权角色修改、跳过必经状态，或与 PR/合并/报告证据不符 | Blocker（流程检查） |
 | OPS-01 | 配置分层正确；共享配置只改 `common-application.yaml` 并提醒导入 Nacos | Major |
 | OPS-02 | 修改受保护部署文件、端口映射、已执行 SQL、`.gitattributes` | Blocker |
@@ -237,12 +237,15 @@ Verdict: REQUEST_CHANGES
    - Feature：`T-xxx-rN-<reviewed-sha>.md`
    - Arch/Ops/Docs：`PR-<n>-<reviewed-sha>.md`
    - `reviewed-sha` 是 Codex 实际测试的代码提交，不是归档提交或后续 head SHA。
-2. APPROVE 后，由实现者（Feature：CodeBuddy；Arch/Ops：Claude）把报告原文作为 **docs-only 提交** 归档，并更新任务包 §8.1（仅 Feature）。该提交只允许改 `docs/review/reports/**` 与任务包 front matter / §8.1 / §8.2；不触发语义复审。维护者合并前确认该提交范围，超出范围则按普通变更复审。
-3. 如果 Codex 无法写文件或访问 GitHub：在 PR 评论输出完整报告，由实现者/维护者原样保存到上述路径；归档前不得把任务置为 `done`。
-4. 如果 PR 先合并：允许在任务关闭前（维护者批量收口时）补归档；DOC-03 在任务关闭时校验，不再把“合并前落盘”作为合并门禁。
+2. APPROVE 后，由实现者把报告原文作为 **docs-only 提交** 归档：
+   - Feature：CodeBuddy 归档，并更新任务包 §8.1；可在合并前归档，也可在任务关闭前补归档。
+   - Arch/Ops/Docs（若 Codex 评审）：Claude 归档；**必须在合并前完成**，因为非 Feature 没有任务关闭动作。
+   该提交只允许改 `docs/review/reports/**` 与 Feature 任务包 front matter / §8.1 / §8.2；不触发语义复审。维护者合并前确认该提交范围，超出范围则按普通变更复审。
+3. 如果 Codex 无法写文件或访问 GitHub：在 PR 评论输出完整报告，由实现者/维护者原样保存到上述路径；Feature 归档前不得置 `done`，非 Feature 不得合并。
+4. DOC-03 校验点：Feature 在任务关闭时；Arch/Ops/Docs 在合并时。Feature 不再把“合并前落盘”作为合并门禁。
 5. Codex 的写入范围仅限 `docs/review/reports/**`；不得修改代码、契约、规则、任务实现或测试。
 6. 报告必须包含：Reviewed SHA、Verdict、Blocker/Major/Minor/Question 计数、发现详情、Self-test 块、未覆盖范围。
-7. 任务包 §8.1 归档报告路径与 Verdict；未归档不得把任务置为 `done`（DOC-03）。
+7. Feature 任务包 §8.1 归档报告路径与 Verdict；非 Feature 不更新任务包，但报告必须在合并前归档（DOC-03）。
 
 ## 7. 分流与升级
 
