@@ -1,0 +1,139 @@
+server:
+  port: 8080
+  shutdown: graceful
+  http2:
+    enabled: true
+
+spring:
+  application:
+    name: atifah-gateway
+  main:
+    web-application-type: reactive
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
+  config:
+    import: "optional:nacos:${spring.application.name}.yaml?group=ATIFAH_GATEWAY_GROUP&refreshEnabled=true"
+  cloud:
+    nacos:
+      server-addr: ${NACOS_ADDR:127.0.0.1:8848}
+      discovery:
+        server-addr: ${NACOS_ADDR:127.0.0.1:8848}
+        namespace: ${NACOS_NAMESPACE:atifah_dev}
+        group: atifah_GROUP
+        username: ${NACOS_USERNAME:}
+        password: ${NACOS_PASSWORD:}
+      config:
+        server-addr: ${NACOS_ADDR:127.0.0.1:8848}
+        namespace: ${NACOS_NAMESPACE:atifah_dev}
+        group: ATIFAH_GATEWAY_GROUP
+        file-extension: yaml
+        username: ${NACOS_USERNAME:}
+        password: ${NACOS_PASSWORD:}
+    # 排除 Windows 开发机虚拟网卡，避免 Nacos 注册到 172.x 虚拟 IP。
+    # 注意：spring-cloud-commons 按 Java NetworkInterface.getDisplayName()（即驱动描述，
+    # 如 "Hyper-V Virtual Ethernet Adapter"）全串正则匹配，不是控制台里的 "vEthernet (...)" 友好名；
+    # Linux 生产环境无匹配接口，配置无害
+    inetutils:
+      ignored-interfaces:
+        - 'Hyper-V Virtual.*'
+        - 'VMware.*'
+        - 'VirtualBox.*'
+    # 网关配置 key 命名空间为 spring.cloud.gateway.server.webflux.*（SCG 4.3 起拆分 webflux/webmvc
+    # 双变体，经典 spring.cloud.gateway.* key 已弃用）；新增路由在此追加
+    gateway:
+      server:
+        webflux:
+          discovery:
+            locator:
+              enabled: false
+          routes:
+            - id: atifah-auth
+              uri: lb://atifah-auth
+              predicates:
+                - Path=/api/v1/auth/**
+            - id: atifah-user
+              uri: lb://atifah-user
+              predicates:
+                - Path=/api/v1/users/**
+            - id: atifah-mood
+              uri: lb://atifah-mood
+              predicates:
+                - Path=/api/v1/moods/**
+            - id: atifah-analysis
+              uri: lb://atifah-analysis
+              predicates:
+                - Path=/api/v1/analysis/**
+            - id: atifah-community
+              uri: lb://atifah-community
+              predicates:
+                - Path=/api/v1/community/**
+            - id: atifah-content
+              uri: lb://atifah-content
+              predicates:
+                - Path=/api/v1/contents/**
+            - id: atifah-message
+              uri: lb://atifah-message
+              predicates:
+                - Path=/api/v1/messages/**
+            - id: atifah-message-websocket
+              uri: lb:ws://atifah-message
+              predicates:
+                - Path=/ws/**
+            - id: atifah-growth
+              uri: lb://atifah-growth
+              predicates:
+                - Path=/api/v1/growth/**
+            - id: atifah-stats
+              uri: lb://atifah-stats
+              predicates:
+                - Path=/api/v1/stats/**
+            - id: atifah-admin
+              uri: lb://atifah-admin
+              predicates:
+                - Path=/admin/api/**
+          globalcors:
+            add-to-simple-url-handler-mapping: true
+            cors-configurations:
+              '[/**]':
+                # 生产务必收敛为具体域名：CORS_ALLOWED_ORIGINS=https://admin.example.com,https://app.example.com
+                # 不使用 Cookie 凭据，故 allow-credentials 关闭，避免与通配源组合产生安全风险
+                allowed-origin-patterns: ${CORS_ALLOWED_ORIGINS:*}
+                allowed-methods: "*"
+                allowed-headers: "*"
+                allow-credentials: false
+                max-age: 3600
+    sentinel:
+      transport:
+        dashboard: ${SENTINEL_DASHBOARD:127.0.0.1:8858}
+      eager: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway,metrics,prometheus
+  endpoint:
+    health:
+      show-details: never
+  metrics:
+    tags:
+      application: ${spring.application.name}
+
+atifah:
+  gateway:
+    auth:
+      enabled: false
+      whitelist:
+        - /api/v1/auth/
+        - /actuator/
+  security:
+    jwt:
+      secret: ${JWT_SECRET:atifah-dev-secret-change-me-please-32bytes}
+      issuer: atifah
+      access-token-ttl: 15m
+
+logging:
+  pattern:
+    level: "%5p [%X{traceId:-}]"
+  level:
+    org.springframework.cloud.gateway: info

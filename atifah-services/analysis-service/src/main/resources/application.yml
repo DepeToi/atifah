@@ -1,0 +1,35 @@
+server:
+  port: 8084
+  shutdown: graceful
+
+spring:
+  application:
+    name: atifah-analysis
+  config:
+    import:
+      - "nacos:common-application.yaml?group=ATIFAH_PUBLIC_GROUP&refreshEnabled=true"
+      - "optional:nacos:${spring.application.name}.yaml?group=ATIFAH_ANALYSIS_GROUP&refreshEnabled=true"
+  cloud:
+    nacos:
+      server-addr: ${NACOS_ADDR:127.0.0.1:8848}
+      discovery:
+        server-addr: ${NACOS_ADDR:127.0.0.1:8848}
+        namespace: ${NACOS_NAMESPACE:atifah_dev}
+        group: atifah_GROUP
+        username: ${NACOS_USERNAME:}
+        password: ${NACOS_PASSWORD:}
+      config:
+        server-addr: ${NACOS_ADDR:127.0.0.1:8848}
+        namespace: ${NACOS_NAMESPACE:atifah_dev}
+        group: ATIFAH_ANALYSIS_GROUP
+        file-extension: yaml
+        username: ${NACOS_USERNAME:}
+        password: ${NACOS_PASSWORD:}
+  datasource:
+    url: "jdbc:mysql://${MYSQL_HOST:127.0.0.1}:${MYSQL_PORT:3306}/atifah_analysis?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true"
+    username: ${MYSQL_USER:root}
+    password: ${MYSQL_PASSWORD:root}
+
+rocketmq:
+  producer:
+    group: atifah-analysis-producer

@@ -1,0 +1,4 @@
+# 构建上下文为本模块目录：只允许 target/ 下的可执行 jar 进入构建
+*
+!target
+!target/*.jar

@@ -1,0 +1,40 @@
+-- ============================================================
+-- 数据库契约模板（MySQL 8.0）
+-- 复制为 docs/contracts/db/<service>.sql 后填写。
+-- 本文件是逻辑 Schema 契约；实际迁移脚本放各服务：
+--   <service>/src/main/resources/db/migration/V1__init.sql
+-- 两者必须一致；已执行的 Flyway 脚本禁止修改，新增变更用新版本号。
+-- ============================================================
+--
+-- 服务：atifah-<service>
+-- 契约版本：0.1.0
+-- 负责人：Claude（架构）
+--
+-- 约定：
+--   1. 表名 t_<业务名>，字段 snake_case，全部写注释。
+--   2. 主键 id BIGINT UNSIGNED，雪花 ID，禁止 AUTO_INCREMENT。
+--   3. 审计字段：created_at / updated_at / deleted（0 正常，1 删除）。
+--   4. 字符集 utf8mb4，排序规则 utf8mb4_0900_ai_ci。
+--   5. 唯一业务键必须有唯一索引，命名 uk_<表>_<字段>。
+--   6. 普通索引命名 idx_<表>_<字段>，遵循最左前缀。
+--   7. 敏感字段用 *_cipher 存储密文（AES-256-GCM），禁止明文列。
+--   8. 禁止跨库 JOIN；分片键必须命中查询条件。
+--
+-- 示例（确认后取消注释并修改）：
+--
+-- CREATE TABLE t_example (
+--     id            BIGINT UNSIGNED NOT NULL COMMENT '雪花主键',
+--     user_id       BIGINT UNSIGNED NOT NULL COMMENT '用户 ID',
+--     record_date   DATE            NOT NULL COMMENT '业务日期',
+--     content_cipher VARBINARY(2048) NULL COMMENT '正文密文（AES-256-GCM）',
+--     status        TINYINT         NOT NULL DEFAULT 0 COMMENT '状态：0 正常，1 删除',
+--     created_at    DATETIME(3)     NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间',
+--     updated_at    DATETIME(3)     NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '更新时间',
+--     deleted       TINYINT         NOT NULL DEFAULT 0 COMMENT '逻辑删除：0 否，1 是',
+--     PRIMARY KEY (id),
+--     UNIQUE KEY uk_example_user_date (user_id, record_date),
+--     KEY idx_example_created_at (created_at)
+-- ) ENGINE = InnoDB
+--   DEFAULT CHARSET = utf8mb4
+--   COLLATE = utf8mb4_0900_ai_ci
+--   COMMENT = '示例表';

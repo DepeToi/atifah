@@ -1,0 +1,42 @@
+server:
+  port: 8088
+  shutdown: graceful
+
+spring:
+  application:
+    name: atifah-growth
+  config:
+    import:
+      - "nacos:common-application.yaml?group=ATIFAH_PUBLIC_GROUP&refreshEnabled=true"
+      - "optional:nacos:${spring.application.name}.yaml?group=ATIFAH_GROWTH_GROUP&refreshEnabled=true"
+  cloud:
+    nacos:
+      server-addr: ${NACOS_ADDR:127.0.0.1:8848}
+      discovery:
+        server-addr: ${NACOS_ADDR:127.0.0.1:8848}
+        namespace: ${NACOS_NAMESPACE:atifah_dev}
+        group: atifah_GROUP
+        username: ${NACOS_USERNAME:}
+        password: ${NACOS_PASSWORD:}
+      config:
+        server-addr: ${NACOS_ADDR:127.0.0.1:8848}
+        namespace: ${NACOS_NAMESPACE:atifah_dev}
+        group: ATIFAH_GROWTH_GROUP
+        file-extension: yaml
+        username: ${NACOS_USERNAME:}
+        password: ${NACOS_PASSWORD:}
+  datasource:
+    url: "jdbc:mysql://${MYSQL_HOST:127.0.0.1}:${MYSQL_PORT:3306}/atifah_growth?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true"
+    username: ${MYSQL_USER:root}
+    password: ${MYSQL_PASSWORD:root}
+
+rocketmq:
+  producer:
+    group: atifah-growth-producer
+
+# 本地骨架默认关闭 Seata，接入分布式事务时改为 true 并提供 seata-server 地址
+seata:
+  enabled: false
+  application-id: ${spring.application.name}
+  tx-service-group: atifah-growth-tx-group
+

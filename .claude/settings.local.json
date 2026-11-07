@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git -C /d/Project/atifah diff --stat deploy/nacos/config/common-application.yaml)",
+      "Bash(git -C /d/Project/atifah diff deploy/nacos/config/common-application.yaml)",
+      "WebSearch"
+    ]
+  }
+}
