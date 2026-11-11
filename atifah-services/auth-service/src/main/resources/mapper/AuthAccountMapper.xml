@@ -26,4 +26,11 @@
         INSERT INTO t_auth_account (id, user_id, phone, password_hash, status)
         VALUES (#{id}, #{userId}, #{phone}, #{passwordHash}, #{status})
     </insert>
+
+    <update id="updateLastLoginAt">
+        UPDATE t_auth_account
+        SET last_login_at = #{lastLoginAt}
+        WHERE id = #{id}
+          AND deleted = 0
+    </update>
 </mapper>

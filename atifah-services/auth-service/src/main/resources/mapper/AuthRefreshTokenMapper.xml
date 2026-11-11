@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.atifah.auth.mapper.AuthRefreshTokenMapper">
+
+    <insert id="insert" parameterType="com.atifah.auth.entity.AuthRefreshToken">
+        INSERT INTO t_auth_refresh_token (id, user_id, token_hash, expires_at)
+        VALUES (#{id}, #{userId}, #{tokenHash}, #{expiresAt})
+    </insert>
+</mapper>

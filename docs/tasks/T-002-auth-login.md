@@ -1,11 +1,11 @@
 ---
 id: T-002
 title: auth 手机号登录
-status: ready
+status: in-review
 owner: codebuddy
 created: 2026-11-11
 updated: 2026-11-11
-status_reason: 维护者指示开始 T-002；契约已冻结（arch-baseline-v0.1）
+status_reason: 实现完成并提交 PR，等待 Codex 评审
 contract_baseline: arch-baseline-v0.1
 related_adr: [docs/adr/0003-auth-baseline.md]
 ---
