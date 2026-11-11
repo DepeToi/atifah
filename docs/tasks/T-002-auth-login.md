@@ -1,11 +1,11 @@
 ---
 id: T-002
 title: auth 手机号登录
-status: in-review
+status: done
 owner: codebuddy
 created: 2026-11-11
 updated: 2026-11-11
-status_reason: 实现完成并提交 PR，等待 Codex 评审
+status_reason: PR #15 已合并，CI 与 Codex 评审通过
 contract_baseline: arch-baseline-v0.1
 related_adr: [docs/adr/0003-auth-baseline.md]
 ---
