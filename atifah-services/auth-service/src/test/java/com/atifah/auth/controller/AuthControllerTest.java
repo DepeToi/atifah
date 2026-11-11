@@ -1,19 +1,27 @@
 package com.atifah.auth.controller;
 
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import com.atifah.auth.service.AuthService;
 import com.atifah.auth.vo.RegisterResult;
 import com.atifah.common.core.enums.ErrorCode;
 import com.atifah.common.core.exception.BusinessException;
 import com.atifah.common.web.handler.GlobalExceptionHandler;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
+import java.util.stream.Collectors;
+
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -33,6 +41,10 @@ class AuthControllerTest {
 
     private static final String IDEMPOTENCY_KEY = "550e8400-e29b-41d4-a716-446655440000";
 
+    private static final String PHONE = "13800005678";
+
+    private static final String PASSWORD = "Passw0rd123";
+
     private static final String VALID_BODY = "{\"phone\":\"13800005678\",\"password\":\"Passw0rd123\"}";
 
     @Mock
@@ -40,11 +52,25 @@ class AuthControllerTest {
 
     private MockMvc mockMvc;
 
+    private Logger exceptionHandlerLogger;
+
+    private ListAppender<ILoggingEvent> logAppender;
+
     @BeforeEach
     void setUp() {
         mockMvc = MockMvcBuilders.standaloneSetup(new AuthController(authService))
                 .setControllerAdvice(new AuthExceptionHandler(), new GlobalExceptionHandler())
                 .build();
+        exceptionHandlerLogger = (Logger) LoggerFactory.getLogger(AuthExceptionHandler.class);
+        logAppender = new ListAppender<>();
+        logAppender.start();
+        exceptionHandlerLogger.addAppender(logAppender);
+    }
+
+    @AfterEach
+    void tearDown() {
+        exceptionHandlerLogger.detachAppender(logAppender);
+        logAppender.stop();
     }
 
     @Test
@@ -105,6 +131,20 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.code").value(ErrorCode.BAD_REQUEST.getCode()));
 
         verifyNoInteractions(authService);
+        assertNoSensitiveLog();
+    }
+
+    @Test
+    void registerWithMalformedBodyReturnsBadRequestWithoutLoggingPayload() throws Exception {
+        mockMvc.perform(post("/api/v1/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("Idempotency-Key", IDEMPOTENCY_KEY)
+                        .content("{\"phone\":\"" + PHONE + "\",\"password\":\"" + PASSWORD + "\""))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value(ErrorCode.BAD_REQUEST.getCode()));
+
+        verifyNoInteractions(authService);
+        assertNoSensitiveLog();
     }
 
     @Test
@@ -118,5 +158,16 @@ class AuthControllerTest {
                         .content(VALID_BODY))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.code").value(ErrorCode.CONFLICT.getCode()));
+    }
+
+    /**
+     * 断言请求体解析异常日志不含手机号与密码明文。
+     */
+    private void assertNoSensitiveLog() {
+        String logs = logAppender.list.stream()
+                .map(ILoggingEvent::getFormattedMessage)
+                .collect(Collectors.joining("\n"));
+        assertFalse(logs.contains(PHONE), "日志不应包含手机号");
+        assertFalse(logs.contains(PASSWORD), "日志不应包含密码");
     }
 }

@@ -6,20 +6,27 @@ import com.atifah.auth.mapper.AuthAccountMapper;
 import com.atifah.auth.service.AuthIdempotencyGuard;
 import com.atifah.auth.vo.RegisterResult;
 import com.atifah.common.core.enums.ErrorCode;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import com.atifah.common.core.exception.BusinessException;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.slf4j.LoggerFactory;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -55,10 +62,24 @@ class AuthServiceImplTest {
 
     private AuthServiceImpl authService;
 
+    private Logger authServiceLogger;
+
+    private ListAppender<ILoggingEvent> logAppender;
+
     @BeforeEach
     void setUp() {
         passwordEncoder = new BCryptPasswordEncoder();
         authService = new AuthServiceImpl(authAccountMapper, passwordEncoder, idempotencyGuard);
+        authServiceLogger = (Logger) LoggerFactory.getLogger(AuthServiceImpl.class);
+        logAppender = new ListAppender<>();
+        logAppender.start();
+        authServiceLogger.addAppender(logAppender);
+    }
+
+    @AfterEach
+    void tearDown() {
+        authServiceLogger.detachAppender(logAppender);
+        logAppender.stop();
     }
 
     @Test
@@ -80,6 +101,7 @@ class AuthServiceImplTest {
         assertNotNull(inserted.getId());
         assertNotNull(inserted.getUserId());
         verify(idempotencyGuard).save(IDEMPOTENCY_KEY, PHONE, inserted.getUserId());
+        assertNoSensitiveLog();
     }
 
     @Test
@@ -91,6 +113,7 @@ class AuthServiceImplTest {
         assertEquals("42", result.userId());
         verify(authAccountMapper, never()).insert(any(AuthAccount.class));
         verify(authAccountMapper, never()).selectByPhone(PHONE);
+        assertNoSensitiveLog();
     }
 
     @Test
@@ -103,6 +126,7 @@ class AuthServiceImplTest {
 
         assertEquals(ErrorCode.CONFLICT.getCode(), ex.getCode());
         verify(authAccountMapper, never()).insert(any(AuthAccount.class));
+        assertNoSensitiveLog();
     }
 
     @Test
@@ -115,8 +139,9 @@ class AuthServiceImplTest {
 
         assertEquals(ErrorCode.CONFLICT.getCode(), ex.getCode());
         assertEquals("手机号已注册", ex.getMessage());
-        assertTrue(!ex.getMessage().contains(PHONE));
+        assertFalse(ex.getMessage().contains(PHONE));
         verify(authAccountMapper, never()).insert(any(AuthAccount.class));
+        assertNoSensitiveLog();
     }
 
     @Test
@@ -130,6 +155,7 @@ class AuthServiceImplTest {
 
         assertEquals("77", result.userId());
         verify(idempotencyGuard, times(3)).findUserId(IDEMPOTENCY_KEY, PHONE);
+        assertNoSensitiveLog();
     }
 
     @Test
@@ -144,6 +170,18 @@ class AuthServiceImplTest {
         assertEquals(ErrorCode.CONFLICT.getCode(), ex.getCode());
         verify(idempotencyGuard, times(4)).findUserId(IDEMPOTENCY_KEY, PHONE);
         verify(idempotencyGuard, never()).save(any(), any(), any());
+        assertNoSensitiveLog();
+    }
+
+    /**
+     * 断言注册链路日志不含手机号与密码明文。
+     */
+    private void assertNoSensitiveLog() {
+        String logs = logAppender.list.stream()
+                .map(ILoggingEvent::getFormattedMessage)
+                .collect(Collectors.joining("\n"));
+        assertFalse(logs.contains(PHONE), "日志不应包含手机号");
+        assertFalse(logs.contains(PASSWORD), "日志不应包含密码");
     }
 
     @Test
