@@ -12,7 +12,9 @@
 
 | 表 | 关键字段 | 说明 |
 | --- | --- | --- |
-| `t_user` | id, phone, password_hash, nickname, avatar, status | 手机号脱敏展示 |
+| `t_auth_account` | id, user_id, phone, password_hash, status, last_login_at | 认证账号；手机号明文存储、接口与日志脱敏（ADR 0003） |
+| `t_auth_refresh_token` | id, user_id, token_hash, expires_at, revoked_at | 刷新令牌哈希；轮换、撤销与重用检测 |
+| `t_user` | id, nickname, avatar, status | 用户资料；认证凭据归 `t_auth_account` |
 | `t_user_profile` | user_id, gender, birthday, privacy_level, emotion_goal | 隐私设置 |
 | `t_mood_record` | id, user_id, record_date, mood_type, mood_score, tags, content_cipher, visibility, voice_url | 唯一索引 `(user_id, record_date)` |
 | `t_mood_diary` | id, user_id, title, content_cipher, mood_score, created_at | 一天可多条 |
