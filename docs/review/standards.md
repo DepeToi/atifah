@@ -168,6 +168,7 @@ cd atifah-admin-web/frontend && npm ci && npm run build
 | CODE-06 | 实体/Mapper 规范（与 DB-03 同一根因时合并报告） | Major |
 | CODE-07 | 不手拼 TraceId；异常日志保留堆栈；业务异常不重复打印 | Minor |
 | CODE-08 | 删除测试、关闭校验、`@SuppressWarnings` / `@ts-ignore` 掩盖问题 | Blocker |
+| CODE-09 | 可读性：过度嵌套、无必要抽象/包装、压缩写法影响维护；结构调整改变原行为时按正确性规则升级 | Minor |
 | DEPS-01 | 新增依赖先确认；版本只在根 pom；无第二套 JSON/日志/HTTP 客户端 | Blocker |
 | DEPS-02 | 修改 parent / BOM 版本 | Blocker |
 | TEST-01 | 核心链路有测试，且断言行为而非只编译 | Major |

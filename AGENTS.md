@@ -150,6 +150,7 @@ pom.xml (parent: spring-boot-starter-parent)
 5. 新增业务代码顺序：实体（继承 `BaseEntity`）→ Mapper → Service → Controller；先登记 `CacheKeys` / `MqTopics` / `MqConsumerGroups` 再引用。
 6. 完成后自检：后端 `mvn -o -q -DskipTests compile`；前端 `npm run type-check`；**不通过不得声称完成**。
 7. 有设计分歧先给两个方案与取舍，等确认再写；架构决策写 `docs/adr/`，不要只留在对话里。
+8. 重构/优化代码时：给出完整文件而非局部片段；注释与 Javadoc 用中文；说明改动点与原因；单独列出兼容性风险。
 
 ## 9. 常用命令
 
