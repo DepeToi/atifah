@@ -52,6 +52,8 @@ npm run preview    # 本地预览构建产物
 
 现有代码一致遵循：无分号、单引号、2 空格缩进、尾逗号。仓库尚未引入 ESLint / Prettier，不要假设有自动格式化。
 
+可读性遵循 `docs/rules/code-style.md` CODE-09；前端补充：优先提前返回，不为复用抽过多 composable，模板保持扁平，注释用中文。
+
 ```ts
 import { ref } from 'vue'
 
