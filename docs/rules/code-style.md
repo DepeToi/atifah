@@ -58,9 +58,10 @@ public class MoodServiceApplication {
 
 ## CODE-06 实体与 Mapper
 
-- 实体继承 `BaseEntity`：雪花 `id`、`createdAt` / `updatedAt` 自动填充、`deleted` 逻辑删除；**禁止自增主键**。
+- 实体继承 `BaseEntity`：`id` 由 Service 用 `IdWorker.getId()` 生成；`createdAt` / `updatedAt` 由数据库默认值维护；`deleted` 由 XML 显式处理；**禁止自增主键**。
 - 表字段固定 `created_at` / `updated_at` / `deleted`；实体字段用 lowerCamel，依靠下划线转驼峰。
-- Mapper 继承 `BaseMapper<T>`；复杂 SQL 才写 XML 到 `resources/mapper/`，必须 `#{}` 参数绑定。
+- Mapper **不继承 `BaseMapper`**，只声明方法；**所有 SQL（含 insert / update / delete）写 XML 到 `resources/mapper/`**，禁止调用 `BaseMapper` / `IService` 的任何 CRUD 方法。
+- XML 必须 `#{}` 参数绑定；查询 / 更新 / 删除显式带 `deleted = 0`，逻辑删除写 `deleted = 1`；分页由 MyBatis-Plus 分页插件处理，XML 不手写 `LIMIT`。
 - 写操作放 Service 并加事务；事务内不做远程调用、不发 MQ（用本地消息表/事务消息）。
 
 ## CODE-07 日志与 TraceId

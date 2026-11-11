@@ -12,7 +12,7 @@
 
     <artifactId>common-mybatis</artifactId>
     <name>common-mybatis</name>
-    <description>MyBatis-Plus 通用能力：分页、审计字段填充</description>
+    <description>MyBatis-Plus 通用能力：分页插件、BaseEntity</description>
 
     <dependencies>
         <dependency>

@@ -12,17 +12,21 @@
 
 ## DB-02 SQL 与索引
 
-- 禁止 `SELECT *`，只查需要的列。
+- 禁止 `SELECT *`（`COUNT(*)` 除外），只查需要的列。
 - 禁止循环内查库（N+1）；批量用 `IN` / 批量接口。
-- 禁止拼接 SQL；必须 `#{}` 绑定，动态排序字段用白名单。
+- **所有 SQL（SELECT / INSERT / UPDATE / DELETE）必须写在 `resources/mapper/*.xml`**：Mapper 接口只声明方法、不继承 `BaseMapper`，禁止调用 `BaseMapper` / `IService` 的任何 CRUD 方法。
+- XML 的 `namespace` 为 Mapper 全限定名，statement id 与接口方法名一致；动态 SQL 用 `<if>` / `<where>` / `<foreach>`；禁止拼接 SQL，参数一律 `#{}` 绑定，动态排序字段用白名单。
+- INSERT 的 `id` 由 Service 用 `IdWorker.getId()` 生成并由 XML 显式插入；`created_at` / `updated_at` 由数据库默认值 / `ON UPDATE` 维护，`MetaObjectHandler` 不会作用于 XML。
+- 自定义 XML 不受 `@TableLogic` 影响：查询 / 更新 / 删除必须显式带 `deleted = 0`，逻辑删除写 `deleted = 1`。
+- 分页查询第一个参数使用 MyBatis-Plus `Page<T>`，由分页插件追加 `LIMIT`，禁止在 XML 手写 `LIMIT`。
 - 列表接口必须分页：`page` 从 1 起，`size` 默认 20、上限 100；禁止无界查询。
 - 高频查询建组合索引，遵循最左前缀；避免在索引列上做函数或隐式转换；大偏移分页用游标（seek）方式。
 - 唯一业务键必须有唯一索引（如 `(user_id, record_date)`、点赞 `(user_id, target_type, target_id)`）。
 
 ## DB-03 实体与 DDL
 
-- 实体继承 `BaseEntity`，`created_at` / `updated_at` / `deleted` 全表统一。
-- `deleted` 逻辑删除（0/1），由 MyBatis-Plus `@TableLogic` 处理；查询默认过滤。
+- 实体继承 `BaseEntity`，`created_at` / `updated_at` / `deleted` 全表统一；`created_at` / `updated_at` 由数据库默认值 / `ON UPDATE` 维护。
+- `deleted` 逻辑删除（0/1）；SQL 全部走 XML，`@TableLogic` 不生效，查询 / 更新 / 删除必须显式带 `deleted = 0`，逻辑删除写 `deleted = 1`。
 - DDL 用 Flyway：`src/main/resources/db/migration/V1__init.sql`；已执行脚本禁止修改，新增变更用新版本号。
 - Flyway 脚本必须与 `docs/contracts/db/<service>.sql` 的逻辑结构一致；不一致时以契约为准，先改契约。
 - 表、列、索引必须写注释；计数/金额用合适精度，禁止用浮点存钱。

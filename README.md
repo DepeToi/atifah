@@ -17,7 +17,7 @@ atifah/
 │   ├── common-core                # Result / ErrorCode / BusinessException / 常量
 │   ├── common-web                 # 统一异常、TraceId、Sentinel、Actuator
 │   ├── common-redis               # RedisTemplate 序列化、缓存 Key、Redisson
-│   ├── common-mybatis             # 分页插件、审计字段填充、BaseEntity
+│   ├── common-mybatis             # 分页插件、BaseEntity（SQL 走 Mapper XML）
 │   ├── common-mq                  # Topic / 消费组常量、MessagePublisher
 │   └── common-security            # JWT 签发校验、PasswordEncoder
 ├── atifah-gateway/             # Spring Cloud Gateway
