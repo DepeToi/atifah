@@ -21,7 +21,7 @@
 | P0-1 | 提交当前规则基线（ADR 0001 + 11 个文档） | 人工 | 无 | git 历史包含当前规则；工作区干净 |
 | P0-2 | auth 契约：`docs/contracts/openapi/auth-service.yaml` | Claude | P0-1 | register/login/refresh/logout；错误码、幂等、脱敏符合 `api-conventions.md` |
 | P0-3 | auth DDL：`docs/contracts/db/auth-service.sql` | Claude | P0-1 | 主键、唯一索引、审计字段、`*_cipher`、注释齐全 |
-| P0-4 | （可选）ADR 0002：Token 与会话模型 | Claude | P0-2 | 记录 HS256/RS256、刷新轮换、网关鉴权开启条件 |
+| P0-4 | （可选）ADR 0003：Token 与会话模型 | Claude | P0-2 | 记录 HS256/RS256、刷新轮换、网关鉴权开启条件 |
 | P0-5 | 契约 PR 合并 | 人工 | P0-2..P0-4 | Codex 评审通过；CI 绿 |
 | P0-6 | 打 `arch-baseline-v0.1` | 人工 | P0-5 | 标签在 `main` 上，仅覆盖 auth |
 | P0-7 | T-001 任务包 | Claude | P0-6 | `status: ready`；允许/禁止路径、验收命令、测试要求齐全 |
@@ -62,7 +62,7 @@
 - [ ] P2-2 修改 `docs/contracts/README.md` §3：兼容新增走契约 PR + 冻结清单 + 新基线。
 - [ ] P2-3 修改 `docs/contracts/api-conventions.md` §10：同步 ADR 分级。
 - [ ] P2-4 修改 `AGENTS.md` §0 的 Arch 必需产物。
-- [ ] P2-5 新增 ADR 0002 记录本次流程规则变更；更新 `docs/adr/README.md` 索引。
+- [ ] P2-5 新增 ADR（按当时下一个可用编号）记录本次流程规则变更；更新 `docs/adr/README.md` 索引。
 
 **验收**：兼容新增不需要 ADR；破坏性变更仍被 DOC-01 拦截。
 

@@ -28,7 +28,7 @@
 | `common-core` | `Result` / `PageResult` / `ErrorCode` / `BusinessException` / `CommonConstants` | 依赖 Spring Web / MyBatis / Redis |
 | `common-web` | 全局异常、TraceId、Sentinel、Actuator | 被网关依赖 |
 | `common-redis` | Redis 序列化、`CacheKeys`、Redisson | 业务缓存逻辑 |
-| `common-mybatis` | 分页插件、字段填充、`BaseEntity`、Flyway | 具体业务 Mapper / 表结构 |
+| `common-mybatis` | 分页插件、`BaseEntity`、Flyway（SQL 走 Mapper XML） | 具体业务 Mapper / 表结构 |
 | `common-mq` | `MqTopics` / `MqConsumerGroups` / `MessagePublisher` | 业务消费者 |
 | `common-security` | JWT 签发校验、`PasswordEncoder` | 真实密钥、业务鉴权规则 |
 

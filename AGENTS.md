@@ -97,7 +97,7 @@ pom.xml (parent: spring-boot-starter-parent)
 
 - **安全 SEC**：敏感字段加密存储；日志、异常、MQ、URL 不得出现明文；密钥只走环境变量；唯一入口是网关（见 `docs/rules/security.md`）。
 - **接口 API**：统一 `Result<T>` / `PageResult<T>`；错误码只取 `ErrorCode`；业务写接口必须支持 `Idempotency-Key`（例外与细则见 `docs/contracts/api-conventions.md` §7）；C 端 `/api/v1/**`，管理端 `/admin/api/**`。
-- **数据 DB**：一服务一库，禁止跨库 JOIN、`SELECT *`、拼接 SQL、循环查库；实体继承 `BaseEntity`；Flyway 管理 DDL（见 `docs/rules/database.md`）。
+- **数据 DB**：一服务一库，禁止跨库 JOIN、`SELECT *`、拼接 SQL、循环查库；所有 SQL（含写入）写 `resources/mapper/*.xml`（Mapper 不继承 `BaseMapper`，禁止 `BaseMapper` / `IService` 的 CRUD；XML 显式带 `deleted = 0`）；`id` 由 Service 生成；实体继承 `BaseEntity`；Flyway 管理 DDL（见 `docs/rules/database.md`）。
 - **消息 MQ**：Topic / 消费组先登记 `MqTopics` / `MqConsumerGroups`；只用 `MessagePublisher`；消费端必须幂等并配重试/死信（见 `docs/rules/database.md`）。
 - **编码 CODE**：构造注入、禁止字段 `@Autowired`；统一异常；`@Valid` 校验；日志用 `@Slf4j` 占位符（见 `docs/rules/code-style.md`）。
 - **依赖 DEPS**：版本只在根 `pom.xml` 管理；新增依赖先确认；禁止第二套 JSON / 日志 / HTTP 客户端。
@@ -145,7 +145,7 @@ pom.xml (parent: spring-boot-starter-parent)
 
 1. 动手前先读任务包（Feature）或 ADR/PR 描述（Arch/Ops/Docs）、模块级 `AGENTS.md` 与相关契约；确认现有写法，不要凭 Spring 通用习惯猜。
 2. 只改与任务相关的文件，不顺手重构，不新增未要求的功能。
-3. 改配置时保持“一份真相”：共享配置改 `deploy/nacos/config/common-application.yaml` 并提醒导入 Nacos；本地 `application.yml` 只留端口、应用名、Nacos 连接、数据源 URL、生产者组。
+3. 改配置时保持“一份真相”：共享配置改 `deploy/nacos/config/common-application.yaml` 并提醒导入 Nacos；本地 `application.yml` 只留端口、应用名、Nacos 连接、数据源 URL、生产者组、`mybatis-plus.mapper-locations`（与 Nacos 保持同值，Nacos 优先、本地回落）。
 4. 改路由、端口、服务名时，同步 `README.md` 端口表与相关契约/文档。
 5. 新增业务代码顺序：实体（继承 `BaseEntity`）→ Mapper → Service → Controller；先登记 `CacheKeys` / `MqTopics` / `MqConsumerGroups` 再引用。
 6. 完成后自检：后端 `mvn -o -q -DskipTests compile`；前端 `npm run type-check`；**不通过不得声称完成**。

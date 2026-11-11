@@ -86,7 +86,7 @@
 | RPC   | OpenFeign（默认）/ Dubbo 3（热点链路可选）                          | 优先简单，避免双协议复杂度           |
 | 流控熔断  | Sentinel                                                | 规则持久化到 Nacos，网关+服务双层防护  |
 | 分布式事务 | Seata AT                                                | 仅用于少量强一致场景，避免滥用         |
-| ORM   | MyBatis-Plus                                            | 分页与逻辑删除方便               |
+| ORM   | MyBatis-Plus                                            | 分页插件；SQL 统一写 XML，逻辑清晰 |
 | 分库分表  | ShardingSphere-JDBC                                     | 无侵入、支持分片+读写分离           |
 | 数据库   | MySQL 8.0/8.4                                           | 事务、主从、成熟运维              |
 | 缓存    | Redis 7 + Redisson + Caffeine                           | 分布式缓存/锁/计数 + 本地热点缓存     |

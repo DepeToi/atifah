@@ -137,8 +137,8 @@ cd atifah-admin-web/frontend && npm ci && npm run build
 | 编号 | 检查点 | 默认级别 |
 | --- | --- | --- |
 | DB-01 | 数据库边界：一服务一库；禁止跨库 JOIN、访问其他服务表（与 ARCH-01 合并报告） | Blocker |
-| DB-02 | 禁止 `SELECT *`、拼接 SQL、N+1、循环内查库；唯一业务键有唯一索引 | Major（拼接 SQL/注入风险为 Blocker） |
-| DB-03 | 实体继承 `BaseEntity`；雪花 ID；逻辑删除；审计字段；Flyway 与 `docs/contracts/db/` 一致，已执行脚本未修改 | Major（Schema/迁移与契约不一致为 Blocker） |
+| DB-02 | 禁止 `SELECT *`、拼接 SQL、N+1、循环内查库；所有 SQL（含写入）落在 `resources/mapper/*.xml`（Mapper 不继承 `BaseMapper`，禁止 `BaseMapper`/`IService` CRUD；XML 显式带 `deleted = 0`、`id` 由 Service 生成）；唯一业务键有唯一索引 | Major（拼接 SQL/注入风险为 Blocker） |
+| DB-03 | 实体继承 `BaseEntity`；雪花 ID 由 Service 生成；逻辑删除与时间字段由 XML/数据库默认值显式维护；Flyway 与 `docs/contracts/db/` 一致，已执行脚本未修改 | Major（Schema/迁移与契约不一致为 Blocker） |
 | DB-04 | `@Transactional` 只在 Service；事务内不做 RPC/MQ/文件 IO | Major |
 | DB-05 | 缓存 Key 登记 `CacheKeys`；Cache Aside；缓存不是唯一数据源 | Major |
 | DB-06 | 分片键命中查询；无跨分片聚合 | Major |
@@ -165,7 +165,7 @@ cd atifah-admin-web/frontend && npm ci && npm run build
 | CODE-03 | 启动类三注解齐全 | Major |
 | CODE-04 | 构造注入；禁止字段 `@Autowired`；Lombok 仅用于样板代码 | Major |
 | CODE-05 | `@Valid` 校验；统一异常；禁止自定义响应壳 | Major |
-| CODE-06 | 实体/Mapper 规范（与 DB-03 同一根因时合并报告） | Major |
+| CODE-06 | 实体/Mapper 规范；Mapper 不继承 `BaseMapper`，所有 SQL 在 XML（与 DB-02 同一根因时合并报告） | Major |
 | CODE-07 | 不手拼 TraceId；异常日志保留堆栈；业务异常不重复打印 | Minor |
 | CODE-08 | 删除测试、关闭校验、`@SuppressWarnings` / `@ts-ignore` 掩盖问题 | Blocker |
 | CODE-09 | 可读性：过度嵌套、无必要抽象/包装、压缩写法影响维护；结构调整改变原行为时按正确性规则升级 | Minor |

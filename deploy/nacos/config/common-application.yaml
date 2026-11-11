@@ -47,6 +47,8 @@ spring:
             read-timeout: 5000
 
 mybatis-plus:
+  # 与各服务本地 application.yml 保持同值；Nacos 优先，本地作为回落（ADR 0002）
+  mapper-locations: classpath*:/mapper/**/*.xml
   configuration:
     map-underscore-to-camel-case: true
   global-config:

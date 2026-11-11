@@ -1,18 +1,15 @@
 package com.atifah.common.mybatis.config;
 
 import com.baomidou.mybatisplus.annotation.DbType;
-import com.baomidou.mybatisplus.core.handlers.MetaObjectHandler;
 import com.baomidou.mybatisplus.extension.plugins.MybatisPlusInterceptor;
 import com.baomidou.mybatisplus.extension.plugins.inner.PaginationInnerInterceptor;
-import org.apache.ibatis.reflection.MetaObject;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 
-import java.time.LocalDateTime;
-
 /**
- * MyBatis-Plus 公共配置。
+ * MyBatis-Plus 公共配置：分页插件。
+ * 所有 SQL 走 Mapper XML（ADR 0002），不使用 BaseMapper CRUD 与自动填充。
  *
  * @author DepeToi
  * @since 1.0.0
@@ -31,28 +28,5 @@ public class MybatisPlusAutoConfiguration {
         MybatisPlusInterceptor interceptor = new MybatisPlusInterceptor();
         interceptor.addInnerInterceptor(new PaginationInnerInterceptor(DbType.MYSQL));
         return interceptor;
-    }
-
-    /**
-     * 装配审计字段自动填充处理器。
-     *
-     * @return 元对象处理器
-     */
-    @Bean
-    @ConditionalOnMissingBean(MetaObjectHandler.class)
-    public MetaObjectHandler auditMetaObjectHandler() {
-        return new MetaObjectHandler() {
-            @Override
-            public void insertFill(MetaObject metaObject) {
-                LocalDateTime now = LocalDateTime.now();
-                strictInsertFill(metaObject, "createdAt", LocalDateTime.class, now);
-                strictInsertFill(metaObject, "updatedAt", LocalDateTime.class, now);
-            }
-
-            @Override
-            public void updateFill(MetaObject metaObject) {
-                strictUpdateFill(metaObject, "updatedAt", LocalDateTime.class, LocalDateTime.now());
-            }
-        };
     }
 }

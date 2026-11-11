@@ -33,3 +33,6 @@ spring:
 rocketmq:
   producer:
     group: atifah-stats-producer
+
+mybatis-plus:
+  mapper-locations: classpath*:/mapper/**/*.xml

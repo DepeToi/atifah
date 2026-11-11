@@ -34,6 +34,9 @@ rocketmq:
   producer:
     group: atifah-growth-producer
 
+mybatis-plus:
+  mapper-locations: classpath*:/mapper/**/*.xml
+
 # 本地骨架默认关闭 Seata，接入分布式事务时改为 true 并提供 seata-server 地址
 seata:
   enabled: false

@@ -16,19 +16,20 @@
 ├── <Service>Application.java   # 三注解：@SpringBootApplication @EnableDiscoveryClient @MapperScan("com.atifah.<service>.mapper")
 ├── controller/                 # @Valid 校验 + 调 service + 返回 Result
 ├── service/                    # 业务编排，impl 子包
-├── mapper/                     # 继承 BaseMapper<T>
+├── mapper/                     # 不继承 BaseMapper，只声明方法；SQL 全在 resources/mapper/*.xml
 ├── entity/                     # 继承 BaseEntity
 ├── dto/ · vo/                  # 入参 / 出参
 └── config/                     # 本服务配置类
 ```
 
 - 包根固定 `com.atifah.<service>`；Mapper 必须在 `...<service>.mapper`，否则 `@MapperScan` 扫不到。
-- 本地 `application.yml` 只留差异化项：端口、`spring.application.name`、Nacos 连接（`spring.config.import` + `spring.cloud.nacos.*`）、数据源 URL、生产者组。共享配置不要复制到本地。
+- 本地 `application.yml` 只留差异化项：端口、`spring.application.name`、Nacos 连接（`spring.config.import` + `spring.cloud.nacos.*`）、数据源 URL、生产者组、`mybatis-plus.mapper-locations`（与 Nacos 公共配置保持同值）。共享配置不要复制到本地；Nacos 未显式配置时回落到服务自有 yaml。
+- XML Mapper 放 `src/main/resources/mapper/`，文件名 `<Entity>Mapper.xml`；所有 SQL 必须显式带 `deleted = 0`（逻辑删除写 `deleted = 1`），`created_at` / `updated_at` 交给数据库默认值。
 
 ## 业务落地顺序
 
 1. 实体（继承 `BaseEntity`，表字段 `created_at` / `updated_at` / `deleted`，禁止自增主键）。
-2. Mapper（`BaseMapper<T>`，复杂 SQL 才写 XML 到 `resources/mapper/`）。
+2. Mapper（不继承 `BaseMapper`；所有 SQL 写 XML 到 `src/main/resources/mapper/`，namespace 为 Mapper 全限定名；insert 前 Service 用 `IdWorker.getId()` 生成 `id`）。
 3. Service（`@RequiredArgsConstructor` 构造注入；写操作加事务；业务失败抛 `BusinessException`）。
 4. Controller（只做参数校验与组装；不要 try-catch 包装）。
 5. 需要缓存 / 消息时，先在 `CacheKeys` / `MqTopics` / `MqConsumerGroups` 登记，再引用。
