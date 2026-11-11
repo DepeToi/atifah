@@ -9,7 +9,7 @@
 
 - **P0 未完成前，不启动 P1–P4 的规则修改**；先用一次真实任务验证流程，再按实际摩擦调整。
 - 每项只标注执行角色；实际 `git commit` / `git push` 仍由人工授权（GIT-01）。
-- 当前工作区已有未提交的 ADR 0001 + 11 个文档修改；先按 P0-1 落盘，再开始后续事项。
+- P0-1 已完成：规则基线（ADR 0001 + 11 个文档）已提交并合并；工作区除 `.claude/settings.local.json` 本地配置外无未提交改动，可直接开始 P0-2。
 - 当前仓库状态：`main` 分支，无 `arch-baseline-*` 标签，`docs/contracts/` 只有模板与 `api-conventions.md`。
 
 ## P0 流程冒烟（auth 纵向切片）
@@ -18,7 +18,7 @@
 
 | # | 事项 | 执行 | 依赖 | 验收 |
 | --- | --- | --- | --- | --- |
-| P0-1 | 提交当前规则基线（ADR 0001 + 11 个文档） | 人工 | 无 | git 历史包含当前规则；工作区干净 |
+| P0-1 | 提交当前规则基线（ADR 0001 + 11 个文档） | 人工 | 无 | ✅ 已完成（`c9a0fba` 已合并）；git 历史包含当前规则 |
 | P0-2 | auth 契约：`docs/contracts/openapi/auth-service.yaml` | Claude | P0-1 | register/login/refresh/logout；错误码、幂等、脱敏符合 `api-conventions.md` |
 | P0-3 | auth DDL：`docs/contracts/db/auth-service.sql` | Claude | P0-1 | 主键、唯一索引、审计字段、`*_cipher`、注释齐全 |
 | P0-4 | （可选）ADR 0003：Token 与会话模型 | Claude | P0-2 | 记录 HS256/RS256、刷新轮换、网关鉴权开启条件 |
