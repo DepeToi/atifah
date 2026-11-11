@@ -211,8 +211,8 @@ class AuthServiceImplTest {
         AuthToken token = authService.login(new LoginRequest(PHONE, PASSWORD));
 
         assertEquals(expected, token);
+        verify(loginFailureGuard).acquireAttempt(PHONE);
         verify(loginFailureGuard).clear(PHONE);
-        verify(loginFailureGuard, never()).recordFailure(anyString());
         assertNoSensitiveLog();
     }
 
@@ -229,7 +229,8 @@ class AuthServiceImplTest {
         ArgumentCaptor<String> hashCaptor = ArgumentCaptor.forClass(String.class);
         verify(passwordEncoder).matches(eq(PASSWORD), hashCaptor.capture());
         assertTrue(hashCaptor.getValue().startsWith("$2"), "账号不存在时也必须执行一次 BCrypt 比对");
-        verify(loginFailureGuard).recordFailure(PHONE);
+        verify(loginFailureGuard).acquireAttempt(PHONE);
+        verify(loginFailureGuard, never()).clear(anyString());
         verify(loginTokenWriter, never()).issue(any(AuthAccount.class));
         assertNoSensitiveLog();
     }
@@ -244,7 +245,7 @@ class AuthServiceImplTest {
 
         assertEquals(ErrorCode.UNAUTHORIZED.getCode(), ex.getCode());
         assertEquals("手机号或密码错误", ex.getMessage());
-        verify(loginFailureGuard).recordFailure(PHONE);
+        verify(loginFailureGuard).acquireAttempt(PHONE);
         verify(loginFailureGuard, never()).clear(anyString());
         verify(loginTokenWriter, never()).issue(any(AuthAccount.class));
         assertNoSensitiveLog();
@@ -268,7 +269,7 @@ class AuthServiceImplTest {
     @Test
     void loginWhenLockedReturnsTooManyRequestsWithoutQueryingAccount() {
         doThrow(new BusinessException(ErrorCode.TOO_MANY_REQUESTS.getCode(), "登录失败次数过多，请稍后再试"))
-                .when(loginFailureGuard).assertNotLocked(PHONE);
+                .when(loginFailureGuard).acquireAttempt(PHONE);
 
         BusinessException ex = assertThrows(BusinessException.class,
                 () -> authService.login(new LoginRequest(PHONE, PASSWORD)));
@@ -281,7 +282,7 @@ class AuthServiceImplTest {
     @Test
     void loginPropagatesRedisFailureInsteadOfBypassingLock() {
         doThrow(new IllegalStateException("redis unavailable"))
-                .when(loginFailureGuard).assertNotLocked(PHONE);
+                .when(loginFailureGuard).acquireAttempt(PHONE);
 
         assertThrows(IllegalStateException.class, () -> authService.login(new LoginRequest(PHONE, PASSWORD)));
 

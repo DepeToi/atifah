@@ -7,16 +7,18 @@ import com.atifah.common.redis.constant.CacheKeys;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.data.redis.core.ValueOperations;
+import org.springframework.data.redis.core.script.RedisScript;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
 import java.util.HexFormat;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -24,6 +26,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
@@ -31,7 +34,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * 登录失败计数组件单元测试，不依赖 Redis。
+ * 登录尝试计数组件单元测试，不依赖 Redis。
  *
  * @author DepeToi
  * @since 1.0.0
@@ -43,9 +46,6 @@ class LoginFailureGuardTest {
 
     @Mock
     private StringRedisTemplate stringRedisTemplate;
-
-    @Mock
-    private ValueOperations<String, String> valueOperations;
 
     private LoginFailureGuard guard;
 
@@ -63,50 +63,46 @@ class LoginFailureGuardTest {
     }
 
     @Test
-    void assertNotLockedAllowsRequestWithoutFailures() {
-        when(stringRedisTemplate.opsForValue()).thenReturn(valueOperations);
-        when(valueOperations.get(anyString())).thenReturn(null);
+    void acquireAttemptRunsSingleAtomicScriptWithWindowMillis() {
+        when(stringRedisTemplate.execute(any(RedisScript.class), anyList(), any())).thenReturn(1L);
 
-        assertDoesNotThrow(() -> guard.assertNotLocked(PHONE));
+        guard.acquireAttempt(PHONE);
+
+        ArgumentCaptor<RedisScript> scriptCaptor = ArgumentCaptor.forClass(RedisScript.class);
+        ArgumentCaptor<String> argCaptor = ArgumentCaptor.forClass(String.class);
+        verify(stringRedisTemplate).execute(scriptCaptor.capture(), eq(List.of(guard.buildKey(PHONE))),
+                argCaptor.capture());
+
+        String script = scriptCaptor.getValue().getScriptAsString();
+        assertTrue(script.contains("INCR"), "计数必须走原子脚本");
+        assertTrue(script.contains("PEXPIRE"), "首次计数必须在同一脚本内设置 TTL");
+        assertEquals(String.valueOf(Duration.ofMinutes(10).toMillis()), argCaptor.getValue());
+        verify(stringRedisTemplate, never()).expire(anyString(), any(Duration.class));
     }
 
     @Test
-    void assertNotLockedAllowsRequestBelowThreshold() {
-        when(stringRedisTemplate.opsForValue()).thenReturn(valueOperations);
-        when(valueOperations.get(guard.buildKey(PHONE))).thenReturn("4");
+    void acquireAttemptAllowsFirstFiveAttempts() {
+        when(stringRedisTemplate.execute(any(RedisScript.class), anyList(), any())).thenReturn(5L);
 
-        assertDoesNotThrow(() -> guard.assertNotLocked(PHONE));
+        assertDoesNotThrow(() -> guard.acquireAttempt(PHONE));
     }
 
     @Test
-    void assertNotLockedRejectsRequestAtThreshold() {
-        when(stringRedisTemplate.opsForValue()).thenReturn(valueOperations);
-        when(valueOperations.get(guard.buildKey(PHONE))).thenReturn("5");
+    void acquireAttemptRejectsAttemptAboveThreshold() {
+        when(stringRedisTemplate.execute(any(RedisScript.class), anyList(), any())).thenReturn(6L);
 
-        BusinessException ex = assertThrows(BusinessException.class, () -> guard.assertNotLocked(PHONE));
+        BusinessException ex = assertThrows(BusinessException.class, () -> guard.acquireAttempt(PHONE));
 
         assertEquals(ErrorCode.TOO_MANY_REQUESTS.getCode(), ex.getCode());
         assertEquals("登录失败次数过多，请稍后再试", ex.getMessage());
     }
 
     @Test
-    void recordFailureStartsWindowOnFirstFailure() {
-        when(stringRedisTemplate.opsForValue()).thenReturn(valueOperations);
-        when(valueOperations.increment(guard.buildKey(PHONE))).thenReturn(1L);
+    void acquireAttemptPropagatesRedisFailure() {
+        when(stringRedisTemplate.execute(any(RedisScript.class), anyList(), any()))
+                .thenThrow(new IllegalStateException("redis unavailable"));
 
-        guard.recordFailure(PHONE);
-
-        verify(stringRedisTemplate).expire(guard.buildKey(PHONE), Duration.ofMinutes(10));
-    }
-
-    @Test
-    void recordFailureKeepsExistingWindowAfterFirstFailure() {
-        when(stringRedisTemplate.opsForValue()).thenReturn(valueOperations);
-        when(valueOperations.increment(guard.buildKey(PHONE))).thenReturn(3L);
-
-        guard.recordFailure(PHONE);
-
-        verify(stringRedisTemplate, never()).expire(anyString(), any(Duration.class));
+        assertThrows(IllegalStateException.class, () -> guard.acquireAttempt(PHONE));
     }
 
     @Test
@@ -114,14 +110,6 @@ class LoginFailureGuardTest {
         guard.clear(PHONE);
 
         verify(stringRedisTemplate).delete(guard.buildKey(PHONE));
-    }
-
-    @Test
-    void assertNotLockedPropagatesRedisFailure() {
-        when(stringRedisTemplate.opsForValue()).thenThrow(new IllegalStateException("redis unavailable"));
-
-        assertThrows(IllegalStateException.class, () -> guard.assertNotLocked(PHONE));
-        verify(stringRedisTemplate, never()).expire(eq(guard.buildKey(PHONE)), any(Duration.class));
     }
 
     private String sha256(String text) {

@@ -105,27 +105,26 @@ public class AuthServiceImpl implements AuthService {
 
     /**
      * 手机号密码登录。
+     * 校验密码前先原子占用一次尝试，避免并发突发请求绕过锁定；
      * 账号不存在与密码错误返回同一错误码，并在账号不存在时执行等时比对；
-     * 密码校验通过后才清除失败计数并判断账号状态，避免暴露账号是否存在。
+     * 密码校验通过后才清除计数并判断账号状态，避免暴露账号是否存在。
      *
      * @param request 登录请求
      * @return 访问令牌与刷新令牌
      */
     @Override
     public AuthToken login(LoginRequest request) {
-        loginFailureGuard.assertNotLocked(request.phone());
+        loginFailureGuard.acquireAttempt(request.phone());
 
         AuthAccount account = authAccountMapper.selectByPhone(request.phone());
         if (account == null) {
             // 等时比对：账号不存在时也执行一次 BCrypt，避免响应时间泄露账号是否存在。
             passwordEncoder.matches(request.password(), DUMMY_PASSWORD_HASH);
-            loginFailureGuard.recordFailure(request.phone());
             log.info("login failed, reason=account not found");
             throw new BusinessException(ErrorCode.UNAUTHORIZED.getCode(), INVALID_CREDENTIALS_MESSAGE);
         }
 
         if (!passwordEncoder.matches(request.password(), account.getPasswordHash())) {
-            loginFailureGuard.recordFailure(request.phone());
             log.info("login failed, reason=password mismatch, userId={}", account.getUserId());
             throw new BusinessException(ErrorCode.UNAUTHORIZED.getCode(), INVALID_CREDENTIALS_MESSAGE);
         }
