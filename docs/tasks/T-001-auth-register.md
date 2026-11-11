@@ -5,7 +5,7 @@ status: in-review
 owner: codebuddy
 created: 2026-11-11
 updated: 2026-11-11
-status_reason: PR #7 已创建，等待 CI 与 Codex 评审
+status_reason: 已按 Codex 评审补充敏感日志断言并更正 PR 描述，等待复审
 contract_baseline: arch-baseline-v0.1
 related_adr: [docs/adr/0003-auth-baseline.md]
 ---
