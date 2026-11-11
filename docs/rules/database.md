@@ -30,7 +30,7 @@
 - DDL 用 Flyway：`src/main/resources/db/migration/V1__init.sql`；已执行脚本禁止修改，新增变更用新版本号。
 - Flyway 脚本必须与 `docs/contracts/db/<service>.sql` 的逻辑结构一致；不一致时以契约为准，先改契约。
 - 表、列、索引必须写注释；计数/金额用合适精度，禁止用浮点存钱。
-- 敏感字段用 `*_cipher`（如 `content_cipher`）存储密文，禁止明文列。
+- 需字段级加密的敏感字段（见 SEC-01 数据分级）用 `*_cipher`（如 `content_cipher`）存储密文，禁止明文列；手机号按 ADR 0003 处理。
 
 ## DB-04 事务
 

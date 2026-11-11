@@ -54,7 +54,7 @@
 - 情绪管理产品：C 端 App（Flutter，`atifah-app/` 占位）+ 管理后台（Vue 3）+ Spring Cloud Alibaba 微服务。
 - 当前处于骨架阶段：公共能力与网关已实现，9 个业务服务只有启动类，尚无 Controller / Service / Mapper / 表结构（以仓库现状为准）。
 - 业务域：账号、情绪打卡与日记、趋势与量表报告、社区树洞 Feed、冥想内容、消息推送、签到积分、运营统计。
-- 情绪日记、量表结果、手机号属于敏感个人信息，**隐私与加密优先于性能优化**。
+- 情绪日记、量表结果属于敏感个人信息；手机号、密码属于个人敏感字段（手机号脱敏展示，密码只存哈希）。**隐私与加密优先于性能优化**。
 
 ## 2. 技术栈（禁止替换、禁止擅自新增）
 
@@ -95,7 +95,7 @@ pom.xml (parent: spring-boot-starter-parent)
 
 ## 4. 硬约束速查（规则编号与 `docs/review/standards.md` 一致）
 
-- **安全 SEC**：敏感字段加密存储；日志、异常、MQ、URL 不得出现明文；密钥只走环境变量；唯一入口是网关（见 `docs/rules/security.md`）。
+- **安全 SEC**：敏感字段按 SEC-01 分级处理（敏感个人信息字段级加密，手机号等个人敏感字段脱敏）；日志、异常、MQ、URL 不得出现明文；密钥只走环境变量；唯一入口是网关（见 `docs/rules/security.md`）。
 - **接口 API**：统一 `Result<T>` / `PageResult<T>`；错误码只取 `ErrorCode`；业务写接口必须支持 `Idempotency-Key`（例外与细则见 `docs/contracts/api-conventions.md` §7）；C 端 `/api/v1/**`，管理端 `/admin/api/**`。
 - **数据 DB**：一服务一库，禁止跨库 JOIN、`SELECT *`、拼接 SQL、循环查库；所有 SQL（含写入）写 `resources/mapper/*.xml`（Mapper 不继承 `BaseMapper`，禁止 `BaseMapper` / `IService` 的 CRUD；XML 显式带 `deleted = 0`）；`id` 由 Service 生成；实体继承 `BaseEntity`；Flyway 管理 DDL（见 `docs/rules/database.md`）。
 - **消息 MQ**：Topic / 消费组先登记 `MqTopics` / `MqConsumerGroups`；只用 `MessagePublisher`；消费端必须幂等并配重试/死信（见 `docs/rules/database.md`）。

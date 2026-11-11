@@ -47,7 +47,7 @@ atifah/
 
 完整设计目标、容量假设、核心链路、缓存/MQ/分片、部署与演进见 [`docs/architecture.md`](docs/architecture.md)；数据模型见 [`docs/db.md`](docs/db.md)，业务边界见 [`docs/domain.md`](docs/domain.md)。本文件不重复架构正文。
 
-一句话概括：C 端 App + 管理后台 Vue 3 SPA，经网关进入 Spring Cloud Alibaba 微服务；同步查询走 OpenFeign，异步事件走 RocketMQ；MySQL 一服务一库，Redis 多级缓存，敏感数据字段级加密；强一致范围最小化，优先最终一致 + 对账。
+一句话概括：C 端 App + 管理后台 Vue 3 SPA，经网关进入 Spring Cloud Alibaba 微服务；同步查询走 OpenFeign，异步事件走 RocketMQ；MySQL 一服务一库，Redis 多级缓存，敏感数据按分级加密或脱敏；强一致范围最小化，优先最终一致 + 对账。
 
 ## 环境要求
 

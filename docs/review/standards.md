@@ -150,7 +150,7 @@ cd atifah-admin-web/frontend && npm ci && npm run build
 
 | 编号 | 检查点 | 默认级别 |
 | --- | --- | --- |
-| SEC-01 | 敏感字段加密；日志、异常、MQ、URL 无明文 | Blocker |
+| SEC-01 | 敏感字段按 SEC-01 分级处理（加密或脱敏）；日志、异常、MQ、URL 无明文 | Blocker |
 | SEC-02 | 无硬编码密码、密钥、Token、AK/SK | Blocker |
 | SEC-03 | 不绕过网关；业务服务不重复验签；管理端不直连业务库 | Blocker |
 | SEC-04 | 写接口幂等：执行契约 §7 与 `docs/rules/security.md` SEC-04（与 API-04 合并报告） | Blocker |
