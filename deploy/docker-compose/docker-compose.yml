@@ -165,6 +165,10 @@ services:
     profiles: [ "nginx" ]
     container_name: atifah-nginx
     restart: unless-stopped
+    # Linux 上 host.docker.internal 默认不可解析；nginx 加载配置时即解析 upstream，
+    # 缺失会直接 [emerg] 退出，因此必须显式映射到宿主机网关
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
       - "80:80"
     volumes:

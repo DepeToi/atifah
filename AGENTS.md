@@ -17,17 +17,17 @@
 | 角色 | 职责 | 可写范围 | 禁止 |
 | --- | --- | --- | --- |
 | Claude（架构） | 架构设计、接口/DDL/事件契约、ADR、任务拆解、公共能力、网关/部署/CI 脚手架 | `docs/`、根 `pom.xml`、`atifah-common/`、`atifah-gateway/`、`deploy/`、`.github/`、模块骨架、根规则文件 | 不实现业务 CRUD |
-| CodeBuddy（开发） | 按 Feature 任务包实现功能与测试 | 任务包“允许修改”列出的目录，通常为单个服务；任务包 front matter / §8.1 / §8.2（仅此字段） | 不改契约、规则、父 pom、其他服务 |
-| Codex（评审） | 只读评审 diff、合规检查与**独立自测试** | PR 评论 + `docs/review/reports/**`（只写评审报告；可运行构建/测试） | 不改代码/契约/规则/任务实现 |
+| CodeBuddy（开发） | 按 Feature 任务包实现功能与测试 | 任务包“允许修改”列出的目录，通常为单个服务；任务包 front matter（仅状态字段） | 不改契约、规则、父 pom、其他服务 |
+| Codex（评审） | 只读评审 diff、合规检查与风险匹配的验证 | PR 评审评论；按需写 `docs/review/reports/**` | 不改代码/契约/规则/任务实现 |
 | 人类（维护者） | 确认架构、合并 PR、处理升级 | 全部 | — |
 
 **变更分四类**（混合变更按最高风险类型处理；Feature 不得夹带 Arch/Ops 路径；契约变更必须单独 PR）：
 
 | 类型 | 范围 | 必需产物 | 评审 |
 | --- | --- | --- | --- |
-| Feature | 业务服务、管理端业务代码 | 任务包 `docs/tasks/T-xxx-*.md` | Codex 语义评审 + A 级自测 |
-| Arch | `atifah-common/**`、`atifah-gateway/**`、根/父 `pom.xml`、`docs/contracts/**`、`docs/rules/**`、`docs/adr/**`、根/模块 `AGENTS.md`、`CLAUDE.md`、`docs/tasks/README.md`、`docs/tasks/_TEMPLATE.md`、`docs/review/standards.md`、`docs/review/report-template.md`、`docs/review/reports/README.md` | ADR（涉及契约时附契约 diff） | Codex 语义评审 + A 级自测 |
-| Ops | `deploy/**`、`.github/**`、Dockerfile、构建/部署脚本 | PR 描述中的变更说明、影响面、验证命令与回滚方式 | Codex 轻评审（安全/配置）+ B 级自测 |
+| Feature | 业务服务、管理端业务代码 | 任务包 `docs/tasks/T-xxx-*.md` | Codex 语义评审；按风险核验 CI 与补充测试 |
+| Arch | `atifah-common/**`、`atifah-gateway/**`、根/父 `pom.xml`、`docs/contracts/**`、`docs/rules/**`、`docs/adr/**`、根/模块 `AGENTS.md`、`CLAUDE.md`、`docs/tasks/README.md`、`docs/tasks/_TEMPLATE.md`、`docs/review/standards.md`、`docs/review/report-template.md`、`docs/review/reports/README.md` | ADR（涉及契约时附契约 diff） | Codex 语义评审；高风险变更针对性验证 |
+| Ops | `deploy/**`、`.github/**`、Dockerfile、构建/部署脚本 | PR 描述中的变更说明、影响面、验证命令与回滚方式 | Codex 轻评审（安全/配置）+ 相关配置验证 |
 | Docs | `docs/**`（非契约/ADR/rules/治理入口）、`README.md`、`TODO.md`、单个任务包 `docs/tasks/T-*.md`、已归档报告 `docs/review/reports/*.md` | PR 描述 | CI + 人工；Codex 可免 |
 
 - 治理入口文件（根/模块 `AGENTS.md`、`CLAUDE.md`、`docs/tasks/README.md`、`docs/tasks/_TEMPLATE.md`、`docs/review/standards.md`、`docs/review/report-template.md`、`docs/review/reports/README.md`）一律归 Arch，避免被 Docs 兜底跳过语义评审。
@@ -39,15 +39,15 @@
 1. Claude 产出 ADR + 契约 +（Feature）任务包；人工确认后在 `main` 打 `arch-baseline-vX.Y` 标签，契约冻结。
 2. Feature：CodeBuddy 从 `main` 拉 `feat/T-xxx-<slug>`，只按任务包实现，创建 PR 后把状态改为 `in-review`。Arch/Ops/Docs：由 Claude 按分类在 `arch/`、`ops/`、`docs/` 分支实现并开 PR。
 3. CI（`.github/workflows/ci.yml`）必须通过。
-4. Codex 按 `docs/review/standards.md` 只读评审 PR，并按 A/B/C 级在独立工作区执行自测试；报告以 **Reviewed SHA**（实际测试的代码提交）命名，写入 `docs/review/reports/`，PR 评论放摘要与链接。
-5. `Blocker` / `Major` 或自测试失败由对应实现者修复；架构或契约问题回到 Claude，先改 ADR/契约再改代码。
-6. 人类合并；Feature 报告可在合并前或任务关闭前归档，Arch/Ops/Docs（若评审）必须在合并前归档（见 `docs/review/standards.md` §6.1）；维护者批量把 Feature 任务状态改为 `done`。AI 不得自动 `git commit` / `git push`，除非用户明确要求。
+4. Codex 按 `docs/review/standards.md` 只读评审 PR，核对 Reviewed SHA 对应的 CI，并按风险补充测试；在 PR 评论记录结论、验证证据与未覆盖范围。报告文件可选。
+5. `Blocker` / `Major` 或验证失败由对应实现者修复；架构或契约问题回到 Claude，先改 ADR/契约再改代码。
+6. 人类合并；维护者批量把 Feature 任务状态改为 `done`。AI 不得自动 `git commit` / `git push`，除非用户明确要求。
 
 **并发约束**：同一工作区同一时刻只允许一个角色写文件。并行任务用独立分支或 `git worktree`，禁止两个工具同时改同一批文件。
 
-**任务状态权限**：仅 Feature 任务包有状态。Claude 只设 `draft` / `ready`（`ready` 需人工确认）；CodeBuddy 只设 `in-review`；人类维护者设 `done` 与强制回退；任意当前负责人可置 `blocked` 并按解除条件恢复；Codex 不得改状态。状态机、front matter 与 §8.2 记录要求见 `docs/tasks/README.md` §2（DOC-04）。
+**任务状态权限**：仅 Feature 任务包有状态。Claude 只设 `draft` / `ready`（`ready` 需人工确认）；CodeBuddy 只设 `in-review`；人类维护者设 `done` 与强制回退；任意当前负责人可置 `blocked` 并按解除条件恢复；Codex 不得改状态。状态只更新 front matter，Git 历史与 PR 保留流转依据；细则见 `docs/tasks/README.md` §2（DOC-04）。
 
-**Codex 自测试与报告**：必须按 `docs/review/standards.md` §4 的 A/B/C 级在独立 worktree / 干净检出中执行；A 级不得只跑单模块，Docs 级可免构建并说明理由。报告命名与归档见 §6.1；不得只信 CI，不得修改代码/测试，不得提交构建产物。
+**Codex 验证与报告**：按 `docs/review/standards.md` §4 的 A/B/C 级核验 CI 与风险对应的测试；不重复执行 CI 已覆盖的全量测试。报告以 PR 评论为准，独立报告文件可选；不得修改代码/测试，不得提交构建产物。
 
 ## 1. 项目是什么
 
@@ -101,15 +101,15 @@ pom.xml (parent: spring-boot-starter-parent)
 - **消息 MQ**：Topic / 消费组先登记 `MqTopics` / `MqConsumerGroups`；只用 `MessagePublisher`；消费端必须幂等并配重试/死信（见 `docs/rules/database.md`）。
 - **编码 CODE**：构造注入、禁止字段 `@Autowired`；统一异常；`@Valid` 校验；日志用 `@Slf4j` 占位符（见 `docs/rules/code-style.md`）。
 - **依赖 DEPS**：版本只在根 `pom.xml` 管理；新增依赖先确认；禁止第二套 JSON / 日志 / HTTP 客户端。
-- **变更边界 SCOPE**：Feature 只改任务包允许路径，Arch/Ops/Docs 只改 PR 描述列出的路径；一个 PR 只做一件事，语义 diff ≤400 行（docs-only 报告归档提交不计入，归档提交自身 ≤400 行）。
+- **变更边界 SCOPE**：Feature 只改任务包允许路径，Arch/Ops/Docs 只改 PR 描述列出的路径；一个 PR 只做一件事，语义 diff ≤400 行。
 
 ## 5. 契约、任务包与评审
 
 - **契约冻结**：`docs/contracts/` 是接口唯一依据；架构基线通过 `main` 上的 `arch-baseline-vX.Y` 标签冻结。冻结与变更流程见 `docs/contracts/README.md` §3。
 - **先改契约再改代码**：任何接口/DDL/事件变更必须先由 Claude 出 ADR 并单独提交契约 PR；CodeBuddy 与 Codex 不得修改 `docs/contracts/**`。
 - **任务包**：每个 Feature 变更必须有 `docs/tasks/T-xxx-<slug>.md`；Arch 用 ADR + 契约 diff，Ops 用 PR 描述，Docs 用 PR 描述。规范与状态机见 `docs/tasks/README.md`。
-- **评审**：Codex 只读评审并独立执行自测试，判据与输出格式见 `docs/review/standards.md`；报告命名与归档要求见该文件 §6.1。
-- **PR 上限**：单服务、单任务、语义 diff ≤400 行（docs-only 报告归档提交不计入，归档提交自身 ≤400 行）；口径以 `docs/review/standards.md` SCOPE-02 为准；超出请拆任务，不要提交大杂烩。
+- **评审**：Codex 只读评审并按风险核验 CI / 补充测试，判据与输出格式见 `docs/review/standards.md`。
+- **PR 上限**：单服务、单任务、语义 diff ≤400 行；口径以 `docs/review/standards.md` SCOPE-02 为准；超出请拆任务，不要提交大杂烩。
 
 ## 6. 禁止事项（违反即打回）
 
@@ -131,8 +131,8 @@ pom.xml (parent: spring-boot-starter-parent)
 | `docs/contracts/README.md` | 契约目录、冻结与变更流程 |
 | `docs/contracts/api-conventions.md` | 接口总纲（响应、错误码、鉴权、分页） |
 | `docs/tasks/README.md` | 任务包规范与状态流转 |
-| `docs/review/standards.md` | Codex 评审规则、自测试要求、分级与结论 |
-| `docs/review/reports/` | Codex 评审报告归档（按任务/PR + Reviewed SHA 命名） |
+| `docs/review/standards.md` | Codex 评审规则、风险验证、分级与结论 |
+| `docs/review/reports/` | 可选的 Codex 评审报告副本（按任务/PR + Reviewed SHA 命名） |
 | `docs/adr/` | 架构决策记录 |
 | `docs/architecture.md` | 设计目标、核心链路、高并发与一致性 |
 | `docs/domain.md` | 业务域、服务归属、领域边界 |

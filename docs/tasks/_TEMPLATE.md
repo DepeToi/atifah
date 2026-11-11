@@ -34,8 +34,7 @@ related_adr: []
 ```text
 atifah-services/<service>/**
 atifah-services/<service>/src/test/**
-docs/tasks/T-000-<slug>.md              # 仅 front matter / §8.1 / §8.2
-docs/review/reports/**                  # 仅归档 Codex 报告
+docs/tasks/T-000-<slug>.md              # 仅 front matter
 ```
 
 > 只列实际需要的路径；不要写整个仓库。只允许改上述路径，其他一律禁止。
@@ -71,7 +70,7 @@ atifah-common/**
 
 ## 6. 测试与自检
 
-- 自测试级别：A / B / C（定义见 `docs/review/standards.md` §4）
+- 验证级别：A / B / C（定义见 `docs/review/standards.md` §4）
 - [ ] 单元测试覆盖：<类/方法>
 - [ ] 成功 / 失败 / 边界用例：
 - [ ] 如涉及 MQ：重复消费、乱序、重试用例。
@@ -90,21 +89,3 @@ mvn -B -ntp verify
 - 风险：
 - 回滚方式：
 - 数据迁移影响：
-
-## 8. 评审与状态记录
-
-### 8.1 评审与自测试记录
-
-- 评审报告：`docs/review/reports/T-000-rN-<reviewed-sha>.md`
-
-| 轮次 | 评审人 | Reviewed SHA | 自测试命令/结果 | 结论 | Blocker/Major | 处理 |
-| --- | --- | --- | --- | --- | --- | --- |
-| 1 | Codex |  |  |  |  |  |
-
-### 8.2 状态变更记录
-
-> 每次状态变更必须更新 front matter 的 `status` / `updated` / `status_reason`，并在此追加一行；没有记录的状态变更无效（DOC-04）。
-
-| 日期 | 从 | 到 | 操作人 | 依据/证据 |
-| --- | --- | --- | --- | --- |
-| YYYY-MM-DD | draft | ready | Claude | 契约冻结 + 维护者确认 |

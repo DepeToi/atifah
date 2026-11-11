@@ -179,16 +179,16 @@ curl http://localhost:8090/actuator/health   # admin-service（管理后台 BFF�
 | --- | --- | --- |
 | Claude（架构） | ADR、契约、任务包、公共能力、网关/部署/CI | `AGENTS.md` §0、`docs/contracts/`、`docs/tasks/` |
 | CodeBuddy（开发） | 按 Feature 任务包实现与测试 | `AGENTS.md` §0、目标模块 `AGENTS.md`、任务包 |
-| Codex（评审） | 只读评审 + 独立自测试 + 报告落盘 | `AGENTS.md` §0、[`docs/review/standards.md`](docs/review/standards.md) |
+| Codex（评审） | 只读评审 + 按风险核验 CI / 补测 | `AGENTS.md` §0、[`docs/review/standards.md`](docs/review/standards.md) |
 | 人类（维护者） | 确认架构、合并、打基线、改 `done` | `AGENTS.md` §0 |
 
 标准交接顺序：
 
 1. Claude 产出 ADR + 契约 +（Feature）任务包；人工确认后在 `main` 打 `arch-baseline-vX.Y`。
 2. Feature：CodeBuddy 从 `main` 拉 `feat/T-xxx-<slug>`，只改任务包允许路径，自检后开 PR；Arch/Ops/Docs 由 Claude 在 `arch/`、`ops/`、`docs/` 分支实现。
-3. CI 通过后，Codex 按 A/B/C 级在独立 worktree 复跑自测试，报告以 Reviewed SHA 命名并写入 `docs/review/reports/`。
-4. `Blocker` / `Major` 或自测试失败回实现者；架构/契约问题回 Claude。
-5. 人类合并；Feature 报告可在合并前或任务关闭前归档，Arch/Ops/Docs（若评审）须在合并前归档（见 `docs/review/standards.md` §6.1）；维护者批量把 Feature 任务改为 `status: done`。
+3. CI 通过后，Codex 核验 Reviewed SHA 对应的 CI，并按风险补跑 CI 未覆盖的测试；在 PR 评论记录结论和验证证据，报告文件可选。
+4. `Blocker` / `Major` 或验证失败回实现者；架构/契约问题回 Claude。
+5. 人类合并；维护者批量把 Feature 任务改为 `status: done`。
 
 分支、提交、PR 与任务状态机的完整规则见 [`docs/rules/git-workflow.md`](docs/rules/git-workflow.md)、[`docs/tasks/README.md`](docs/tasks/README.md)；命令与自检见 `AGENTS.md` §9。
 

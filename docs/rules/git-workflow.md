@@ -19,7 +19,7 @@
   - 功能：`feat/T-xxx-<slug>`（CodeBuddy）
   - 修复：`fix/T-xxx-<slug>`（CodeBuddy）
   - 文档/规则：`docs/<topic>`（Claude）
-- Feature 一个 PR 对应一个任务包；Arch/Ops/Docs 一个 PR 对应一个变更。单服务、语义 diff ≤400 行（docs-only 报告归档提交不计入，归档提交自身 ≤400 行）；超出请拆任务。
+- Feature 一个 PR 对应一个任务包；Arch/Ops/Docs 一个 PR 对应一个变更。单服务、语义 diff ≤400 行；超出请拆任务。
 - PR 必须使用 `.github/pull_request_template.md`，写清改了什么、为什么、影响面、如何验证。
 - 契约变更必须单独开 PR，不得混在功能 PR 里。
 
@@ -65,7 +65,7 @@ git status              # 确认没有无关文件
 ## GIT-07 三角色交接约束
 
 - 同一工作区同一时刻只允许一个角色写文件；并行任务用独立分支或 `git worktree`。
-- Codex 只读评审，可在独立 worktree / 干净检出中执行构建与测试，并写 `docs/review/reports/**` 评审报告；不得修改代码/契约/任务实现，不得提交修复或构建产物；修复必须回到实现者。
-- 任务状态只对 Feature 任务包生效；四状态 `draft → ready → in-review → done`（`blocked` 横向）。授权角色见 `docs/tasks/README.md` §2；Codex 不得改状态；每次变更更新 front matter 与任务包 §8.2（DOC-04）。
+- Codex 只读评审，核验 Reviewed SHA 对应的 CI，并按风险补充测试；PR 评论是默认评审记录，`docs/review/reports/**` 报告可选归档。Codex 不得修改代码/契约/任务实现、提交修复或构建产物；修复必须回到实现者。
+- 任务状态只对 Feature 任务包生效；四状态 `draft → ready → in-review → done`（`blocked` 横向）。授权角色见 `docs/tasks/README.md` §2；Codex 不得改状态；每次变更只更新 front matter，Git 历史与 PR 即记录（DOC-04）。
 - CodeBuddy 不得修改契约、规则、父 pom 或其他服务；需要变更时回到 Claude 走 ADR/契约 PR。
 - Feature 由 CodeBuddy 实现；Arch/Ops/Docs 由 Claude 实现；两者不得混在同一个 PR。

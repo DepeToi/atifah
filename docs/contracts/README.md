@@ -1,6 +1,6 @@
 # 契约目录（docs/contracts）
 
-> 这里是 Claude 产出、CodeBuddy 实现、Codex 校验与自测试的**接口唯一依据**。
+> 这里是 Claude 产出、CodeBuddy 实现、Codex 校验与风险验证的**接口唯一依据**。
 > 契约一旦冻结，优先级高于实现代码；实现与契约冲突时以契约为准，改契约必须先走 ADR。
 
 ## 1. 目录结构
@@ -25,7 +25,7 @@ docs/contracts/
 
 ## 2. 所有权与写入权限
 
-角色与可写范围以 `AGENTS.md` §0 为唯一来源。契约相关约束只有一条：`docs/contracts/**` 由 Claude 写入，CodeBuddy / Codex 只读（Codex 可运行自测试）。
+角色与可写范围以 `AGENTS.md` §0 为唯一来源。契约相关约束只有一条：`docs/contracts/**` 由 Claude 写入，CodeBuddy / Codex 只读。
 
 CodeBuddy **禁止**修改契约来迁就实现。发现契约缺失或矛盾时，在 PR 中标注 `[Contract-Question]` 并等待 Claude 更新。
 
@@ -58,7 +58,7 @@ CodeBuddy **禁止**修改契约来迁就实现。发现契约缺失或矛盾时
 
 - **Claude**：写契约、维护模板与总纲；通过 ADR 记录取舍。
 - **CodeBuddy**：Feature 任务包“上下文与必读”列出具体契约路径；实现以契约为准，不自行扩展字段。
-- **Codex**：评审时对照契约检查 diff；Arch 变更检查 ADR 与契约 diff；自测试与报告要求见 `docs/review/standards.md` §4/§6.1。
+- **Codex**：评审时对照契约检查 diff；Arch 变更检查 ADR 与契约 diff；CI 核验与风险验证要求见 `docs/review/standards.md` §4/§6。
 
 ## 6. 相关文档
 
