@@ -1,11 +1,11 @@
 ---
 id: T-003
 title: auth 刷新与登出
-status: ready
+status: in-review
 owner: codebuddy
 created: 2026-11-11
 updated: 2026-11-11
-status_reason: 维护者指示开启 T-003；契约已冻结（arch-baseline-v0.1）
+status_reason: 实现完成并推送分支 feat/T-003-auth-refresh-logout（bbd3949），等待 Codex 评审
 contract_baseline: arch-baseline-v0.1
 related_adr: [docs/adr/0003-auth-baseline.md]
 ---
