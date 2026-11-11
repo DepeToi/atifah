@@ -19,7 +19,7 @@
   - 功能：`feat/T-xxx-<slug>`（CodeBuddy）
   - 修复：`fix/T-xxx-<slug>`（CodeBuddy）
   - 文档/规则：`docs/<topic>`（Claude）
-- Feature 一个 PR 对应一个任务包；Arch/Ops/Docs 一个 PR 对应一个变更。单服务、语义 diff ≤400 行；超出请拆任务。
+- Feature 一个 PR 对应一个任务包；Arch/Ops/Docs 一个 PR 对应一个变更。单服务、生产语义 diff ≤400 行（口径见 `docs/review/standards.md` SCOPE-02）；超出请拆任务。
 - PR 必须使用 `.github/pull_request_template.md`，写清改了什么、为什么、影响面、如何验证。
 - 契约变更必须单独开 PR，不得混在功能 PR 里。
 

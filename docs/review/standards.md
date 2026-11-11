@@ -114,12 +114,14 @@ cd atifah-admin-web/frontend && npm ci && npm run build
 | 编号 | 检查点 | 默认级别 |
 | --- | --- | --- |
 | SCOPE-01 | 变更类型与 diff 范围一致；具备该类型必需产物；Feature 只改任务包允许路径，Arch/Ops/Docs 只改 PR 描述列出的路径 | Blocker |
-| SCOPE-02 | 一个 PR 只对应一个任务/变更；语义 diff ≤400 行 | Major |
+| SCOPE-02 | 一个 PR 只对应一个任务/变更；生产语义 diff ≤400 行（测试不计入，口径见本节说明） | Major |
 | SCOPE-03 | 未授权修改契约/规则/父 pom/受保护文件 | Blocker |
 | ARCH-01 | 一服务一库；禁止跨库 JOIN、访问其他服务表 | Blocker |
 | ARCH-02 | 跨服务同步走 OpenFeign、异步走 RocketMQ；禁止共享库绕过 | Blocker |
 | ARCH-03 | `common-*` 不依赖 service；网关不引入 `common-web` / `common-mybatis` / servlet 栈 | Blocker |
 | ARCH-04 | 公共能力走 `AutoConfiguration.imports`；业务服务不得加 `@ComponentScan("com.atifah")` | Major |
+
+**SCOPE-02 统计口径**：只统计生产代码、SQL、配置、契约与规则的语义新增/删除行；测试代码、纯格式化、生成文件不计入。测试代码规模仍需在 PR 描述中说明，评审关注覆盖质量而非行数。
 
 ### 5.2 接口
 
