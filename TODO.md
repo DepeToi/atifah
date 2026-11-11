@@ -7,10 +7,10 @@
 
 ## 0. 使用约定
 
-- **P0 未完成前，不启动 P1–P4 的规则修改**；先用一次真实任务验证流程，再按实际摩擦调整。
+- **P0 已完成（2026-11-11）**；P1–P4 可按计划启动，规则修改仍需按变更类型走 PR。
 - 每项只标注执行角色；实际 `git commit` / `git push` 仍由人工授权（GIT-01）。
-- P0-1 已完成：规则基线（ADR 0001 + 11 个文档）已提交并合并；工作区除 `.claude/settings.local.json` 本地配置外无未提交改动，可直接开始 P0-2。
-- 当前仓库状态：`main` 分支，无 `arch-baseline-*` 标签，`docs/contracts/` 只有模板与 `api-conventions.md`。
+- P0-1..P0-11 已完成：规则基线、auth 契约 + DDL + ADR 0003、T-001 注册切片均已合并；复盘见下方。
+- 当前仓库状态：`main` 分支；`arch-baseline-v0.1` 已打标签；`docs/contracts/` 已包含 auth 契约。
 
 ## P0 流程冒烟（auth 纵向切片）
 
@@ -28,11 +28,25 @@
 | P0-8 | 实现 T-001 | CodeBuddy | P0-7 | 按任务包实现；自检通过；PR 置 `in-review` |
 | P0-9 | 评审 T-001 | Codex | P0-8 | PR 评论含 Reviewed SHA、CI、补测、未覆盖范围、结论 |
 | P0-10 | 合并 + `done` | 人工 | P0-9 | PR 合并；任务包 `status: done` |
-| P0-11 | 流程复盘 | 全体 | P0-10 | 记录 3 个真实摩擦点，决定是否调整 P1–P4 |
+| P0-11 | 流程复盘 | 全体 | P0-10 | ✅ 已完成（见下方复盘） |
 
 **P0 明确不做**：9 个服务全量契约、MQ 事件链路、前端页面、管理端鉴权。
 
 > 实现拆分（2026-11-11 维护者确认）：为满足 SCOPE-02 ≤400 行，auth 实现拆为 T-001 注册 / T-002 登录 / T-003 刷新与登出；本表 P0-7..P0-10 先以 T-001 跑通流程，T-002/T-003 在 P0-11 复盘后继续。
+
+### P0-11 复盘（2026-11-11）
+
+| # | 摩擦点 | 处理 | 证据 |
+| --- | --- | --- | --- |
+| 1 | SCOPE-02 未说明测试是否计入 400 行 | ADR 0004：只统计生产语义行 | PR #9 |
+| 2 | PR 描述复用旧 Docs 内容，类型与 diff 不符 | PR 模板增加变更类型/范围自检 | PR #10 |
+| 3 | common-web 框架级 400 未映射，服务内临时兜底 | common-web 统一映射 + 测试 | PR #11 |
+
+结论：
+
+- P1-5 已完成（PR #10）；P1–P4 其余项不因本次复盘调整。
+- auth-service 的临时 `AuthExceptionHandler` 在 T-002 中删除。
+- gitleaks 对 JWT 示例的误报已用低熵占位符规避；`BusinessException(ErrorCode, String)` 构造器缺失留待后续公共 API 评估，不阻塞流程。
 
 ### P0 建议顺序
 
@@ -54,7 +68,7 @@
 - [ ] P1-2 `docs/tasks/README.md` §6 只留分支/自检命令；评审要求指向 `docs/review/standards.md` §4。
 - [ ] P1-3 `docs/rules/git-workflow.md` GIT-07 只留 Git 侧约束；交接顺序指向 `AGENTS.md` §0。
 - [ ] P1-4 `docs/tasks/_TEMPLATE.md` 的 `owner` 改为 `implementer`。
-- [ ] P1-5 PR 模板增加“Feature 变更路径 ⊆ 任务包允许路径”检查项。
+- [x] P1-5 PR 模板增加“Feature 变更路径 ⊆ 任务包允许路径”检查项（PR #10）。
 
 **验收**：同一交接步骤不再在 4 处重复描述；相关章节只保留一处正文 + 链接。
 
