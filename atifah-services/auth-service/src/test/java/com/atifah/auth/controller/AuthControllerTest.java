@@ -3,6 +3,7 @@ package com.atifah.auth.controller;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
+import com.atifah.auth.dto.RefreshTokenRequest;
 import com.atifah.auth.service.AuthService;
 import com.atifah.auth.vo.AuthToken;
 import com.atifah.auth.vo.RegisterResult;
@@ -25,6 +26,7 @@ import java.util.stream.Collectors;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -47,6 +49,10 @@ class AuthControllerTest {
     private static final String PASSWORD = "Passw0rd123";
 
     private static final String VALID_BODY = "{\"phone\":\"13800005678\",\"password\":\"Passw0rd123\"}";
+
+    private static final String REFRESH_TOKEN = "0123456789012345678901234567890123456789012";
+
+    private static final String REFRESH_BODY = "{\"refreshToken\":\"" + REFRESH_TOKEN + "\"}";
 
     @Mock
     private AuthService authService;
@@ -246,6 +252,78 @@ class AuthControllerTest {
                         .content(VALID_BODY))
                 .andExpect(status().isTooManyRequests())
                 .andExpect(jsonPath("$.code").value(ErrorCode.TOO_MANY_REQUESTS.getCode()));
+    }
+
+    @Test
+    void refreshSuccessReturnsRotatedTokens() throws Exception {
+        when(authService.refresh(any())).thenReturn(
+                new AuthToken("1856000000000000001", "new-access-token", "new-refresh-token", "Bearer", 900, 604800));
+
+        mockMvc.perform(post("/api/v1/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(REFRESH_BODY))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(0))
+                .andExpect(jsonPath("$.data.accessToken").value("new-access-token"))
+                .andExpect(jsonPath("$.data.refreshToken").value("new-refresh-token"))
+                .andExpect(jsonPath("$.data.expiresIn").value(900))
+                .andExpect(jsonPath("$.data.refreshExpiresIn").value(604800));
+    }
+
+    @Test
+    void refreshWithInvalidTokenReturnsUnauthorized() throws Exception {
+        when(authService.refresh(any()))
+                .thenThrow(new BusinessException(ErrorCode.UNAUTHORIZED.getCode(), "刷新令牌无效或已过期"));
+
+        mockMvc.perform(post("/api/v1/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(REFRESH_BODY))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value(ErrorCode.UNAUTHORIZED.getCode()));
+    }
+
+    @Test
+    void refreshWithShortTokenReturnsBadRequest() throws Exception {
+        mockMvc.perform(post("/api/v1/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"refreshToken\":\"too-short\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value(ErrorCode.BAD_REQUEST.getCode()));
+
+        verifyNoInteractions(authService);
+    }
+
+    @Test
+    void refreshWithoutBodyReturnsBadRequest() throws Exception {
+        mockMvc.perform(post("/api/v1/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value(ErrorCode.BAD_REQUEST.getCode()));
+
+        verifyNoInteractions(authService);
+        assertNoSensitiveLog();
+    }
+
+    @Test
+    void logoutSuccessReturnsOk() throws Exception {
+        mockMvc.perform(post("/api/v1/auth/logout")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(REFRESH_BODY))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(0));
+
+        verify(authService).logout(new RefreshTokenRequest(REFRESH_TOKEN));
+    }
+
+    @Test
+    void logoutWithShortTokenReturnsBadRequest() throws Exception {
+        mockMvc.perform(post("/api/v1/auth/logout")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"refreshToken\":\"too-short\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value(ErrorCode.BAD_REQUEST.getCode()));
+
+        verifyNoInteractions(authService);
     }
 
     /**

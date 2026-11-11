@@ -3,8 +3,42 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.atifah.auth.mapper.AuthRefreshTokenMapper">
 
+    <resultMap id="AuthRefreshTokenMap" type="com.atifah.auth.entity.AuthRefreshToken">
+        <id column="id" property="id"/>
+        <result column="user_id" property="userId"/>
+        <result column="token_hash" property="tokenHash"/>
+        <result column="expires_at" property="expiresAt"/>
+        <result column="revoked_at" property="revokedAt"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+        <result column="deleted" property="deleted"/>
+    </resultMap>
+
     <insert id="insert" parameterType="com.atifah.auth.entity.AuthRefreshToken">
         INSERT INTO t_auth_refresh_token (id, user_id, token_hash, expires_at)
         VALUES (#{id}, #{userId}, #{tokenHash}, #{expiresAt})
     </insert>
+
+    <select id="selectByTokenHash" resultMap="AuthRefreshTokenMap">
+        SELECT id, user_id, token_hash, expires_at, revoked_at, created_at, updated_at, deleted
+        FROM t_auth_refresh_token
+        WHERE token_hash = #{tokenHash}
+          AND deleted = 0
+    </select>
+
+    <update id="revoke">
+        UPDATE t_auth_refresh_token
+        SET revoked_at = #{revokedAt}
+        WHERE id = #{id}
+          AND revoked_at IS NULL
+          AND deleted = 0
+    </update>
+
+    <update id="revokeAllActiveByUserId">
+        UPDATE t_auth_refresh_token
+        SET revoked_at = #{revokedAt}
+        WHERE user_id = #{userId}
+          AND revoked_at IS NULL
+          AND deleted = 0
+    </update>
 </mapper>

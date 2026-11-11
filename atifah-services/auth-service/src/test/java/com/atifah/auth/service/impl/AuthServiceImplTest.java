@@ -4,12 +4,14 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import com.atifah.auth.dto.LoginRequest;
+import com.atifah.auth.dto.RefreshTokenRequest;
 import com.atifah.auth.dto.RegisterRequest;
 import com.atifah.auth.entity.AuthAccount;
 import com.atifah.auth.mapper.AuthAccountMapper;
 import com.atifah.auth.service.AuthIdempotencyGuard;
 import com.atifah.auth.service.LoginFailureGuard;
 import com.atifah.auth.service.LoginTokenWriter;
+import com.atifah.auth.service.RefreshTokenService;
 import com.atifah.auth.vo.AuthToken;
 import com.atifah.auth.vo.RegisterResult;
 import com.atifah.common.core.enums.ErrorCode;
@@ -74,6 +76,9 @@ class AuthServiceImplTest {
     @Mock
     private LoginTokenWriter loginTokenWriter;
 
+    @Mock
+    private RefreshTokenService refreshTokenService;
+
     private PasswordEncoder passwordEncoder;
 
     private AuthServiceImpl authService;
@@ -86,7 +91,7 @@ class AuthServiceImplTest {
     void setUp() {
         passwordEncoder = spy(new BCryptPasswordEncoder());
         authService = new AuthServiceImpl(authAccountMapper, passwordEncoder, idempotencyGuard,
-                loginFailureGuard, loginTokenWriter);
+                loginFailureGuard, loginTokenWriter, refreshTokenService);
         authServiceLogger = (Logger) LoggerFactory.getLogger(AuthServiceImpl.class);
         logAppender = new ListAppender<>();
         logAppender.start();
@@ -287,6 +292,28 @@ class AuthServiceImplTest {
         assertThrows(IllegalStateException.class, () -> authService.login(new LoginRequest(PHONE, PASSWORD)));
 
         verify(authAccountMapper, never()).selectByPhone(anyString());
+    }
+
+    @Test
+    void refreshDelegatesToRefreshTokenService() {
+        RefreshTokenRequest request = new RefreshTokenRequest("0123456789012345678901234567890123456789012");
+        AuthToken expected = new AuthToken(String.valueOf(USER_ID), "access", "refresh", "Bearer", 900, 604800);
+        when(refreshTokenService.refresh(request)).thenReturn(expected);
+
+        AuthToken token = authService.refresh(request);
+
+        assertEquals(expected, token);
+        assertNoSensitiveLog();
+    }
+
+    @Test
+    void logoutDelegatesToRefreshTokenService() {
+        RefreshTokenRequest request = new RefreshTokenRequest("0123456789012345678901234567890123456789012");
+
+        authService.logout(request);
+
+        verify(refreshTokenService).logout(request);
+        assertNoSensitiveLog();
     }
 
     private AuthAccount buildAccount(String rawPassword, int status) {

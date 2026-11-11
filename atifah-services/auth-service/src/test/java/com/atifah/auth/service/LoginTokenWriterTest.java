@@ -61,8 +61,8 @@ class LoginTokenWriterTest {
 
     @BeforeEach
     void setUp() {
-        tokenWriter = new LoginTokenWriter(authRefreshTokenMapper, authAccountMapper, jwtTokenProvider,
-                new JwtProperties(), new AuthProperties());
+        tokenWriter = new LoginTokenWriter(authRefreshTokenMapper, authAccountMapper,
+                new TokenFactory(jwtTokenProvider, new JwtProperties(), new AuthProperties()), new AuthProperties());
     }
 
     @Test
