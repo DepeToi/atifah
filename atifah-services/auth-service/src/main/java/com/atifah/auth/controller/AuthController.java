@@ -1,7 +1,9 @@
 package com.atifah.auth.controller;
 
+import com.atifah.auth.dto.LoginRequest;
 import com.atifah.auth.dto.RegisterRequest;
 import com.atifah.auth.service.AuthService;
+import com.atifah.auth.vo.AuthToken;
 import com.atifah.auth.vo.RegisterResult;
 import com.atifah.common.core.constant.CommonConstants;
 import com.atifah.common.core.enums.ErrorCode;
@@ -16,7 +18,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * 认证接口：当前仅实现手机号注册。
+ * 认证接口：手机号注册与登录。
  *
  * @author DepeToi
  * @since 1.0.0
@@ -43,5 +45,16 @@ public class AuthController {
             throw new BusinessException(ErrorCode.BAD_REQUEST.getCode(), "Idempotency-Key 缺失或格式非法");
         }
         return Result.ok(authService.register(request, idempotencyKey));
+    }
+
+    /**
+     * 手机号密码登录，不要求 Idempotency-Key。
+     *
+     * @param request 登录请求
+     * @return 访问令牌与刷新令牌
+     */
+    @PostMapping("/login")
+    public Result<AuthToken> login(@Valid @RequestBody LoginRequest request) {
+        return Result.ok(authService.login(request));
     }
 }

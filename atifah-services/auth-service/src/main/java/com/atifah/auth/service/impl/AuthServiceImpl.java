@@ -1,10 +1,14 @@
 package com.atifah.auth.service.impl;
 
+import com.atifah.auth.dto.LoginRequest;
 import com.atifah.auth.dto.RegisterRequest;
 import com.atifah.auth.entity.AuthAccount;
 import com.atifah.auth.mapper.AuthAccountMapper;
 import com.atifah.auth.service.AuthIdempotencyGuard;
 import com.atifah.auth.service.AuthService;
+import com.atifah.auth.service.LoginFailureGuard;
+import com.atifah.auth.service.LoginTokenWriter;
+import com.atifah.auth.vo.AuthToken;
 import com.atifah.auth.vo.RegisterResult;
 import com.atifah.common.core.enums.ErrorCode;
 import com.atifah.common.core.exception.BusinessException;
@@ -15,11 +19,13 @@ import org.springframework.dao.DuplicateKeyException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.Objects;
 import java.util.Optional;
 
 /**
  * 认证业务实现。
- * 注册是单条 INSERT，不加事务，避免在事务内做 Redis 远程调用（DB-04）。
+ * 注册是单条 INSERT，不加事务，避免在事务内做 Redis 远程调用（DB-04）；
+ * 登录的写库动作集中在 LoginTokenWriter 的短事务内。
  *
  * @author DepeToi
  * @since 1.0.0
@@ -40,11 +46,27 @@ public class AuthServiceImpl implements AuthService {
 
     private static final String DUPLICATE_PHONE_MESSAGE = "手机号已注册";
 
+    /** 凭据错误统一提示，不区分账号是否存在。 */
+    private static final String INVALID_CREDENTIALS_MESSAGE = "手机号或密码错误";
+
+    private static final String ACCOUNT_DISABLED_MESSAGE = "账号已禁用";
+
+    /**
+     * 账号不存在时用于等时比对的 BCrypt 哈希。
+     * 对固定口令编码一次，保证与真实密码校验耗时相近，降低通过响应时间枚举账号的风险。
+     */
+    private static final String DUMMY_PASSWORD_HASH =
+            "$2a$10$oRDE4Lm0UV6.TU7FFI1biu.lBHpCixbTfU38ZqB8A9lgIb8VSESOu";
+
     private final AuthAccountMapper authAccountMapper;
 
     private final PasswordEncoder passwordEncoder;
 
     private final AuthIdempotencyGuard idempotencyGuard;
+
+    private final LoginFailureGuard loginFailureGuard;
+
+    private final LoginTokenWriter loginTokenWriter;
 
     /**
      * 手机号注册。
@@ -79,6 +101,44 @@ public class AuthServiceImpl implements AuthService {
         idempotencyGuard.save(idempotencyKey, request.phone(), account.getUserId());
         log.info("register succeeded, userId={}", account.getUserId());
         return new RegisterResult(String.valueOf(account.getUserId()));
+    }
+
+    /**
+     * 手机号密码登录。
+     * 账号不存在与密码错误返回同一错误码，并在账号不存在时执行等时比对；
+     * 密码校验通过后才清除失败计数并判断账号状态，避免暴露账号是否存在。
+     *
+     * @param request 登录请求
+     * @return 访问令牌与刷新令牌
+     */
+    @Override
+    public AuthToken login(LoginRequest request) {
+        loginFailureGuard.assertNotLocked(request.phone());
+
+        AuthAccount account = authAccountMapper.selectByPhone(request.phone());
+        if (account == null) {
+            // 等时比对：账号不存在时也执行一次 BCrypt，避免响应时间泄露账号是否存在。
+            passwordEncoder.matches(request.password(), DUMMY_PASSWORD_HASH);
+            loginFailureGuard.recordFailure(request.phone());
+            log.info("login failed, reason=account not found");
+            throw new BusinessException(ErrorCode.UNAUTHORIZED.getCode(), INVALID_CREDENTIALS_MESSAGE);
+        }
+
+        if (!passwordEncoder.matches(request.password(), account.getPasswordHash())) {
+            loginFailureGuard.recordFailure(request.phone());
+            log.info("login failed, reason=password mismatch, userId={}", account.getUserId());
+            throw new BusinessException(ErrorCode.UNAUTHORIZED.getCode(), INVALID_CREDENTIALS_MESSAGE);
+        }
+
+        loginFailureGuard.clear(request.phone());
+        if (!Objects.equals(account.getStatus(), ACCOUNT_STATUS_NORMAL)) {
+            log.info("login rejected, reason=account disabled, userId={}", account.getUserId());
+            throw new BusinessException(ErrorCode.FORBIDDEN.getCode(), ACCOUNT_DISABLED_MESSAGE);
+        }
+
+        AuthToken token = loginTokenWriter.issue(account);
+        log.info("login succeeded, userId={}", account.getUserId());
+        return token;
     }
 
     /**

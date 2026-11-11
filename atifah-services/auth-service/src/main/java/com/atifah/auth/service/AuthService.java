@@ -1,6 +1,8 @@
 package com.atifah.auth.service;
 
+import com.atifah.auth.dto.LoginRequest;
 import com.atifah.auth.dto.RegisterRequest;
+import com.atifah.auth.vo.AuthToken;
 import com.atifah.auth.vo.RegisterResult;
 
 /**
@@ -19,4 +21,12 @@ public interface AuthService {
      * @return 注册结果，仅包含全局用户 ID
      */
     RegisterResult register(RegisterRequest request, String idempotencyKey);
+
+    /**
+     * 手机号密码登录。
+     *
+     * @param request 登录请求
+     * @return 访问令牌与刷新令牌
+     */
+    AuthToken login(LoginRequest request);
 }

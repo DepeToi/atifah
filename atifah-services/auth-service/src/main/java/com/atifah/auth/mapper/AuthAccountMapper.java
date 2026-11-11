@@ -3,6 +3,8 @@ package com.atifah.auth.mapper;
 import com.atifah.auth.entity.AuthAccount;
 import org.apache.ibatis.annotations.Param;
 
+import java.time.LocalDateTime;
+
 /**
  * 认证账号 Mapper。
  * 不继承 BaseMapper，SQL 全部写在 resources/mapper/AuthAccountMapper.xml。
@@ -27,4 +29,13 @@ public interface AuthAccountMapper {
      * @return 影响行数
      */
     int insert(AuthAccount account);
+
+    /**
+     * 更新最后登录成功时间。
+     *
+     * @param id 认证账号主键
+     * @param lastLoginAt 最后登录时间
+     * @return 影响行数
+     */
+    int updateLastLoginAt(@Param("id") Long id, @Param("lastLoginAt") LocalDateTime lastLoginAt);
 }

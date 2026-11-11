@@ -4,6 +4,7 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import com.atifah.auth.service.AuthService;
+import com.atifah.auth.vo.AuthToken;
 import com.atifah.auth.vo.RegisterResult;
 import com.atifah.common.core.enums.ErrorCode;
 import com.atifah.common.core.exception.BusinessException;
@@ -31,7 +32,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * 注册接口接口层测试，使用 standalone MockMvc 与全局异常处理器。
+ * 认证接口接口层测试，使用 standalone MockMvc 与全局异常处理器。
  *
  * @author DepeToi
  * @since 1.0.0
@@ -59,9 +60,9 @@ class AuthControllerTest {
     @BeforeEach
     void setUp() {
         mockMvc = MockMvcBuilders.standaloneSetup(new AuthController(authService))
-                .setControllerAdvice(new AuthExceptionHandler(), new GlobalExceptionHandler())
+                .setControllerAdvice(new GlobalExceptionHandler())
                 .build();
-        exceptionHandlerLogger = (Logger) LoggerFactory.getLogger(AuthExceptionHandler.class);
+        exceptionHandlerLogger = (Logger) LoggerFactory.getLogger(GlobalExceptionHandler.class);
         logAppender = new ListAppender<>();
         logAppender.start();
         exceptionHandlerLogger.addAppender(logAppender);
@@ -158,6 +159,93 @@ class AuthControllerTest {
                         .content(VALID_BODY))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.code").value(ErrorCode.CONFLICT.getCode()));
+    }
+
+    @Test
+    void loginSuccessReturnsTokens() throws Exception {
+        when(authService.login(any())).thenReturn(
+                new AuthToken("1856000000000000001", "jwt-access-token", "refresh-token", "Bearer", 900, 604800));
+
+        mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(VALID_BODY))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(0))
+                .andExpect(jsonPath("$.data.userId").value("1856000000000000001"))
+                .andExpect(jsonPath("$.data.accessToken").value("jwt-access-token"))
+                .andExpect(jsonPath("$.data.refreshToken").value("refresh-token"))
+                .andExpect(jsonPath("$.data.tokenType").value("Bearer"))
+                .andExpect(jsonPath("$.data.expiresIn").value(900))
+                .andExpect(jsonPath("$.data.refreshExpiresIn").value(604800));
+    }
+
+    @Test
+    void loginWithInvalidPhoneReturnsBadRequest() throws Exception {
+        mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"phone\":\"12345\",\"password\":\"Passw0rd123\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value(ErrorCode.BAD_REQUEST.getCode()));
+
+        verifyNoInteractions(authService);
+    }
+
+    @Test
+    void loginWithShortPasswordReturnsBadRequest() throws Exception {
+        mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"phone\":\"13800005678\",\"password\":\"short\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value(ErrorCode.BAD_REQUEST.getCode()));
+
+        verifyNoInteractions(authService);
+    }
+
+    @Test
+    void loginWithoutBodyReturnsBadRequest() throws Exception {
+        mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value(ErrorCode.BAD_REQUEST.getCode()));
+
+        verifyNoInteractions(authService);
+        assertNoSensitiveLog();
+    }
+
+    @Test
+    void loginWithBadCredentialsReturnsUnauthorized() throws Exception {
+        when(authService.login(any()))
+                .thenThrow(new BusinessException(ErrorCode.UNAUTHORIZED.getCode(), "手机号或密码错误"));
+
+        mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(VALID_BODY))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value(ErrorCode.UNAUTHORIZED.getCode()));
+    }
+
+    @Test
+    void loginWithDisabledAccountReturnsForbidden() throws Exception {
+        when(authService.login(any()))
+                .thenThrow(new BusinessException(ErrorCode.FORBIDDEN.getCode(), "账号已禁用"));
+
+        mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(VALID_BODY))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value(ErrorCode.FORBIDDEN.getCode()));
+    }
+
+    @Test
+    void loginWhenLockedReturnsTooManyRequests() throws Exception {
+        when(authService.login(any()))
+                .thenThrow(new BusinessException(ErrorCode.TOO_MANY_REQUESTS.getCode(), "登录失败次数过多，请稍后再试"));
+
+        mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(VALID_BODY))
+                .andExpect(status().isTooManyRequests())
+                .andExpect(jsonPath("$.code").value(ErrorCode.TOO_MANY_REQUESTS.getCode()));
     }
 
     /**
