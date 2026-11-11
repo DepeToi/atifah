@@ -101,7 +101,7 @@ pom.xml (parent: spring-boot-starter-parent)
 - **消息 MQ**：Topic / 消费组先登记 `MqTopics` / `MqConsumerGroups`；只用 `MessagePublisher`；消费端必须幂等并配重试/死信（见 `docs/rules/database.md`）。
 - **编码 CODE**：构造注入、禁止字段 `@Autowired`；统一异常；`@Valid` 校验；日志用 `@Slf4j` 占位符（见 `docs/rules/code-style.md`）。
 - **依赖 DEPS**：版本只在根 `pom.xml` 管理；新增依赖先确认；禁止第二套 JSON / 日志 / HTTP 客户端。
-- **变更边界 SCOPE**：Feature 只改任务包允许路径，Arch/Ops/Docs 只改 PR 描述列出的路径；一个 PR 只做一件事，语义 diff ≤400 行。
+- **变更边界 SCOPE**：Feature 只改任务包允许路径，Arch/Ops/Docs 只改 PR 描述列出的路径；一个 PR 只做一件事，生产语义 diff ≤400 行（口径见 `docs/review/standards.md` SCOPE-02）。
 
 ## 5. 契约、任务包与评审
 
@@ -109,7 +109,7 @@ pom.xml (parent: spring-boot-starter-parent)
 - **先改契约再改代码**：任何接口/DDL/事件变更必须先由 Claude 出 ADR 并单独提交契约 PR；CodeBuddy 与 Codex 不得修改 `docs/contracts/**`。
 - **任务包**：每个 Feature 变更必须有 `docs/tasks/T-xxx-<slug>.md`；Arch 用 ADR + 契约 diff，Ops 用 PR 描述，Docs 用 PR 描述。规范与状态机见 `docs/tasks/README.md`。
 - **评审**：Codex 只读评审并按风险核验 CI / 补充测试，判据与输出格式见 `docs/review/standards.md`。
-- **PR 上限**：单服务、单任务、语义 diff ≤400 行；口径以 `docs/review/standards.md` SCOPE-02 为准；超出请拆任务，不要提交大杂烩。
+- **PR 上限**：单服务、单任务、生产语义 diff ≤400 行；口径以 `docs/review/standards.md` SCOPE-02 为准；超出请拆任务，不要提交大杂烩。
 
 ## 6. 禁止事项（违反即打回）
 
