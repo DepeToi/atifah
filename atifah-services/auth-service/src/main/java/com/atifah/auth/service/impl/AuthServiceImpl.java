@@ -1,6 +1,7 @@
 package com.atifah.auth.service.impl;
 
 import com.atifah.auth.dto.LoginRequest;
+import com.atifah.auth.dto.RefreshTokenRequest;
 import com.atifah.auth.dto.RegisterRequest;
 import com.atifah.auth.entity.AuthAccount;
 import com.atifah.auth.mapper.AuthAccountMapper;
@@ -8,6 +9,7 @@ import com.atifah.auth.service.AuthIdempotencyGuard;
 import com.atifah.auth.service.AuthService;
 import com.atifah.auth.service.LoginFailureGuard;
 import com.atifah.auth.service.LoginTokenWriter;
+import com.atifah.auth.service.RefreshTokenService;
 import com.atifah.auth.vo.AuthToken;
 import com.atifah.auth.vo.RegisterResult;
 import com.atifah.common.core.enums.ErrorCode;
@@ -67,6 +69,8 @@ public class AuthServiceImpl implements AuthService {
     private final LoginFailureGuard loginFailureGuard;
 
     private final LoginTokenWriter loginTokenWriter;
+
+    private final RefreshTokenService refreshTokenService;
 
     /**
      * 手机号注册。
@@ -138,6 +142,27 @@ public class AuthServiceImpl implements AuthService {
         AuthToken token = loginTokenWriter.issue(account);
         log.info("login succeeded, userId={}", account.getUserId());
         return token;
+    }
+
+    /**
+     * 刷新令牌并轮换，委托 {@link RefreshTokenService} 处理。
+     *
+     * @param request 刷新请求
+     * @return 轮换后的令牌
+     */
+    @Override
+    public AuthToken refresh(RefreshTokenRequest request) {
+        return refreshTokenService.refresh(request);
+    }
+
+    /**
+     * 登出并撤销刷新令牌，委托 {@link RefreshTokenService} 处理。
+     *
+     * @param request 登出请求
+     */
+    @Override
+    public void logout(RefreshTokenRequest request) {
+        refreshTokenService.logout(request);
     }
 
     /**

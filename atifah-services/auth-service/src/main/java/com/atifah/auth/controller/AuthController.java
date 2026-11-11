@@ -1,6 +1,7 @@
 package com.atifah.auth.controller;
 
 import com.atifah.auth.dto.LoginRequest;
+import com.atifah.auth.dto.RefreshTokenRequest;
 import com.atifah.auth.dto.RegisterRequest;
 import com.atifah.auth.service.AuthService;
 import com.atifah.auth.vo.AuthToken;
@@ -18,7 +19,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * 认证接口：手机号注册与登录。
+ * 认证接口：手机号注册、登录、刷新与登出。
  *
  * @author DepeToi
  * @since 1.0.0
@@ -56,5 +57,28 @@ public class AuthController {
     @PostMapping("/login")
     public Result<AuthToken> login(@Valid @RequestBody LoginRequest request) {
         return Result.ok(authService.login(request));
+    }
+
+    /**
+     * 刷新令牌并轮换，不要求 Idempotency-Key。
+     *
+     * @param request 刷新请求
+     * @return 轮换后的访问令牌与刷新令牌
+     */
+    @PostMapping("/refresh")
+    public Result<AuthToken> refresh(@Valid @RequestBody RefreshTokenRequest request) {
+        return Result.ok(authService.refresh(request));
+    }
+
+    /**
+     * 登出并撤销刷新令牌，幂等，不要求 Idempotency-Key。
+     *
+     * @param request 登出请求
+     * @return 成功响应
+     */
+    @PostMapping("/logout")
+    public Result<Void> logout(@Valid @RequestBody RefreshTokenRequest request) {
+        authService.logout(request);
+        return Result.ok();
     }
 }

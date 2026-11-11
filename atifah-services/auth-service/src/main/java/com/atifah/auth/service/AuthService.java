@@ -1,6 +1,7 @@
 package com.atifah.auth.service;
 
 import com.atifah.auth.dto.LoginRequest;
+import com.atifah.auth.dto.RefreshTokenRequest;
 import com.atifah.auth.dto.RegisterRequest;
 import com.atifah.auth.vo.AuthToken;
 import com.atifah.auth.vo.RegisterResult;
@@ -29,4 +30,19 @@ public interface AuthService {
      * @return 访问令牌与刷新令牌
      */
     AuthToken login(LoginRequest request);
+
+    /**
+     * 刷新令牌并轮换。
+     *
+     * @param request 刷新请求
+     * @return 轮换后的令牌
+     */
+    AuthToken refresh(RefreshTokenRequest request);
+
+    /**
+     * 登出并撤销刷新令牌。
+     *
+     * @param request 登出请求
+     */
+    void logout(RefreshTokenRequest request);
 }

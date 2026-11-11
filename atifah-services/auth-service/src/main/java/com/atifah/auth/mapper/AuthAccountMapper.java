@@ -23,6 +23,14 @@ public interface AuthAccountMapper {
     AuthAccount selectByPhone(@Param("phone") String phone);
 
     /**
+     * 按全局用户 ID 查询未删除的账号，刷新令牌时使用。
+     *
+     * @param userId 全局用户 ID
+     * @return 账号；不存在时返回 null
+     */
+    AuthAccount selectByUserId(@Param("userId") Long userId);
+
+    /**
      * 新增认证账号，id 由调用方生成。
      *
      * @param account 待插入账号
