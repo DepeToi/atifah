@@ -3,7 +3,16 @@
     "allow": [
       "Bash(git -C /d/Project/atifah diff --stat deploy/nacos/config/common-application.yaml)",
       "Bash(git -C /d/Project/atifah diff deploy/nacos/config/common-application.yaml)",
-      "WebSearch"
+      "WebSearch",
+      "Bash(git remote *)",
+      "Bash(mvn -o -q -DskipTests compile)",
+      "Bash(mvn -q -DskipTests compile)",
+      "Bash(git ls-remote *)",
+      "Bash(gh pr *)",
+      "Bash(git switch *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(GIT_SSH_COMMAND='ssh -o BatchMode=yes' git push -u origin arch/sql-in-mapper-xml)"
     ]
   }
 }

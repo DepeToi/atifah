@@ -1,11 +1,11 @@
 ---
 id: T-003
 title: auth 刷新与登出
-status: in-review
+status: done
 owner: codebuddy
 created: 2026-11-11
 updated: 2026-11-11
-status_reason: 实现完成并推送分支 feat/T-003-auth-refresh-logout（bbd3949），等待 Codex 评审
+status_reason: PR #18 已合并，CI 与 Codex 评审通过
 contract_baseline: arch-baseline-v0.1
 related_adr: [docs/adr/0003-auth-baseline.md]
 ---
