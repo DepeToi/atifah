@@ -26,7 +26,7 @@
 | 类型 | 范围 | 必需产物 | 评审 |
 | --- | --- | --- | --- |
 | Feature | 业务服务、管理端业务代码 | 任务包 `docs/tasks/T-xxx-*.md` | Codex 语义评审；按风险核验 CI 与补充测试 |
-| Arch | `atifah-common/**`、`atifah-gateway/**`、根/父 `pom.xml`、`docs/contracts/**`、`docs/rules/**`、`docs/adr/**`、根/模块 `AGENTS.md`、`CLAUDE.md`、`docs/tasks/README.md`、`docs/tasks/_TEMPLATE.md`、`docs/review/standards.md`、`docs/review/report-template.md`、`docs/review/reports/README.md` | ADR（涉及契约时附契约 diff） | Codex 语义评审；高风险变更针对性验证 |
+| Arch | `atifah-common/**`、`atifah-gateway/**`、根/父 `pom.xml`、`docs/contracts/**`、`docs/rules/**`、`docs/adr/**`、根/模块 `AGENTS.md`、`CLAUDE.md`、`docs/tasks/README.md`、`docs/tasks/_TEMPLATE.md`、`docs/review/standards.md`、`docs/review/report-template.md`、`docs/review/reports/README.md` | ADR（按 DOC-01：首次冻结、破坏性变更、跨服务语义、新组件必需；兼容新增只需契约 diff 与变更说明） | Codex 语义评审；高风险变更针对性验证 |
 | Ops | `deploy/**`、`.github/**`、Dockerfile、构建/部署脚本 | PR 描述中的变更说明、影响面、验证命令与回滚方式 | Codex 轻评审（安全/配置）+ 相关配置验证 |
 | Docs | `docs/**`（非契约/ADR/rules/治理入口）、`README.md`、`TODO.md`、单个任务包 `docs/tasks/T-*.md`、已归档报告 `docs/review/reports/*.md` | PR 描述 | CI + 人工；Codex 可免 |
 
@@ -37,7 +37,7 @@
 **交接只通过仓库完成**，不依赖对话记忆：
 
 1. Claude 产出 ADR + 契约 +（Feature）任务包；人工确认后在 `main` 打 `arch-baseline-vX.Y` 标签，契约冻结。
-2. Feature：CodeBuddy 从 `main` 拉 `feat/T-xxx-<slug>`，只按任务包实现，创建 PR 后把状态改为 `in-review`。Arch/Ops/Docs：由 Claude 按分类在 `arch/`、`ops/`、`docs/` 分支实现并开 PR。
+2. Feature：CodeBuddy 从 `main` 拉 `feat/T-xxx-<slug>`，只按任务包实现，与创建 PR 同一提交把状态改为 `in-review`。Arch/Ops/Docs：由 Claude 按分类在 `arch/`、`ops/`、`docs/` 分支实现并开 PR。
 3. CI（`.github/workflows/ci.yml`）必须通过。
 4. Codex 按 `docs/review/standards.md` 只读评审 PR，核对 Reviewed SHA 对应的 CI，并按风险补充测试；在 PR 评论记录结论、验证证据与未覆盖范围。报告文件可选。
 5. `Blocker` / `Major` 或验证失败由对应实现者修复；架构或契约问题回到 Claude，先改 ADR/契约再改代码。
@@ -45,7 +45,7 @@
 
 **并发约束**：同一工作区同一时刻只允许一个角色写文件。并行任务用独立分支或 `git worktree`，禁止两个工具同时改同一批文件。
 
-**任务状态权限**：仅 Feature 任务包有状态。Claude 只设 `draft` / `ready`（`ready` 需人工确认）；CodeBuddy 只设 `in-review`；人类维护者设 `done` 与强制回退；任意当前负责人可置 `blocked` 并按解除条件恢复；Codex 不得改状态。状态只更新 front matter，Git 历史与 PR 保留流转依据；细则见 `docs/tasks/README.md` §2（DOC-04）。
+**任务状态权限**：仅 Feature 任务包有状态。Claude 只设 `draft` / `ready`（契约已冻结 + 维护者确认时可直接以 `ready` 创建，`draft` 仅为例外）；CodeBuddy 只设 `in-review`；人类维护者设 `done` 与强制回退，合并后批量收口；任意当前负责人可置 `blocked` 并按解除条件恢复；Codex 不得改状态。状态只更新 front matter，且须与对应 PR 同一提交，禁止 status-only PR；Git 历史与 PR 保留流转依据；细则见 `docs/tasks/README.md` §2（DOC-04、ADR 0005）。
 
 **Codex 验证与报告**：按 `docs/review/standards.md` §4 的 A/B/C 级核验 CI 与风险对应的测试；不重复执行 CI 已覆盖的全量测试。报告以 PR 评论为准，独立报告文件可选；不得修改代码/测试，不得提交构建产物。
 

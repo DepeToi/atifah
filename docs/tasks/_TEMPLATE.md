@@ -1,8 +1,9 @@
 ---
 id: T-000
 title: <服务> <功能>
+# 契约已冻结且维护者确认时可直接改为 ready；draft 仅用于契约/范围仍可能变化的例外
 status: draft
-owner: codebuddy
+implementer: codebuddy
 created: YYYY-MM-DD
 updated: YYYY-MM-DD
 status_reason: <为什么处于当前状态>

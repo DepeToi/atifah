@@ -17,8 +17,8 @@
 
 | 状态 | 含义 | 进入条件 | 可设置者 |
 | --- | --- | --- | --- |
-| `draft` | Claude 正在设计，契约可能变化 | 任务包创建 | Claude |
-| `ready` | 契约已冻结、验收标准明确，可开发 | 契约冻结 + 基线标签 + 维护者确认 | Claude |
+| `draft` | Claude 正在设计，契约或范围可能变化 | 任务包创建（例外情况） | Claude |
+| `ready` | 契约已冻结、验收标准明确，可开发 | 契约冻结 + 基线标签 + 维护者确认；可直接以此状态创建 | Claude |
 | `in-review` | 已开 PR，等待 CI / Codex 评审 | 分支已推送 + PR 已创建 | CodeBuddy |
 | `done` | 已合并，验收通过 | PR 已合并 + CI 通过 + 评审结论满足合并要求 | 人类维护者（可批量） |
 | `blocked` | 契约缺失、依赖未就绪或评审阻塞 | 写明阻塞原因与解除条件 | 当前负责人 |
@@ -39,6 +39,7 @@
 - 人类维护者负责 `done` 与强制回退；合并后批量收口，不要求每个 PR 后立即提交。
 - 状态变更只更新 front matter 的 `status`、`updated`、`status_reason`；Git 历史和关联 PR 即为变更记录，不维护重复日志。
 - 没有 PR 证据不得标 `in-review`；没有合并、CI 与评审证据不得标 `done`（DOC-04）。
+- **禁止 status-only PR**：仅修改任务包 front matter（`status` / `updated` / `status_reason`）的 PR 不予合并。状态变更必须与对应的实现、契约或评审证据在同一 PR，或由维护者在合并后批量收口 `done`（ADR 0005）。
 
 ## 3. 写作与执行约束
 

@@ -119,5 +119,5 @@
 
 1. 先改本总纲或对应 `openapi/<service>.yaml`，再改实现。
 2. 破坏性变更必须新增版本路径（`/api/v2`）或保持旧字段兼容。
-3. 契约 PR 必须由 Claude 发起并关联 ADR；功能 PR 不得夹带契约修改。
+3. 契约 PR 必须由 Claude 发起并单独提交；ADR 按 `docs/review/standards.md` DOC-01 分级（首次冻结、破坏性变更、跨服务语义、新组件必需；兼容新增只需变更说明与契约 diff）。功能 PR 不得夹带契约修改。
 4. 同步修改：`common-core` 的 `Result` / `ErrorCode`、前端 `src/api/types.ts`、相关测试。

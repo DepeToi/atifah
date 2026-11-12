@@ -18,7 +18,7 @@
 ## 不做
 
 - 不实现业务 Controller / Service / Mapper / 前端页面，除非用户明确要求切换角色。
-- 不绕过任务包直接改业务代码；不在没有 ADR 的情况下修改已冻结契约。
+- 不绕过任务包直接改业务代码；破坏性契约变更必须先有 ADR，兼容新增按 DOC-01 走契约 PR。
 - 不把任务状态设为 `in-review` / `done`；Claude 只设 `draft` / `ready`（`ready` 需人工确认），可将状态置为 `blocked`。
 - 不自动 `git commit` / `git push`，除非用户明确要求。
 

@@ -64,30 +64,30 @@
 
 ## P1 规则去重（P0 后）
 
-- [ ] P1-1 `AGENTS.md` §0 作为交接序列唯一来源；`README.md` 的 AI 指南删除 5 步序列，改为链接。
-- [ ] P1-2 `docs/tasks/README.md` §6 只留分支/自检命令；评审要求指向 `docs/review/standards.md` §4。
-- [ ] P1-3 `docs/rules/git-workflow.md` GIT-07 只留 Git 侧约束；交接顺序指向 `AGENTS.md` §0。
-- [ ] P1-4 `docs/tasks/_TEMPLATE.md` 的 `owner` 改为 `implementer`。
+- [x] P1-1 `AGENTS.md` §0 作为交接序列唯一来源；`README.md` 的 AI 指南删除 5 步序列，改为链接。
+- [x] P1-2 `docs/tasks/README.md` §6 只留分支/自检命令；评审要求指向 `docs/review/standards.md` §4。
+- [x] P1-3 `docs/rules/git-workflow.md` GIT-07 只留 Git 侧约束；交接顺序指向 `AGENTS.md` §0。
+- [x] P1-4 `docs/tasks/_TEMPLATE.md` 的 `owner` 改为 `implementer`。
 - [x] P1-5 PR 模板增加“Feature 变更路径 ⊆ 任务包允许路径”检查项（PR #10）。
 
 **验收**：同一交接步骤不再在 4 处重复描述；相关章节只保留一处正文 + 链接。
 
 ## P2 契约 ADR 分级（P0 后）
 
-- [ ] P2-1 修改 `docs/review/standards.md` DOC-01：ADR 仅对首次冻结、破坏性变更、跨服务语义、新组件强制。
-- [ ] P2-2 修改 `docs/contracts/README.md` §3：兼容新增走契约 PR + 冻结清单 + 新基线。
-- [ ] P2-3 修改 `docs/contracts/api-conventions.md` §10：同步 ADR 分级。
-- [ ] P2-4 修改 `AGENTS.md` §0 的 Arch 必需产物。
-- [ ] P2-5 新增 ADR（按当时下一个可用编号）记录本次流程规则变更；更新 `docs/adr/README.md` 索引。
+- [x] P2-1 修改 `docs/review/standards.md` DOC-01：ADR 仅对首次冻结、破坏性变更、跨服务语义、新组件强制。
+- [x] P2-2 修改 `docs/contracts/README.md` §3：兼容新增走契约 PR + 冻结清单 + 新基线。
+- [x] P2-3 修改 `docs/contracts/api-conventions.md` §10：同步 ADR 分级。
+- [x] P2-4 修改 `AGENTS.md` §0 的 Arch 必需产物。
+- [x] P2-5 新增 ADR（按当时下一个可用编号）记录本次流程规则变更；更新 `docs/adr/README.md` 索引。
 
 **验收**：兼容新增不需要 ADR；破坏性变更仍被 DOC-01 拦截。
 
 ## P3 状态机减写（P0 后）
 
-- [ ] P3-1 `docs/tasks/README.md` §2：允许直接创建 `ready`（契约已冻结 + 维护者确认）；`draft` 仅用于例外。
-- [ ] P3-2 `in-review` 与开 PR 放在同一提交；`done` 合并后批量处理。
-- [ ] P3-3 增加“禁止 status-only PR”规则。
-- [ ] P3-4 同步 `AGENTS.md` §0 与 `docs/tasks/_TEMPLATE.md`。
+- [x] P3-1 `docs/tasks/README.md` §2：允许直接创建 `ready`（契约已冻结 + 维护者确认）；`draft` 仅用于例外。
+- [x] P3-2 `in-review` 与开 PR 放在同一提交；`done` 合并后批量处理。
+- [x] P3-3 增加“禁止 status-only PR”规则。
+- [x] P3-4 同步 `AGENTS.md` §0 与 `docs/tasks/_TEMPLATE.md`。
 
 **验收**：正常任务状态提交 ≤2 次；权限模型不变。
 

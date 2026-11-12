@@ -41,6 +41,17 @@ public class BusinessException extends RuntimeException {
     }
 
     /**
+     * 按错误码与自定义提示构建业务异常。
+     *
+     * @param errorCode 错误码
+     * @param message 自定义提示消息
+     */
+    public BusinessException(ErrorCode errorCode, String message) {
+        super(message);
+        this.code = errorCode.getCode();
+    }
+
+    /**
      * 按自定义状态码与消息构建业务异常。
      *
      * @param code 业务状态码
