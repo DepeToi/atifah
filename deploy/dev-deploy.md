@@ -150,6 +150,10 @@ java -jar atifah-admin-web/backend/target/admin-service-1.0.0-SNAPSHOT.jar
 服务经 Nacos 注册，网关按 `lb://atifah-<service>` 路由。默认连接中间件地址为
 `127.0.0.1`（环境变量可覆盖，见根 README「配置约定」）。
 
+日志同时输出控制台与文件（ADR 0008）：文件默认在启动工作目录的 `logs/` 下，文件名
+`<spring.application.name>.log`，例如从仓库根启动时是 `logs/atifah-mood.log`；可用
+`ATIFAH_LOG_DIR` 指定目录。
+
 ### 6.2 方案 B：Docker 运行
 
 前置条件：中间件已启动（§3）、Nacos 配置已导入（§4）、jar 已构建（§5）。
@@ -168,6 +172,14 @@ docker compose -f deploy/docker-compose/docker-compose.app.yml up -d --build
 
 ```bash
 docker compose -f deploy/docker-compose/docker-compose.app.yml up -d --build gateway user-service
+```
+
+容器内日志同时写入 `/app/logs/atifah-<service>.log`（未挂载到宿主机，随容器删除丢失）。
+日常查看仍用 `docker compose ... logs -f <service>`；需要读文件时用：
+
+```bash
+docker compose -f deploy/docker-compose/docker-compose.app.yml exec mood-service \
+  tail -f /app/logs/atifah-mood.log
 ```
 
 单个服务也可以脱离统一编排独立构建/启停。每个后端模块目录（`atifah-gateway/`、
