@@ -97,18 +97,33 @@ atifah:
       log-remote-ip: true
 
 logging:
+  file:
+    # 控制台之外同时写文件（ADR 0008）；文件名带服务名，多服务共用目录也不冲突
+    # 相对路径基于工作目录：JVM 从仓库根启动 → <repo>/logs；Docker 中 WORKDIR=/app → /app/logs
+    name: ${ATIFAH_LOG_DIR:logs}/${spring.application.name}.log
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %5p [%X{traceId:-}] [%X{userId:-}] [%t] %logger{40} - %msg%n"
+    # 与 console 保持同格式；Boot 默认 file pattern 会额外带 PID 和 ---
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} %5p [%X{traceId:-}] [%X{userId:-}] [%t] %logger{40} - %msg%n"
   structured:
     # 本地为空走文本 pattern；生产设置 ATIFAH_LOG_FORMAT=logstash 启用 JSON
     format:
       console: ${ATIFAH_LOG_FORMAT:}
+      # 与 console 共用开关，避免控制台 JSON、文件仍是文本
+      file: ${ATIFAH_LOG_FORMAT:}
     json:
       context:
         include: true
       add:
         service: ${spring.application.name}
         env: ${APP_ENV:local}
+  logback:
+    rollingpolicy:
+      # 单文件 100MB，按天归档保留 30 个，备份总量上限 5GB（ADR 0008）
+      max-file-size: ${ATIFAH_LOG_MAX_FILE_SIZE:100MB}
+      max-history: ${ATIFAH_LOG_MAX_HISTORY:30}
+      total-size-cap: ${ATIFAH_LOG_TOTAL_SIZE_CAP:5GB}
+      clean-history-on-start: false
   level:
     root: info
     com.atifah: info

@@ -288,7 +288,7 @@ App ──POST /api/v1/moods──▶ Nginx ──▶ Gateway
 
 - **链路**：Gateway 生成/校验 `X-Trace-Id`（32 位十六进制），经 MDC、OpenFeign、MQ 消息属性贯穿；SkyWalking 仍为 P4 可选项，启用前另立 ADR。
 - **指标**：JVM、QPS/RT/错误率、Sentinel 指标、MQ 堆积、Redis 命中率、MySQL 慢查询。
-- **日志**：一请求一行访问日志（网关 + 各服务），不记录 body/query/Token；本地文本、生产 JSON（Boot 原生 `logstash` 格式，`ATIFAH_LOG_FORMAT=logstash`）输出 stdout → Loki；保留 30–90 天。方案见 [ADR 0007](adr/0007-logging-and-trace.md)。
+- **日志**：一请求一行访问日志（网关 + 各服务），不记录 body/query/Token；本地文本、生产 JSON（Boot 原生 `logstash` 格式，`ATIFAH_LOG_FORMAT=logstash`）同时输出 stdout 与文件：stdout 供容器/Loki 采集，文件按服务名落盘并轮转；保留 30–90 天。方案见 [ADR 0007](adr/0007-logging-and-trace.md)、[ADR 0008](adr/0008-log-console-and-file-output.md)。
 - **告警**：错误率、P99 超阈值、MQ 堆积、消费失败、DB 主从延迟、证书到期。
 
 ## 10. 演进路线
