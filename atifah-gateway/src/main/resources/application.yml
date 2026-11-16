@@ -131,9 +131,27 @@ atifah:
       secret: ${JWT_SECRET:atifah-dev-secret-change-me-please-32bytes}
       issuer: atifah
       access-token-ttl: 15m
+  logging:
+    access:
+      enabled: true
+      ignore-paths:
+        - /actuator/
+      log-client-ip: true
 
 logging:
   pattern:
-    level: "%5p [%X{traceId:-}]"
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %5p [%X{traceId:-}] [%t] %logger{40} - %msg%n"
+  structured:
+    format:
+      console: ${ATIFAH_LOG_FORMAT:}
+    json:
+      context:
+        include: true
+      add:
+        service: ${spring.application.name}
+        env: ${APP_ENV:local}
   level:
+    root: info
     org.springframework.cloud.gateway: info
+    reactor.netty: warn
+    com.alibaba.nacos: warn

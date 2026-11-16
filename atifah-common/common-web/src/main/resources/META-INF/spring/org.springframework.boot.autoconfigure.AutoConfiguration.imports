@@ -1,1 +1,2 @@
 com.atifah.common.web.config.CommonWebAutoConfiguration
+com.atifah.common.web.config.FeignTraceAutoConfiguration

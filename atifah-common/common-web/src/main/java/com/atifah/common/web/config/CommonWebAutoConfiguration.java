@@ -1,9 +1,11 @@
 package com.atifah.common.web.config;
 
+import com.atifah.common.web.filter.AccessLogFilter;
 import com.atifah.common.web.filter.TraceIdFilter;
 import com.atifah.common.web.handler.GlobalExceptionHandler;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Import;
 
 /**
@@ -14,6 +16,7 @@ import org.springframework.context.annotation.Import;
  */
 @AutoConfiguration
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
-@Import({GlobalExceptionHandler.class, TraceIdFilter.class})
+@EnableConfigurationProperties(AccessLogProperties.class)
+@Import({GlobalExceptionHandler.class, TraceIdFilter.class, AccessLogFilter.class})
 public class CommonWebAutoConfiguration {
 }

@@ -4,6 +4,8 @@
 # application.yml 与环境变量，避免两处真相（不要把本地文件整份复制过来）。
 # 刷新语义：whitelist 由 Spring Cloud 重绑定 @ConfigurationProperties，改后发布即生效；
 # auth.enabled 由 @ConditionalOnProperty 在启动时判定过滤器是否装配，修改后需重启网关。
+# 日志配置在 atifah-gateway/src/main/resources/application.yml；如需按环境覆盖，
+# 可在此追加 logging.level.* / atifah.logging.access.*，修改后需重启网关。
 
 atifah:
   gateway:

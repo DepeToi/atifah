@@ -3,6 +3,7 @@
 > 复制为 `docs/contracts/events/<event-name>.md` 后填写。
 > Topic / 消费组常量分别登记在 `MqTopics` / `MqConsumerGroups`，本文件与常量必须一一对应。
 > 事件契约冻结后由 Claude 维护，CodeBuddy / Codex 只读。
+> 消息 header 可携带 `X-Trace-Id`（由 `MessagePublisher` 写入）；消费端应将其写入 MDC 并在 `finally` 清理，禁止打印 payload。
 
 ## 1. 元数据
 
@@ -59,3 +60,4 @@
 - [ ] 消费者组已登记 `MqConsumerGroups`。
 - [ ] 不依赖跨 key 的到达顺序。
 - [ ] 日志不打印敏感 payload。
+- [ ] 消费端将消息 header 中的 `X-Trace-Id` 写入 MDC，并在 `finally` 清理。

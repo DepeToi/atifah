@@ -86,7 +86,37 @@ atifah:
       issuer: atifah
       # Access Token 短 TTL；Refresh Token 由 auth-service 单独管理。
       access-token-ttl: 15m
+  logging:
+    access:
+      enabled: true
+      # 健康检查与错误转发不记录访问日志
+      ignore-paths:
+        - /actuator/
+        - /error
+      # 业务服务在网关之后，remoteIp 通常是网关地址；可按合规要求关闭
+      log-remote-ip: true
 
 logging:
   pattern:
-    level: "%5p [%X{traceId:-}]"
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %5p [%X{traceId:-}] [%X{userId:-}] [%t] %logger{40} - %msg%n"
+  structured:
+    # 本地为空走文本 pattern；生产设置 ATIFAH_LOG_FORMAT=logstash 启用 JSON
+    format:
+      console: ${ATIFAH_LOG_FORMAT:}
+    json:
+      context:
+        include: true
+      add:
+        service: ${spring.application.name}
+        env: ${APP_ENV:local}
+  level:
+    root: info
+    com.atifah: info
+    # 中间件噪声与敏感数据控制：生产禁止 Mapper DEBUG，避免 SQL 参数进入日志
+    com.alibaba.nacos: warn
+    org.redisson: warn
+    org.apache.rocketmq: warn
+    com.alibaba.csp.sentinel: warn
+    io.seata: warn
+    com.zaxxer.hikari: info
+    org.flywaydb: info

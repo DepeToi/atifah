@@ -40,5 +40,11 @@
             <groupId>com.alibaba.cloud</groupId>
             <artifactId>spring-cloud-starter-alibaba-sentinel</artifactId>
         </dependency>
+        <!-- 仅用于编译 Feign TraceId 透传拦截器；业务服务父 POM 已引入 OpenFeign，不增加实际运行依赖 -->
+        <dependency>
+            <groupId>io.github.openfeign</groupId>
+            <artifactId>feign-core</artifactId>
+            <optional>true</optional>
+        </dependency>
     </dependencies>
 </project>

@@ -83,6 +83,7 @@
 
 - C 端：请求头 `Authorization: Bearer <access_token>`，由网关 `AuthGlobalFilter` 校验（当前 `atifah.gateway.auth.enabled=false`，接入 auth-service 后开启）。
 - 网关校验通过后写入下游请求头 `X-User-Id`、`X-Username`，业务服务直接读取，不重复验签。
+- 客户端传入的 `X-User-Id`、`X-Username` 一律由网关剥离，业务服务不得信任外部来源的身份头。
 - 管理端：独立鉴权链（独立密钥 + MFA + IP 白名单），复用 `/admin/api` 前缀但走管理端 Token，待接入。
 - 前端收到 401 统一清理登录态并跳转登录页。
 
@@ -92,7 +93,10 @@
 | --- | --- | --- |
 | Authorization | Bearer Token（C 端） | 除白名单外必填 |
 | Idempotency-Key | 幂等键（UUID） | 写接口必填 |
-| X-Trace-Id | 链路追踪，网关生成/透传 | 可选 |
+| X-Trace-Id | 链路追踪，32 位十六进制；网关生成/校验并回写响应头，业务服务原样透传 | 可选 |
+
+- 客户端可携带 `X-Trace-Id`；合法值由网关透传，缺失或非法时网关重新生成，并以响应头返回实际值。
+- `X-User-Id`、`X-Username` 是网关写入的下游请求头，不属于客户端公共请求头；客户端传入会被剥离。
 
 ## 7. 幂等
 
