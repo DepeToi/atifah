@@ -174,13 +174,18 @@ docker compose -f deploy/docker-compose/docker-compose.app.yml up -d --build
 docker compose -f deploy/docker-compose/docker-compose.app.yml up -d --build gateway user-service
 ```
 
-容器内日志同时写入 `/app/logs/atifah-<service>.log`（未挂载到宿主机，随容器删除丢失）。
-日常查看仍用 `docker compose ... logs -f <service>`；需要读文件时用：
+容器内 `/app/logs` 已 bind mount 到仓库根 `logs/`，日志文件（`atifah-<service>.log`）在宿主机
+可直接查看，容器重建后仍保留。仓库用 `logs/.gitkeep` 保留该目录；若被手动删除，先 `mkdir -p logs`。
+
+容器以宿主机 UID/GID 运行（默认 `1000:1000`），保证写出的日志文件宿主机可直接读写。Linux 下
+宿主 UID/GID 不是 1000 时，用环境变量对齐：
 
 ```bash
-docker compose -f deploy/docker-compose/docker-compose.app.yml exec mood-service \
-  tail -f /app/logs/atifah-mood.log
+APP_UID=$(id -u) APP_GID=$(id -g) \
+  docker compose -f deploy/docker-compose/docker-compose.app.yml up -d --build
 ```
+
+日常查看仍可用 `docker compose ... logs -f <service>`；读文件直接 `tail -f logs/atifah-mood.log`。
 
 单个服务也可以脱离统一编排独立构建/启停。每个后端模块目录（`atifah-gateway/`、
 `atifah-services/*/`、`atifah-admin-web/backend/`）下都有 `Dockerfile`、`.dockerignore` 与
@@ -194,6 +199,14 @@ docker compose -f atifah-services/user-service/docker-compose.yml down
 
 单服务 compose 与统一 compose 的镜像 tag、容器名、端口完全一致，**同一个服务不能同时用两种方式运行**；
 统一 compose 只是复用同一批模块 Dockerfile 做全量编排。
+
+单服务 compose 同样把仓库根 `logs/` 挂载到 `/app/logs`。模块目录下没有 `.env` 模板，
+`APP_UID` / `APP_GID` 需通过 shell 环境变量传入，例如：
+
+```bash
+APP_UID=$(id -u) APP_GID=$(id -g) \
+  docker compose -f atifah-services/user-service/docker-compose.yml up -d --build
+```
 
 说明：
 

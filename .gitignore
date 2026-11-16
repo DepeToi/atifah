@@ -20,8 +20,9 @@ pom.xml.next
 Thumbs.db
 desktop.ini
 
-# Logs
-logs/
+# Logs（保留 logs/ 目录本身供 Docker bind mount 使用；日志内容仍忽略）
+logs/*
+!logs/.gitkeep
 *.log
 
 # Local environment

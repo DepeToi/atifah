@@ -154,8 +154,10 @@ curl http://localhost:8090/actuator/health   # admin-service（管理后台 BFF�
 - 日志：所有环境同时输出控制台与文件（ADR 0008）；目录由 `ATIFAH_LOG_DIR` 控制（默认 `logs`，相对工作目录），
   `ATIFAH_LOG_FORMAT=logstash` 时控制台与文件都输出 JSON；轮转由 `ATIFAH_LOG_MAX_FILE_SIZE` /
   `ATIFAH_LOG_MAX_HISTORY` / `ATIFAH_LOG_TOTAL_SIZE_CAP` 控制（默认 `100MB` / `30` / `5GB`）。
-- 方案 B（Docker）额外支持 `BASE_IMAGE`（基础镜像，默认 `eclipse-temurin:21-jre-jammy`）与
-  `APP_MEM_LIMIT`（单容器内存上限，默认 `1g`），见 `deploy/dev-deploy.md` §6.2。
+- 方案 B（Docker）额外支持 `BASE_IMAGE`（基础镜像，默认 `eclipse-temurin:21-jre-jammy`）、
+  `APP_MEM_LIMIT`（单容器内存上限，默认 `1g`）与 `APP_UID` / `APP_GID`（容器运行用户，默认 `1000` / `1000`，
+  须与仓库根 `logs/` 目录属主一致）；容器日志通过 bind mount 写到仓库根 `logs/`，宿主机可直接查看，
+  见 `deploy/dev-deploy.md` §6.2。
 - 管理后台前端环境变量（`VITE_API_BASE_URL`、`VITE_API_PROXY_TARGET`）见 `atifah-admin-web/README.md`。
 - Servlet 业务服务已开启虚拟线程（`spring.threads.virtual.enabled=true`）；`atifah-gateway` 为响应式 Netty 栈，不适用该配置。
 - 网关 JWT 鉴权当前默认关闭（`atifah.gateway.auth.enabled=false`），接入 `auth-service` 签发 Token 后开启。

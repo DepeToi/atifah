@@ -19,10 +19,17 @@ x-app-common: &app-common
   restart: unless-stopped
   # 限制单容器内存，JVM 的 MaxRAMPercentage 才能按容器而非宿主机内存计算
   mem_limit: ${APP_MEM_LIMIT:-1g}
+  # 日志落宿主机仓库根 logs/（目录由 logs/.gitkeep 保留，被删除时先 mkdir -p logs）
+  # 运行 UID/GID 必须与该目录属主一致（Linux 用 id -u / id -g 查看）
+  user: "${APP_UID:-1000}:${APP_GID:-1000}"
+  volumes:
+    - ../../logs:/app/logs
   networks:
     - atifah-net
   environment: &app-env
     TZ: Asia/Shanghai
+    # 容器以宿主机 UID 运行时没有对应 passwd 记录，user.home 会落到 /；/tmp 保证 Nacos 快照与 RocketMQ 客户端日志可写
+    HOME: /tmp
     NACOS_ADDR: nacos:8848
     NACOS_NAMESPACE: ${NACOS_NAMESPACE:-atifah_dev}
     MYSQL_HOST: mysql
