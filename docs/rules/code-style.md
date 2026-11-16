@@ -66,9 +66,12 @@ public class MoodServiceApplication {
 
 ## CODE-07 日志与 TraceId
 
-- 日志格式已带 `%X{traceId}`，直接 `log.info(...)` 即可，不要手动拼接 TraceId。
-- 敏感字段（日记正文、量表结果、手机号、密码）严禁打印到日志或控制台。
-- 异常日志保留堆栈；业务异常不要重复打印。
+- 日志格式已带 `traceId` / `userId` MDC，直接 `log.info(...)` 即可，不要手动拼接 TraceId。
+- 业务日志只记录 ID、状态、数量、错误码、耗时；严禁打印日记正文、量表结果、手机号、密码/哈希、Token、验证码、请求/响应体、URL query。
+- 访问日志统一由网关 `AccessLogGlobalFilter` 与 `common-web` 的 `AccessLogFilter` 输出，一请求一行；业务代码不要重复打印请求摘要。
+- 异常日志保留堆栈；业务异常不要重复打印；禁止 log-and-throw。
+- 生产禁止 Mapper DEBUG、Feign `FULL/BASIC` 日志、MQ payload、Redis value；中间件级别见 [`ADR 0007`](../adr/0007-logging-and-trace.md)。
+- 访问日志字段与结构化输出约定见 [`ADR 0007`](../adr/0007-logging-and-trace.md)。
 
 ## CODE-08 自检与诚实性
 
