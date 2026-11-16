@@ -3,7 +3,7 @@ package com.atifah.common.redis.util;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentMatchers;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.redis.core.HashOperations;
@@ -21,9 +21,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyCollection;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -102,22 +106,31 @@ class RedisUtilTest {
     }
 
     @Test
-    void incrementWithTtlExecutesAtomicScript() {
-        when(stringRedisTemplate.execute(
-                ArgumentMatchers.<RedisScript<Long>>any(),
-                eq(List.of("counter")),
-                eq("2"),
-                eq("60000")))
-                .thenReturn(2L);
+    void incrementWithTtlExecutesSingleAtomicScript() {
+        when(stringRedisTemplate.execute(any(RedisScript.class), anyList(), any(), any())).thenReturn(2L);
 
         long value = redisUtil.increment("counter", 2, Duration.ofMinutes(1));
 
         assertEquals(2L, value);
+
+        ArgumentCaptor<RedisScript> scriptCaptor = ArgumentCaptor.forClass(RedisScript.class);
+        ArgumentCaptor<String> deltaCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<String> ttlCaptor = ArgumentCaptor.forClass(String.class);
         verify(stringRedisTemplate).execute(
-                ArgumentMatchers.<RedisScript<Long>>any(),
+                scriptCaptor.capture(),
                 eq(List.of("counter")),
-                eq("2"),
-                eq("60000"));
+                deltaCaptor.capture(),
+                ttlCaptor.capture());
+
+        String script = scriptCaptor.getValue().getScriptAsString();
+        assertTrue(script.contains("redis.call('INCRBY', KEYS[1], ARGV[1])"), "计数必须走原子 INCRBY");
+        assertTrue(script.contains("redis.call('PTTL', KEYS[1]) < 0"), "只允许在 Key 没有 TTL 时设置过期");
+        assertTrue(script.contains("redis.call('PEXPIRE', KEYS[1], ARGV[2])"),
+                "首次计数必须在同一脚本内设置 TTL");
+        assertEquals(Long.class, scriptCaptor.getValue().getResultType());
+        assertEquals("2", deltaCaptor.getValue());
+        assertEquals("60000", ttlCaptor.getValue());
+        verify(stringRedisTemplate, never()).expire(anyString(), any(Duration.class));
     }
 
     @Test
