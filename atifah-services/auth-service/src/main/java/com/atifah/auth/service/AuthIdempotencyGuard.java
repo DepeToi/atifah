@@ -3,8 +3,8 @@ package com.atifah.auth.service;
 import com.atifah.common.core.enums.ErrorCode;
 import com.atifah.common.core.exception.BusinessException;
 import com.atifah.common.redis.constant.CacheKeys;
+import com.atifah.common.redis.util.RedisUtil;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
@@ -40,7 +40,7 @@ public class AuthIdempotencyGuard {
     /** 幂等值中手机号哈希与 userId 的分隔符。 */
     private static final String VALUE_SEPARATOR = ":";
 
-    private final StringRedisTemplate stringRedisTemplate;
+    private final RedisUtil redisUtil;
 
     /**
      * 校验幂等键格式，缺失或非法时返回 40000。
@@ -72,7 +72,7 @@ public class AuthIdempotencyGuard {
      * @return 首次注册的 userId；没有幂等记录时为空
      */
     public Optional<Long> findUserId(String idempotencyKey, String phone) {
-        String value = stringRedisTemplate.opsForValue().get(buildKey(idempotencyKey));
+        String value = redisUtil.getString(buildKey(idempotencyKey));
         if (value == null) {
             return Optional.empty();
         }
@@ -95,7 +95,7 @@ public class AuthIdempotencyGuard {
      */
     public void save(String idempotencyKey, String phone, Long userId) {
         String value = fingerprint(phone) + VALUE_SEPARATOR + userId;
-        stringRedisTemplate.opsForValue().set(buildKey(idempotencyKey), value, IDEMPOTENCY_TTL);
+        redisUtil.setString(buildKey(idempotencyKey), value, IDEMPOTENCY_TTL);
     }
 
     /**
