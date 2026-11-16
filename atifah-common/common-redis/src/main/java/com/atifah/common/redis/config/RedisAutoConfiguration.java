@@ -1,13 +1,16 @@
 package com.atifah.common.redis.config;
 
+import com.atifah.common.redis.util.RedisUtil;
 import org.redisson.config.BaseConfig;
 import org.redisson.config.SentinelServersConfig;
 import org.redisson.spring.starter.RedissonAutoConfigurationCustomizer;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
@@ -18,6 +21,7 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
  * @since 1.0.0
  */
 @AutoConfiguration
+@ConditionalOnClass({RedisTemplate.class, StringRedisTemplate.class})
 public class RedisAutoConfiguration {
 
     /**
@@ -41,6 +45,20 @@ public class RedisAutoConfiguration {
         template.setHashValueSerializer(valueSerializer);
         template.afterPropertiesSet();
         return template;
+    }
+
+    /**
+     * 装配 Redis 通用操作工具。
+     *
+     * @param redisTemplate       JSON 值序列化的 RedisTemplate
+     * @param stringRedisTemplate 纯字符串 RedisTemplate
+     * @return Redis 通用操作工具
+     */
+    @Bean
+    @ConditionalOnMissingBean
+    public RedisUtil redisUtil(RedisTemplate<String, Object> redisTemplate,
+                               StringRedisTemplate stringRedisTemplate) {
+        return new RedisUtil(redisTemplate, stringRedisTemplate);
     }
 
     /**

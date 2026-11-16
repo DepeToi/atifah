@@ -12,7 +12,7 @@
 
     <artifactId>common-redis</artifactId>
     <name>common-redis</name>
-    <description>Redis 通用能力：序列化、缓存 Key、Redisson</description>
+    <description>Redis 通用能力：序列化、缓存 Key、RedisUtil、Redisson</description>
 
     <dependencies>
         <dependency>

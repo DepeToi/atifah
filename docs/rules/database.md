@@ -41,7 +41,7 @@
 ## DB-05 缓存
 
 - Key 先登记 `CacheKeys`，禁止散落硬编码；模板统一 `业务:对象:%s`。
-- `RedisTemplate<String, Object>` 已装配（String key + JSON value），直接注入使用；令牌、计数器等纯字符串/数值场景用 `StringRedisTemplate`，避免 JSON 序列化与 `INCR` 不兼容。
+- `common-redis` 已装配 `RedisUtil`：对象缓存用 `RedisTemplate<String, Object>`（String key + JSON value），令牌、计数器等纯字符串/数值场景用 `StringRedisTemplate`，避免 JSON 序列化与 `INCR` 不兼容；复杂命令可直接注入对应 Template。
 - 分布式锁用 Redisson + `CacheKeys.LOCK`；必须设置过期或 watchdog，Lua 安全释放。
 - 缓存一致性用 Cache Aside；热点 key 加随机 TTL、逻辑过期/互斥重建；空值缓存 + 布隆过滤器防穿透。
 - 缓存不得作为唯一数据源；关键状态必须可回源数据库。
