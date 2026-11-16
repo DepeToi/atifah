@@ -3,14 +3,12 @@ package com.atifah.auth.service;
 import com.atifah.common.core.enums.ErrorCode;
 import com.atifah.common.core.exception.BusinessException;
 import com.atifah.common.redis.constant.CacheKeys;
+import com.atifah.common.redis.util.RedisUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.data.redis.core.ValueOperations;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -44,16 +42,13 @@ class AuthIdempotencyGuardTest {
     private static final String OTHER_PHONE = "13900001234";
 
     @Mock
-    private StringRedisTemplate stringRedisTemplate;
-
-    @Mock
-    private ValueOperations<String, String> valueOperations;
+    private RedisUtil redisUtil;
 
     private AuthIdempotencyGuard guard;
 
     @BeforeEach
     void setUp() {
-        guard = new AuthIdempotencyGuard(stringRedisTemplate);
+        guard = new AuthIdempotencyGuard(redisUtil);
     }
 
     @Test
@@ -81,22 +76,15 @@ class AuthIdempotencyGuardTest {
 
     @Test
     void saveStoresFingerprintAndUserIdWithTtl() {
-        when(stringRedisTemplate.opsForValue()).thenReturn(valueOperations);
-
         guard.save(IDEMPOTENCY_KEY, PHONE, 42L);
 
-        ArgumentCaptor<String> valueCaptor = ArgumentCaptor.forClass(String.class);
-        verify(valueOperations).set(eq(guard.buildKey(IDEMPOTENCY_KEY)), valueCaptor.capture(),
-                eq(Duration.ofHours(24)));
-        String value = valueCaptor.getValue();
-        assertTrue(value.startsWith(sha256(PHONE) + ":"));
-        assertEquals(sha256(PHONE) + ":42", value);
+        verify(redisUtil).setString(eq(guard.buildKey(IDEMPOTENCY_KEY)),
+                eq(sha256(PHONE) + ":42"), eq(Duration.ofHours(24)));
     }
 
     @Test
     void findUserIdReturnsReplayResultForSamePhone() {
-        when(stringRedisTemplate.opsForValue()).thenReturn(valueOperations);
-        when(valueOperations.get(guard.buildKey(IDEMPOTENCY_KEY))).thenReturn(sha256(PHONE) + ":42");
+        when(redisUtil.getString(guard.buildKey(IDEMPOTENCY_KEY))).thenReturn(sha256(PHONE) + ":42");
 
         Optional<Long> userId = guard.findUserId(IDEMPOTENCY_KEY, PHONE);
 
@@ -106,8 +94,7 @@ class AuthIdempotencyGuardTest {
 
     @Test
     void findUserIdRejectsDifferentPhone() {
-        when(stringRedisTemplate.opsForValue()).thenReturn(valueOperations);
-        when(valueOperations.get(guard.buildKey(IDEMPOTENCY_KEY))).thenReturn(sha256(PHONE) + ":42");
+        when(redisUtil.getString(guard.buildKey(IDEMPOTENCY_KEY))).thenReturn(sha256(PHONE) + ":42");
 
         BusinessException ex = assertThrows(BusinessException.class,
                 () -> guard.findUserId(IDEMPOTENCY_KEY, OTHER_PHONE));
@@ -117,8 +104,7 @@ class AuthIdempotencyGuardTest {
 
     @Test
     void findUserIdReturnsEmptyWhenNoRecord() {
-        when(stringRedisTemplate.opsForValue()).thenReturn(valueOperations);
-        when(valueOperations.get(anyString())).thenReturn(null);
+        when(redisUtil.getString(anyString())).thenReturn(null);
 
         assertFalse(guard.findUserId(IDEMPOTENCY_KEY, PHONE).isPresent());
     }

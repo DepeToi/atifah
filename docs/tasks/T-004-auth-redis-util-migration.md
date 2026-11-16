@@ -1,11 +1,11 @@
 ---
 id: T-004
 title: auth Redis 调用收敛到 RedisUtil
-status: ready
+status: in-review
 owner: codebuddy
 created: 2026-11-16
 updated: 2026-11-16
-status_reason: 维护者确认创建；arch-baseline-v0.1 契约已冻结，RedisUtil 已在 main 可用
+status_reason: 实现完成并推送分支，已创建 PR，等待 CI 与 Codex 评审
 contract_baseline: arch-baseline-v0.1
 related_adr: [docs/adr/0006-common-redis-util.md, docs/adr/0003-auth-baseline.md]
 ---
